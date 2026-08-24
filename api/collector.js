@@ -94,6 +94,7 @@
    ============================================================ */
 
 import { createHash } from 'node:crypto'
+import { scanSource } from './_scan.js'
 
 const INGEST_PATH = '/api/capture'
 const INSTALL_PATH = '/collect'
@@ -106,8 +107,17 @@ const INSTALL_PATH = '/collect'
    something. `bySource` reports which found what, so a thin result
    is explicable rather than mysterious.
    ============================================================ */
-function captureSource() {
+function captureSource(doc, baseHref) {
   'use strict'
+
+  /* READS ANY DOCUMENT, NOT JUST THE LIVE ONE.
+     "Scan everything" fetches listing pages and parses them with
+     DOMParser, and those pages have to be read by exactly this code
+     or there are two extractors that drift apart silently. Defaults
+     to the live page, so the plain capture path is unchanged. */
+  doc = doc || document
+  baseHref = baseHref || location.href
+  var LIVE = (doc === document)
 
   var products = []
   var notes = []
@@ -153,7 +163,7 @@ function captureSource() {
   function absolute(href) {
     var v = text(href)
     if (!v) return null
-    try { return new URL(v, location.href).href } catch (e) { return null }
+    try { return new URL(v, baseHref).href } catch (e) { return null }
   }
 
   /* ---------------------------------------------------- 1. JSON-LD */
@@ -198,14 +208,14 @@ function captureSource() {
     }
   }
 
-  var ld = document.querySelectorAll('script[type="application/ld+json"]')
+  var ld = doc.querySelectorAll('script[type="application/ld+json"]')
   for (var i = 0; i < ld.length; i++) {
     try { walkLd(JSON.parse(ld[i].textContent || 'null'), 0) }
     catch (e) { note('One JSON-LD block on this page is malformed and was skipped.') }
   }
 
   /* -------------------------------------------------- 2. Microdata */
-  var micro = document.querySelectorAll('[itemtype*="schema.org/Product" i]')
+  var micro = doc.querySelectorAll('[itemtype*="schema.org/Product" i]')
   for (var m = 0; m < micro.length; m++) {
     (function (scope) {
       function prop(n) {
@@ -239,20 +249,20 @@ function captureSource() {
      worth nothing on a collection page and everything on a product
      page a merchant built without structured data. */
   function meta(n) {
-    var el = document.querySelector('meta[property="' + n + '"]') ||
-             document.querySelector('meta[name="' + n + '"]')
+    var el = doc.querySelector('meta[property="' + n + '"]') ||
+             doc.querySelector('meta[name="' + n + '"]')
     return el ? text(el.getAttribute('content')) : null
   }
   if (meta('og:type') && /product/i.test(meta('og:type'))) {
     var ogRaw = {}
-    var metas = document.querySelectorAll('meta[property^="og:"],meta[property^="product:"]')
+    var metas = doc.querySelectorAll('meta[property^="og:"],meta[property^="product:"]')
     for (var q = 0; q < metas.length; q++) {
       var pk = metas[q].getAttribute('property') || metas[q].getAttribute('name')
       if (pk) ogRaw[pk] = text(metas[q].getAttribute('content'))
     }
     add('opengraph', {
       title: meta('og:title'),
-      url: absolute(meta('og:url') || location.href),
+      url: absolute(meta('og:url') || baseHref),
       price: price(meta('product:price:amount') || meta('og:price:amount')),
       currency: meta('product:price:currency') || meta('og:price:currency'),
       image: absolute(meta('og:image')),
@@ -267,6 +277,12 @@ function captureSource() {
      inventory, real product_type. */
   var platform = null
   try {
+    /* WINDOW GLOBALS ONLY EXIST FOR THE LIVE PAGE. A document parsed
+       out of fetched HTML has no ShopifyAnalytics: the globals belong
+       to the window that ran the scripts, not to the markup. Reading
+       them for a fetched page would attribute THIS page's product to
+       every page in the crawl. */
+    if (!LIVE) throw 0
     var w = window
     if (w.ShopifyAnalytics && w.ShopifyAnalytics.meta) {
       platform = 'shopify'
@@ -305,7 +321,7 @@ function captureSource() {
   for (var s = 0; s < products.length; s++) if (products[s].url) seen[products[s].url] = 1
 
   var PRICE_RE = /(?:[$£€¥]|USD|GBP|EUR|CAD|AUD)\s?\d[\d.,]*/
-  var anchors = document.querySelectorAll('a[href]')
+  var anchors = doc.querySelectorAll('a[href]')
   for (var a = 0; a < anchors.length; a++) {
     var el = anchors[a]
     var href = el.getAttribute('href') || ''
@@ -352,12 +368,12 @@ function captureSource() {
      products looks exactly like a small catalogue, and a known gap is
      worth far more than a clean-looking number. */
   var claimedTotal = null
-  var bodyText = (document.body ? document.body.innerText || '' : '').slice(0, 20000)
+  var bodyText = (doc.body ? (doc.body.innerText || doc.body.textContent || '') : '').slice(0, 20000)
   var cm = bodyText.match(/([\d,]{2,})\s+(?:results?|products?|items?)\b/i)
   if (cm) { var n = parseInt(cm[1].replace(/,/g, ''), 10); if (isFinite(n)) claimedTotal = n }
 
   var pager = []
-  var pagerLinks = document.querySelectorAll('a[href*="page="],a[rel="next"],.pagination a,[class*="pagination"] a')
+  var pagerLinks = doc.querySelectorAll('a[href*="page="],a[rel="next"],.pagination a,[class*="pagination"] a')
   for (var pg = 0; pg < pagerLinks.length && pager.length < 30; pg++) {
     var ph = absolute(pagerLinks[pg].getAttribute('href'))
     if (ph && pager.indexOf(ph) === -1) pager.push(ph)
@@ -372,11 +388,13 @@ function captureSource() {
      viewport with few products read. */
   var lazy = false
   try {
-    lazy = document.body.scrollHeight > innerHeight * 2.5 && products.length < 12
+    /* A measurement of the viewport, so it means nothing off-screen. */
+    if (!LIVE) throw 0
+    lazy = doc.body.scrollHeight > innerHeight * 2.5 && products.length < 12
     if (lazy) note('This grid may lazy-load. Scroll to the bottom, then run this again.')
   } catch (e) {}
 
-  var frames = document.querySelectorAll('iframe')
+  var frames = doc.querySelectorAll('iframe')
   if (frames.length) {
     note('There are ' + frames.length + ' iframes on this page. A cross-origin one cannot be ' +
          'read from here — that is the same-origin policy, not a bug. Open it in its own tab.')
@@ -387,9 +405,9 @@ function captureSource() {
   }
 
   return {
-    pageUrl: location.href,
-    host: location.hostname,
-    title: document.title,
+    pageUrl: baseHref,
+    host: (function () { try { return new URL(baseHref).hostname } catch (e) { return '' } })(),
+    title: doc.title,
     at: new Date().toISOString(),
     platform: platform,
     products: products,
@@ -427,8 +445,16 @@ const OPERATOR_SOURCE = `
   var ORIGIN = "";
   try { ORIGIN = new URL(SRC).origin; } catch (e) { ORIGIN = "%%ORIGIN%%"; }
 
-  var capture = (%%CAPTURE%%)();
+  /* BOTH HALVES ARE INLINED, AND THE SCANNER TAKES THE EXTRACTOR AS
+     AN ARGUMENT. Neither can see the other's binding once serialised,
+     so passing it in is what keeps them ONE extractor rather than two
+     that drift. */
+  var EXTRACT = (%%CAPTURE%%);
+  var SCAN = (%%SCAN%%);
+
+  var capture = EXTRACT();
   capture.build = BUILD;
+  var scanning = false, stopFlag = false;
 
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
@@ -449,12 +475,12 @@ const OPERATOR_SOURCE = `
 
   panel.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">' +
-      '<strong style="font-size:15px;color:#c4b5fd">' + capture.products.length + ' products</strong>' +
+      '<strong id="gd-count" style="font-size:15px;color:#c4b5fd">' + capture.products.length + ' products</strong>' +
       '<button id="gd-x" style="background:none;border:0;color:#a390c4;font-size:18px;cursor:pointer;line-height:1">&times;</button>' +
     '</div>' +
-    '<div style="opacity:.8;margin-top:2px">' + esc(per || "nothing found") + '</div>' +
+    '<div id="gd-per" style="opacity:.8;margin-top:2px">' + esc(per || "nothing found") + '</div>' +
     (capture.platform ? '<div style="opacity:.6;margin-top:2px">platform: ' + esc(capture.platform) + '</div>' : "") +
-    (notes ? '<ul style="margin:9px 0 0;padding-left:18px;opacity:.92;color:#f5d0a9">' + notes + "</ul>" : "") +
+    '<ul id="gd-notes" style="margin:9px 0 0;padding-left:18px;opacity:.92;color:#f5d0a9">' + notes + '</ul>' +
     '<label style="display:block;margin-top:12px;opacity:.85">Merchant key' +
       '<input id="gd-key" value="' + esc(guessKey()) + '" ' +
       'style="width:100%;margin-top:3px;padding:7px 8px;border-radius:7px;border:1px solid #43306b;' +
@@ -463,7 +489,11 @@ const OPERATOR_SOURCE = `
       '<input id="gd-token" type="password" placeholder="ADMIN_PASSCODE" ' +
       'style="width:100%;margin-top:3px;padding:7px 8px;border-radius:7px;border:1px solid #43306b;' +
       'background:#0a0413;color:#efe6f7"></label>' +
-    '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">' +
+    '<button id="gd-scan" style="width:100%;margin-top:12px;background:none;color:#c4b5fd;' +
+      'border:1px solid #8b5cf6;border-radius:999px;padding:9px 14px;cursor:pointer;font:inherit;' +
+      'font-weight:700">Scan everything</button>' +
+    '<div id="gd-scanmsg" style="margin-top:6px;opacity:.7;font-size:12px"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
       '<button id="gd-send" style="flex:1;background:#8b5cf6;color:#0a0413;border:0;' +
       'border-radius:999px;padding:9px 14px;cursor:pointer;font:inherit;font-weight:700">Send</button>' +
       '<button id="gd-copy" style="background:none;color:#c4b5fd;border:1px solid #43306b;' +
@@ -495,6 +525,57 @@ const OPERATOR_SOURCE = `
       build: BUILD,
       capture: capture
     };
+  }
+
+  /* ----------------------------------------------------------- scan
+     A DIFFERENT ACT FROM THE REST OF THIS TOOL, and the button says
+     so before it does anything. Everything else here reads a page the
+     browser already fetched; this fetches pages nobody individually
+     asked for. It obeys robots.txt, goes one request at a time with a
+     delay, caps itself, and can be stopped. See api/_scan.js. */
+  $("gd-scan").onclick = function(){
+    if (scanning) { stopFlag = true; say("stopping after the current request..."); return; }
+    scanning = true; stopFlag = false;
+    $("gd-scan").textContent = "Stop scanning";
+    var out = $("gd-scanmsg");
+
+    SCAN(EXTRACT,
+      function(msg){ out.textContent = msg; },
+      { shouldStop: function(){ return stopFlag; } }
+    ).then(function(res){
+      scanning = false;
+      $("gd-scan").textContent = "Scan everything";
+      if (!res || !res.products.length) {
+        out.textContent = "Scan found nothing. The plain capture above still holds " +
+          capture.products.length + ".";
+        return;
+      }
+      /* THE SCAN REPLACES THE CAPTURE RATHER THAN ADDING TO IT. It is
+         a superset by construction: the live page's own products come
+         back through products.json or the crawl. Merging the two
+         would double-count anything the DOM reader and the JSON
+         endpoint both saw under slightly different URLs. */
+      res.build = BUILD;
+      capture = res;
+      out.textContent = "Scan done: " + res.products.length + " products in " +
+        res.scan.requests + " requests" +
+        (res.scan.robotsSkipped ? ", " + res.scan.robotsSkipped + " skipped by robots.txt" : "") + ".";
+      redrawCounts();
+    }).catch(function(e){
+      scanning = false;
+      $("gd-scan").textContent = "Scan everything";
+      out.textContent = "Scan failed: " + (e && e.message ? e.message : "unknown");
+    });
+  };
+
+  /* The header and the notes are the two things a scan changes. */
+  function redrawCounts(){
+    var per = Object.keys(capture.bySource).map(function(k){
+      return k + ": " + capture.bySource[k]; }).join(", ");
+    $("gd-count").textContent = capture.products.length + " products";
+    $("gd-per").textContent = per || "nothing found";
+    $("gd-notes").innerHTML = capture.coverage.notes.map(function(n){
+      return '<li style="margin:5px 0">' + esc(n) + "</li>"; }).join("");
   }
 
   $("gd-copy").onclick = function(){
@@ -573,11 +654,24 @@ const OPERATOR_SOURCE = `
  * matters, and a stale bookmarklet does not throw, it under-reports.
  */
 export function collectorSource(origin) {
+  /* FUNCTION REPLACERS, NOT STRINGS, AND THIS IS NOT STYLE.
+     String.prototype.replace gives `$&`, `$'` and `` $` `` special
+     meaning IN THE REPLACEMENT. The robots.txt parser in _scan.js
+     contains the literal `'\\$&'` (escaping a regex special), so
+     passing the source as a replacement string silently rewrote it
+     into the matched text and emitted a program that would not
+     parse. A function replacer is taken verbatim.
+
+     It failed loudly here because the test parses the output. Had
+     the corrupted fragment happened to stay syntactically valid it
+     would have shipped a subtly wrong crawler to a stranger's
+     website instead, which is the whole reason that test exists. */
   const withExtractor = OPERATOR_SOURCE
-    .replace('%%CAPTURE%%', captureSource.toString())
-    .replace('%%INGEST%%', INGEST_PATH)
+    .replace('%%CAPTURE%%', function () { return captureSource.toString() })
+    .replace('%%SCAN%%', function () { return scanSource.toString() })
+    .replace('%%INGEST%%', function () { return INGEST_PATH })
     .split('%%INSTALL%%').join(INSTALL_PATH)
-    .replace('%%ORIGIN%%', origin)
+    .replace('%%ORIGIN%%', function () { return origin })
 
   const build = createHash('sha256').update(withExtractor).digest('hex').slice(0, 8)
   return { source: withExtractor.split('%%BUILD%%').join(build), build }

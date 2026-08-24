@@ -41,6 +41,7 @@ api/
   products.js    The scraper, ported from Nicotia. SEE ITS PORT NOTES.
   capture.js     POST a capture · ?report=<key> · ?worklist
   collector.js   Generates the bookmarklet from typed source.
+  _scan.js       "Scan everything": the CRAWLING half. Read §4b.
   track.js       Event sink.
 public/
   index.html     The dungeon. Markup only.
@@ -133,7 +134,72 @@ the walking through shows up in a pull request.
 5. Only now clear `pending`.
 
 `GET /api/capture?worklist` is public and says what is left. It carries no
-rates, no cookie windows and no affiliate codes.
+rates, no cookie windows and no affiliate codes. On `/collect` each shop is a
+link and each key copies on click — **bare domains, never the `?ref=` version**,
+because walking the list through tracked links would manufacture 54 fake clicks
+against the owner's own conversion stats.
+
+---
+
+## 4b. "Scan everything" is a DIFFERENT ACT, and the code says so
+
+`api/_scan.js`. Read it before changing it.
+
+The plain capture makes **no request to the merchant at all** — it reads a page
+the browser already fetched because a human asked for it. That is research, and
+it is why the tool can be pointed at any shop without a conversation.
+
+**Scan everything makes requests nobody individually asked for. That is
+crawling.** Pretending otherwise would just mean the next person rediscovers it
+by surprise. So it is built to be defensible rather than merely fast:
+
+1. **It reads `robots.txt` and obeys it.** Not decoratively: a Disallow match
+   means the URL is not fetched, the skip is counted, and the count lands in the
+   capture's coverage notes. Wildcards, `$` anchors and longest-match
+   Allow-beats-Disallow are all implemented, because Shopify shops routinely
+   block a broad path and re-open a narrower one inside it. `Crawl-delay` is
+   honoured when it is longer than ours. `test/scan.test.mjs` exercises all of
+   it against the real shapes — **a decorative robots parser is worse than
+   none**, since it lets everybody believe the crawl is polite.
+2. **It prefers the endpoints shops publish for machines.** `products.json`, the
+   WooCommerce Store API and `sitemap.xml` exist to be read by programs. A whole
+   catalogue in four requests to a documented JSON endpoint is gentler than two
+   hundred HTML pages. **HTML crawling is the fallback, not the strategy.**
+3. **One request at a time, with a delay.** No concurrency.
+4. **Capped at 300 requests, and stoppable mid-run.** A runaway crawl on
+   somebody else's shop is what gets an IP banned and an affiliate account
+   closed.
+5. **It says what it did not see.** The sitemap gives ground truth on catalogue
+   size, so "the sitemap lists 1,180 products and this scan holds 214" is now a
+   fact rather than an inference.
+
+**Every network call goes through `get()`** — that is where the cap, the robots
+check, the throttle and the stop flag live, so a stray `fetch()` elsewhere
+bypasses all four at once. A test asserts there are exactly two `fetch(` sites
+in the file: `get()` itself, and `robots.txt`.
+
+### What this unlocks, and the real reason to build it
+
+`fetch('/products.json')` **from the operator's browser is same-origin.** No
+CORS, no datacentre IP, no bot fingerprint. Kawaii Katz measured Tokyo Tiger at
+HTTP 403 from Vercel's IPs with a real browser UA and correctly concluded it was
+host-level bot protection no header gets past. A shop that refuses a datacentre
+usually serves the person already browsing it, so **this path reaches catalogues
+the server-side scraper structurally cannot.**
+
+### Two traps in the build, both already paid for
+
+- **`String.replace` expands `$&` in the replacement.** The robots parser
+  contains a literal `'\\$&'`, so inlining the scanner with a string
+  replacement silently rewrote it and emitted a program that would not parse.
+  Function replacers fixed it. It failed loudly only because the test parses the
+  output; a corrupted fragment that stayed syntactically valid would have
+  shipped a subtly wrong crawler to a stranger's website.
+- **A backtick in a COMMENT is as fatal as one in code.** The program is inlined
+  into a `javascript:` URL. A prose comment quoting a regex class with backticks
+  broke it, and that is far easier to write by accident than a template literal.
+  A test now asserts on both serialised functions directly, so a failure names
+  which one.
 
 ---
 
@@ -385,6 +451,11 @@ the jsonb it would be a sequential scan on every report.
 - Do NOT put the admin passcode in the bookmarklet or on `/collect` (§10).
 - Do NOT let `/api/` become crawlable; a crawl costs a live scrape of every shop.
 - Do NOT add the age gate back to `arcade.html` (§7).
+- Do NOT add a bare `fetch()` to `_scan.js`; go through `get()` (§4b).
+- Do NOT weaken or bypass the robots.txt check to make a scan reach more (§4b).
+- Do NOT raise the 300-request cap without a reason written down beside it (§4b).
+- Do NOT put a backtick anywhere inside `captureSource` or `scanSource`,
+  comments included (§4b).
 - Do NOT clear the nicotine-shaped leftovers in `products.js` off the to-do list
   without doing them — read its PORT NOTES header. They must come out **before
   the first `pending` flag is cleared**, because the gate is what is currently

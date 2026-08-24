@@ -10,8 +10,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { collectorSource } from '../api/collector.js'
+import { scanSource } from '../api/_scan.js'
+
+/* Read straight off the functions, so a failure names which one. */
+const scanSrc = scanSource.toString()
 
 const { source, build } = collectorSource('https://example.test')
+const capSrc = source.slice(source.indexOf('function captureSource'), source.indexOf('function scanSource'))
 
 test('the assembled program parses', () => {
   /* Not executed — there is no DOM here — but a parse failure is the
@@ -49,6 +54,18 @@ test('the extractor closes over nothing', () => {
   for (const forbidden of ['INGEST_PATH', 'INSTALL_PATH', 'OPERATOR_SOURCE', 'createHash', 'collectorSource']) {
     assert.equal(fn.includes(forbidden), false,
       `the extractor references ${forbidden}, which will not exist when it runs`)
+  }
+})
+
+test('neither serialised function contains a backtick, comments included', () => {
+  /* Caught for real: a prose comment inside scanSource used backticks
+     to quote a regex character class. It is inlined into a
+     `javascript:` URL and pasted into consoles, so a backtick in a
+     COMMENT is as fatal as one in code, and it is far easier to write
+     by accident. Asserting on the two functions directly points at
+     the offender; the emitted-program check below only says "somewhere". */
+  for (const [name, fn] of [['captureSource', capSrc], ['scanSource', scanSrc]]) {
+    assert.equal(fn.includes('`'), false, name + ' contains a backtick')
   }
 })
 
