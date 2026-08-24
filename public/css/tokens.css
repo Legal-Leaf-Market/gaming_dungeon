@@ -1,0 +1,105 @@
+/* ============================================================
+   tokens.css — the Leaf Market family design system,
+                Gaming Dungeon's edition
+   ------------------------------------------------------------
+   Four sites share this file's SHAPE, and three of its values.
+   The point is that a visitor crossing between them feels one
+   house, and the point of the differences is that each still
+   reads as itself.
+
+   SHARED ACROSS ALL SISTER SITES — do not drift these:
+
+     --gold   #f0b93c
+     --red    #ef5350
+     the three font families (Fraunces / Cormorant Garamond / Jost)
+
+   Change one of those here and you must change it on Legal-Leaf,
+   Herbal-Leaf and Nicotia too, or the family stops looking like a
+   family. That is not a style preference; the sites cross-link to
+   each other and the seam shows.
+
+   OURS ALONE — the accent slot. This one line is the whole
+   difference between the four sites' shared components:
+
+     Legal-Leaf   --leaf        a cold blue
+     Nicotia      --ember       tobacco amber
+     Herbal-Leaf  --terracotta
+     Gaming Dungeon  --arcade   a CRT violet
+
+   Everything in a shared component reaches for --accent, never for
+   the site-specific name, so a component file copies between the
+   four unchanged. arcade.html is the proof: it is byte-identical
+   across every site that hosts it and picks up the local palette
+   with no per-site branch.
+
+   --accent-rgb EXISTS BECAUSE arcade.html NEEDS IT. It builds
+   glows with rgba(var(--accent-rgb), .11), which cannot be done
+   from a hex token. If you change --arcade, change --accent-rgb in
+   the same edit or every glow on the arcade page silently keeps
+   the old hue.
+
+   THE GOOGLE FONTS REQUEST IS BYTE-IDENTICAL TO THE SISTERS' on
+   purpose: a visitor crossing between sister sites gets a cache
+   hit rather than a second download.
+
+   A NOTE THE SISTER FILES ALL CARRY, EARNED ON LEGAL-LEAF: a
+   stylesheet that claims in its own header to match another file,
+   and does not, is worse than one that never claimed it. Legal-
+   Leaf's market pages were recoloured and its tokens.css was not,
+   so /library and /reels went on painting themselves in the old
+   palette for weeks. Nothing errored. If you recolour, recolour
+   here in the same commit.
+   ============================================================ */
+
+:root{
+  /* --- ground ------------------------------------------------ */
+  --bg:#0a0413;
+  --bg2:#12091b;
+  --panel:rgba(24,14,38,.72);
+  --panel2:rgba(12,6,20,.85);
+  --glass:rgba(30,18,48,.42);
+  --glass-line:rgba(168,140,220,.22);
+  --line:#2c1d44;
+  --chip:#1b1029;
+
+  /* --- ink --------------------------------------------------- */
+  --text:#efe6f7;
+  --muted:#b3a3c8;
+  --dim:#8b7aa4;
+
+  /* --- OURS: the CRT violet --------------------------------- */
+  --arcade:#a78bfa;
+  --arcade2:#8b5cf6;
+  --arcade3:#6d28d9;
+
+  /* --- SHARED with the sister sites. Do not drift. ---------- */
+  --gold:#f0b93c;
+  --amber:#e8a33d;
+  --red:#ef5350;
+
+  /* --- the sisters' names, mapped onto ours, so a component
+         file copies between the four sites unchanged --------- */
+  --leaf:var(--arcade);
+  --sage:var(--arcade);
+  --sage-dk:var(--arcade2);
+  --gold-dk:#c8922a;
+
+  /* --- the accent slot: the whole difference between sites --- */
+  --accent:var(--arcade);
+  --accent-dk:var(--arcade3);
+  /* Needed by arcade.html's rgba() glows. Keep in step with --arcade. */
+  --accent-rgb:167,139,250;
+
+  /* --- type -------------------------------------------------- */
+  --serif:'Fraunces',Georgia,'Times New Roman',serif;
+  --display:'Cormorant Garamond',Georgia,serif;
+  --sans:'Jost',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  /* OURS ALONE: the cabinet face. Only ever used at small sizes and
+     in short strings — Press Start 2P is unreadable as body copy and
+     ships a large file, so it is a texture, not a typeface. */
+  --pixel:'Press Start 2P',ui-monospace,'Cascadia Mono','Courier New',monospace;
+
+  /* --- geometry ---------------------------------------------- */
+  --radius:16px;
+  --radius-sm:8px;
+}

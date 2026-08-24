@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Collector | Gaming Dungeon</title>
+<!-- OPERATOR TOOL. noindex, in no nav, in no sitemap. It is not a
+     shopper page and a crawler finding it helps nobody. -->
+<meta name="robots" content="noindex,nofollow"/>
+<meta name="color-scheme" content="dark"/>
+<link rel="stylesheet" href="/css/tokens.css"/>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.65 var(--sans),system-ui,-apple-system,sans-serif;
+    padding:32px 18px 80px}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-family:var(--pixel);font-size:16px;line-height:1.9;margin:0 0 6px;color:var(--accent)}
+  h2{font-family:var(--pixel);font-size:11px;line-height:1.9;margin:34px 0 10px;color:var(--text)}
+  p{color:var(--muted);max-width:66ch}
+  code,kbd{font-family:ui-monospace,'Cascadia Mono',monospace;font-size:.88em;
+    background:var(--chip);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .drag{display:inline-block;background:var(--accent);color:#0a0413;font-weight:700;
+    border-radius:999px;padding:11px 20px;text-decoration:none;margin:6px 10px 6px 0;
+    font-family:var(--pixel);font-size:10px;cursor:grab}
+  .drag:active{cursor:grabbing}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+  .warn{border-color:var(--gold);background:rgba(240,185,60,.06)}
+  .build{font-family:ui-monospace,monospace;color:var(--dim);font-size:13px}
+  textarea{width:100%;min-height:150px;background:#0a0413;color:var(--text);
+    border:1px solid var(--line);border-radius:8px;padding:10px;font-family:ui-monospace,monospace;font-size:12px}
+  button{background:var(--accent);color:#0a0413;border:0;border-radius:999px;
+    padding:9px 18px;font:inherit;font-weight:700;cursor:pointer}
+  input{background:#0a0413;color:var(--text);border:1px solid var(--line);
+    border-radius:7px;padding:8px 10px;font:inherit}
+  table{border-collapse:collapse;width:100%;font-size:14px;margin-top:8px}
+  th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .yes{color:var(--accent)} .no{color:var(--dim)}
+  ul{color:var(--muted);max-width:66ch}
+  li{margin:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>THE COLLECTOR</h1>
+<p>Read a merchant's catalogue out of a page you are already looking at.
+No request is made to the merchant: the page was fetched because you
+asked for it, in your own browser, as a visitor.</p>
+
+<div class="card warn">
+  <strong>Why this exists, and why it runs before the scraper.</strong>
+  <p style="margin-bottom:0">Every merchant in this repo ships <code>pending</code>, and no
+  merchant can be published without a reviewed capture committed to
+  <code>data/captured/</code>. That is the reverse of how the three sister
+  sites were built, and it is the reverse on purpose: each of them registered
+  vendors, pointed a scraper at them, shipped, and found out afterwards. One
+  vendor has returned zero products since the day it was added. Two others put
+  466 products up that earn nothing to this day. Reading the catalogue first is
+  the cheap version of learning that.</p>
+</div>
+
+<h2>1 · INSTALL</h2>
+<p>Drag one of these to your bookmarks bar. Then open a merchant, and click it.</p>
+
+<p>
+  <a class="drag" id="dragLoader" href="#">GD Collect</a>
+  <a class="drag" id="dragInline" href="#" style="background:none;color:var(--accent);border:1px solid var(--accent)">GD Collect (self-contained)</a>
+</p>
+
+<div class="card">
+  <p style="margin-top:0"><strong>Which one?</strong></p>
+  <ul>
+    <li><strong>GD Collect</strong> is short and always current. It loads the
+      collector from this site each time, so a fix reaches you the next time you
+      click it.</li>
+    <li><strong>Self-contained</strong> carries the whole program in the bookmark
+      itself. Use it on a shop whose <code>script-src</code> refuses the loader
+      &mdash; and note that a blocked script <em>fires no error</em>, so the tell is
+      that nothing at all happens.</li>
+  </ul>
+  <p style="margin-bottom:0">Current build <span class="build" id="buildNow">…</span>.
+  The panel prints the build it is running. <strong>If those two differ, your
+  self-contained bookmark is stale</strong> &mdash; re-drag it. A stale collector
+  does not throw; it returns a smaller catalogue that looks entirely plausible,
+  which is how a shop on the sister site was reported broken months after it was
+  fixed.</p>
+</div>
+
+<h2>2 · CAPTURE</h2>
+<ul>
+  <li><strong>Scroll to the bottom first</strong> if the grid lazy-loads. What is in
+    the DOM is all this can see.</li>
+  <li><strong>Capture every page</strong> of a paginated grid. They merge into one
+    record per merchant, so there is no cost to running it repeatedly.</li>
+  <li><strong>Check the merchant key</strong> the panel guessed. Filing a capture under
+    the wrong merchant is the failure that gets found by a shopper rather than by us.</li>
+  <li>A menu inside a <strong>cross-origin iframe cannot be read</strong>. That is the
+    same-origin policy working correctly. Open that frame in its own tab and run it there.</li>
+  <li>An <strong>empty capture is refused, not stored</strong>. Running it before the grid
+    rendered cannot wipe out earlier work.</li>
+</ul>
+
+<h2>3 · IF SENDING FAILS</h2>
+<p>A shop can permit the read and forbid the send &mdash; <code>connect-src</code>
+does that, and it surfaces as a bare <code>TypeError</code> with nothing to read.
+The collector opens a relay tab automatically, because opening a tab is a
+navigation rather than a connection and no policy governs it. If pop-ups are
+blocked, press <strong>Copy</strong> and paste below.</p>
+
+<div class="card">
+  <label>Admin passcode <input type="password" id="pasteToken" placeholder="ADMIN_PASSCODE"/></label>
+  <p style="font-size:13px;margin:8px 0">Typed here, used for one request, never stored.
+  It is never in the bookmarklet URL &mdash; that lives in a bookmarks bar in plain sight forever.</p>
+  <textarea id="pasteBox" placeholder="Paste the JSON the Copy button put on your clipboard"></textarea>
+  <p><button id="pasteSend">Store it</button> <span id="pasteMsg" class="build"></span></p>
+</div>
+
+<h2>4 · WHAT IS LEFT TO CAPTURE</h2>
+<p>Live from <code>/api/capture?worklist</code>. Merchants with attribution already
+in place are listed first, because a capture on one of those can go live and start
+earning the day it is reviewed.</p>
+<div id="worklist" class="build">loading…</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   THE ORIGIN IS PREPENDED TO EVERY INSTALL METHOD, and it is load-bearing.
+   The collector reads its API origin off its own script tag, and an INLINED
+   program has no currentScript. Without __GD_COLLECTOR_SRC__ a self-contained
+   bookmarklet built on a preview deploy would silently post its captures to
+   production. All three install methods set it, so all three agree.
+   ------------------------------------------------------------------------ */
+(function () {
+  'use strict';
+  var ORIGIN = location.origin;
+  var SRC = ORIGIN + '/api/collector';
+
+  var loader =
+    "javascript:(function(){window.__GD_COLLECTOR_SRC__=" + JSON.stringify(SRC) + ";" +
+    "var s=document.createElement('script');s.src=" + JSON.stringify(SRC) +
+    "+'?t='+Date.now();document.body.appendChild(s);})()";
+  document.getElementById('dragLoader').href = loader;
+
+  fetch(SRC).then(function (r) {
+    document.getElementById('buildNow').textContent =
+      r.headers.get('X-Collector-Build') || '(unknown)';
+    return r.text();
+  }).then(function (src) {
+    document.getElementById('dragInline').href =
+      'javascript:' + encodeURIComponent(
+        'window.__GD_COLLECTOR_SRC__=' + JSON.stringify(SRC) + ';' + src);
+  }).catch(function () {
+    document.getElementById('buildNow').textContent = '(could not reach /api/collector)';
+  });
+
+  /* ---- paste fallback ---- */
+  document.getElementById('pasteSend').onclick = function () {
+    var msg = document.getElementById('pasteMsg');
+    var token = document.getElementById('pasteToken').value.trim();
+    if (!token) { msg.textContent = 'Passcode first.'; return; }
+    var body;
+    try { body = JSON.parse(document.getElementById('pasteBox').value); }
+    catch (e) { msg.textContent = 'That is not valid JSON.'; return; }
+    msg.textContent = 'sending…';
+    post(token, body).then(function (o) {
+      msg.textContent = o.ok
+        ? 'Stored. ' + o.j.added + ' new, ' + o.j.total + ' on file for ' + o.j.merchantKey + '.'
+        : 'Refused: ' + (o.j.error || 'unknown');
+    });
+  };
+
+  function post(token, body) {
+    return fetch('/api/capture', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-gd-admin-token': token },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
+  }
+
+  /* ---------------------------------------------------------------------
+     THE RELAY. ?receive=1 turns this page into the thing the collector
+     hands a capture to when the merchant's connect-src forbids a direct
+     POST. Both ends pin the origin.
+     ------------------------------------------------------------------ */
+  if (/(?:^|[?&])receive=1(?:&|$)/.test(location.search)) {
+    document.querySelector('.wrap').insertAdjacentHTML('afterbegin',
+      '<div class="card warn" id="relayCard"><strong>Relay tab.</strong> ' +
+      '<span id="relayMsg">Waiting for the capture…</span></div>');
+    var relayMsg = document.getElementById('relayMsg');
+
+    window.addEventListener('message', function (ev) {
+      if (ev.origin !== location.origin) return;
+      if (!ev.data || ev.data.type !== 'gd-capture') return;
+      relayMsg.textContent = 'Received. Storing…';
+      post(ev.data.token, ev.data.payload).then(function (o) {
+        relayMsg.textContent = o.ok
+          ? 'Stored. ' + o.j.added + ' new, ' + o.j.total + ' on file for ' + o.j.merchantKey + '.'
+          : 'Refused: ' + (o.j.error || 'unknown');
+        try {
+          ev.source.postMessage({
+            type: 'gd-relay-result', ok: o.ok, result: o.j, error: o.j && o.j.error
+          }, ev.origin);
+        } catch (e) {}
+      });
+    });
+
+    /* Announce readiness to whoever opened us. The collector also has a
+       timed backstop for the case where this tab loaded first. */
+    try { if (window.opener) window.opener.postMessage({ type: 'gd-relay-ready' }, location.origin); }
+    catch (e) {}
+  }
+
+  /* ---- worklist ---- */
+  fetch('/api/capture?worklist').then(function (r) { return r.json(); }).then(function (j) {
+    var el = document.getElementById('worklist');
+    if (!j || !j.ok) { el.textContent = 'worklist unavailable'; return; }
+    var rows = j.rows.slice().sort(function (a, b) {
+      if (a.captured !== b.captured) return a.captured ? 1 : -1;
+      if (a.attributed !== b.attributed) return a.attributed ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    el.innerHTML =
+      '<p>' + j.captured + ' of ' + j.total + ' captured. ' +
+      '<strong>' + j.remaining + ' to go.</strong> Capture store: ' + j.captureStore + '.</p>' +
+      '<table><tr><th>Merchant</th><th>Room</th><th>Captured</th><th>Attributed</th></tr>' +
+      rows.map(function (r) {
+        return '<tr><td>' + r.name + '</td><td>' + r.room + '</td>' +
+          '<td class="' + (r.captured ? 'yes' : 'no') + '">' + (r.captured ? 'yes' : '—') + '</td>' +
+          '<td class="' + (r.attributed ? 'yes' : 'no') + '">' + (r.attributed ? 'yes' : '—') + '</td></tr>';
+      }).join('') + '</table>';
+  }).catch(function () {
+    document.getElementById('worklist').textContent = 'worklist unavailable (is the API running?)';
+  });
+})();
+</script>
+</div>
+</body>
+</html>

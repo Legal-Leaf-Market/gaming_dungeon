@@ -1,0 +1,11 @@
+{
+  "name": "gaming-dungeon",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "node server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "worklist": "node tools/worklist.mjs"
+  }
+}

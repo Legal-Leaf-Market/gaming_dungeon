@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# /collect is an operator tool and /api costs a live scrape of every
+# shop when it is crawled. Kawaii Katz's guide is blunt about the
+# second one and it is the same engine here.
+Disallow: /collect
+Disallow: /api/
+
+Sitemap: https://gamingdungeon.com/sitemap.xml

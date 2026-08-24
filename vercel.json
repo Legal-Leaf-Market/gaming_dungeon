@@ -1,0 +1,43 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": null,
+  "installCommand": null,
+  "outputDirectory": "public",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "functions": {
+    "api/products.js": { "maxDuration": 60 }
+  },
+  "rewrites": [
+    { "source": "/arcade-floor",  "destination": "/" },
+    { "source": "/play",          "destination": "/" },
+    { "source": "/tabletop",      "destination": "/" },
+    { "source": "/battlestation", "destination": "/" },
+    { "source": "/workshop",      "destination": "/" },
+    { "source": "/audio",         "destination": "/" },
+    { "source": "/power",         "destination": "/" },
+    { "source": "/vault",         "destination": "/" },
+    { "source": "/wardrobe",      "destination": "/" },
+    { "source": "/shop/:key",     "destination": "/" }
+  ],
+  "redirects": [
+    { "source": "/(index.html)", "destination": "/", "permanent": true }
+  ],
+  "headers": [
+    { "source": "/api/(.*)", "headers": [
+      { "key": "Cache-Control", "value": "public, s-maxage=600, stale-while-revalidate=86400" }
+    ] },
+    { "source": "/api/collector", "headers": [
+      { "key": "Cache-Control", "value": "no-store" }
+    ] },
+    { "source": "/api/capture", "headers": [
+      { "key": "Cache-Control", "value": "no-store" }
+    ] },
+    { "source": "/css/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] },
+    { "source": "/js/(.*)",  "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }] },
+    { "source": "/arcade/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] },
+    { "source": "/sitemap.xml", "headers": [{ "key": "Content-Type", "value": "application/xml" }] },
+    { "source": "/(.*)", "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }] }
+  ]
+}
