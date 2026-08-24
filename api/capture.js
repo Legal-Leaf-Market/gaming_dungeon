@@ -19,7 +19,7 @@
    ============================================================ */
 
 import { STORES, isAttributed } from './_stores.js'
-import { merge, report, reviewedKeys, capturedCounts, dbConfigured } from './_capture.js'
+import { merge, report, reviewedKeys, capturedCounts, dbConfigured, dbHealth } from './_capture.js'
 
 const PASS = process.env.ADMIN_PASSCODE || ''
 
@@ -83,6 +83,7 @@ export default async function handler(req, res) {
        exist in Neon; `reviewed` means a human looked at them and
        committed the summary. Only the second one publishes. */
     const counts = await capturedCounts()
+    const health = await dbHealth()
     const rows = STORES.map(s => ({
       key: s.key,
       name: s.name,
@@ -97,7 +98,12 @@ export default async function handler(req, res) {
     const todo = rows.filter(r => !r.captured)
     return res.status(200).json({
       ok: true,
-      captureStore: dbConfigured() ? 'Neon, configured' : 'NOT CONFIGURED — set DATABASE_URL',
+      /* The result of a real round trip, not the presence of an
+         env var. A capture store that is set but broken must not
+         read the same as one that is working and empty. */
+      captureStore: health.ok
+        ? 'Neon, reachable'
+        : 'CAPTURE STORE NOT WORKING — ' + health.error,
       total: rows.length,
       captured: rows.length - todo.length,
       remaining: todo.length,

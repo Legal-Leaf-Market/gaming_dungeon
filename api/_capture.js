@@ -80,9 +80,9 @@
 
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { q, dbConfigured } from './_db.js'
+import { q, dbConfigured, dbHealth } from './_db.js'
 
-export { dbConfigured }
+export { dbConfigured, dbHealth }
 
 export const CAPTURED_DIR = join(process.cwd(), 'data', 'captured')
 

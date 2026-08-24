@@ -122,6 +122,37 @@ async function ensureSchema() {
   return ready
 }
 
+/**
+ * Did a query actually work? NOT the same question as "is
+ * DATABASE_URL set", and conflating the two is the exact bug this
+ * codebase keeps writing up.
+ *
+ * `dbConfigured()` reads an environment variable. It says nothing
+ * about whether the connection string is valid, the branch is
+ * awake, the role can create tables, or the schema exists. Every
+ * caller here catches its own errors and degrades to empty — which
+ * is right, a report should not 500 because Neon is cold — but it
+ * means a misconfigured database and an empty one produce byte-
+ * identical output. "0 captured" would read as "you have not
+ * started yet" when it actually meant "nothing you capture will
+ * ever be saved".
+ *
+ * So this one does a real round trip and returns the error text.
+ * It is the difference between the worklist saying "Neon,
+ * configured" and it saying what is actually wrong.
+ */
+export async function dbHealth() {
+  if (!sql) return { ok: false, error: 'DATABASE_URL is not set' }
+  try {
+    await ensureSchema()
+    const rows = await sql`SELECT 1 AS ok`
+    if (!rows || !rows[0]) return { ok: false, error: 'query returned nothing' }
+    return { ok: true, error: null }
+  } catch (e) {
+    return { ok: false, error: (e && e.message ? e.message : String(e)).slice(0, 300) }
+  }
+}
+
 export async function q(fn) {
   if (!sql) return null
   await ensureSchema()
