@@ -37,6 +37,13 @@
   th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
   th{color:var(--dim);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
   .yes{color:var(--accent)} .no{color:var(--dim)}
+  .shoplink{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+  .shoplink:hover{color:var(--accent)}
+  .dom{color:var(--dim);font-size:12px}
+  .key{cursor:pointer;user-select:all}
+  .key:hover{border-color:var(--accent);color:var(--accent)}
+  tr.done{opacity:.45}
+  tr.done .shoplink{text-decoration:none}
   ul{color:var(--muted);max-width:66ch}
   li{margin:6px 0}
 </style>
@@ -211,24 +218,73 @@ earning the day it is reviewed.</p>
     catch (e) {}
   }
 
-  /* ---- worklist ---- */
+  /* ---- worklist ----------------------------------------------------
+     THE LINKS HERE ARE BARE DOMAINS AND MUST STAY THAT WAY.
+
+     It is tempting to link the shop through its own affiliate URL,
+     since the registry already holds one for half of these. Do not.
+     A GET on a `?ref=` link registers a REAL CLICK in GoAffPro, so
+     walking this list to capture 54 shops would manufacture 54
+     fake clicks against the owner's own conversion stats — and the
+     polluted stats are the very evidence you would use to work out
+     why the numbers look wrong.
+
+     The API cannot hand us one anyway: `publicStores()` is an
+     allow-list and `ref` is not in it. That is belt and braces, and
+     both are deliberate.
+
+     rel="nofollow noopener" for the same reason as the product
+     cards: these are outbound commercial links from an operator
+     page, and the page is noindex regardless.
+     ------------------------------------------------------------ */
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
   fetch('/api/capture?worklist').then(function (r) { return r.json(); }).then(function (j) {
     var el = document.getElementById('worklist');
     if (!j || !j.ok) { el.textContent = 'worklist unavailable'; return; }
+
+    /* Work order: not yet captured first, attributed first within
+       that, then longest cookie. A capture on an attributed shop can
+       go live and start earning the day it is reviewed. */
     var rows = j.rows.slice().sort(function (a, b) {
       if (a.captured !== b.captured) return a.captured ? 1 : -1;
       if (a.attributed !== b.attributed) return a.attributed ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
+
     el.innerHTML =
-      '<p>' + j.captured + ' of ' + j.total + ' captured. ' +
-      '<strong>' + j.remaining + ' to go.</strong> Capture store: ' + j.captureStore + '.</p>' +
-      '<table><tr><th>Merchant</th><th>Room</th><th>Captured</th><th>Attributed</th></tr>' +
+      '<p>' + j.captured + ' of ' + j.total + ' captured, ' + j.reviewed + ' reviewed. ' +
+      '<strong>' + j.remaining + ' to go.</strong><br>Capture store: ' + esc(j.captureStore) + '</p>' +
+      '<p class="build">Click a shop to open it in a new tab. Click a key to copy it, then paste ' +
+      'it into the collector panel. Links are deliberately un-tracked.</p>' +
+      '<table><tr><th>Shop</th><th>Key</th><th>Room</th><th>Captured</th><th>Attr</th></tr>' +
       rows.map(function (r) {
-        return '<tr><td>' + r.name + '</td><td>' + r.room + '</td>' +
-          '<td class="' + (r.captured ? 'yes' : 'no') + '">' + (r.captured ? 'yes' : '—') + '</td>' +
-          '<td class="' + (r.attributed ? 'yes' : 'no') + '">' + (r.attributed ? 'yes' : '—') + '</td></tr>';
+        var url = 'https://' + r.domain.replace(/^https?:\/\//, '');
+        return '<tr' + (r.captured ? ' class="done"' : '') + '>' +
+          '<td><a class="shoplink" href="' + esc(url) + '" target="_blank" rel="nofollow noopener">' +
+            esc(r.name) + '</a><br><span class="dom">' + esc(r.domain) + '</span></td>' +
+          '<td><code class="key" data-key="' + esc(r.key) + '" title="click to copy">' + esc(r.key) + '</code></td>' +
+          '<td>' + esc(r.room) + '</td>' +
+          '<td class="' + (r.captured ? 'yes' : 'no') + '">' +
+            (r.captured ? r.capturedProducts : '\u2014') + '</td>' +
+          '<td class="' + (r.attributed ? 'yes' : 'no') + '">' + (r.attributed ? 'yes' : '\u2014') + '</td></tr>';
       }).join('') + '</table>';
+
+    /* Delegated, so it survives the table being re-rendered. */
+    el.addEventListener('click', function (ev) {
+      var k = ev.target.closest ? ev.target.closest('.key') : null;
+      if (!k) return;
+      var key = k.getAttribute('data-key');
+      try {
+        navigator.clipboard.writeText(key);
+        k.textContent = 'copied';
+        setTimeout(function () { k.textContent = key; }, 900);
+      } catch (e) { /* selecting it by hand still works */ }
+    });
   }).catch(function () {
     document.getElementById('worklist').textContent = 'worklist unavailable (is the API running?)';
   });
