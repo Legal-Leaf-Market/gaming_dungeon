@@ -19,7 +19,7 @@
    ============================================================ */
 
 import { STORES, isAttributed } from './_stores.js'
-import { merge, readCapture, report, reviewedKeys, kvConfigured } from './_capture.js'
+import { merge, report, reviewedKeys, capturedCounts, dbConfigured } from './_capture.js'
 
 const PASS = process.env.ADMIN_PASSCODE || ''
 
@@ -78,22 +78,30 @@ export default async function handler(req, res) {
      are in _stores.js, which never reaches a browser. */
   if ('worklist' in q) {
     const reviewed = reviewedKeys()
+    /* Two different facts, and conflating them is how somebody
+       crosses a merchant off the list twice. `captured` means rows
+       exist in Neon; `reviewed` means a human looked at them and
+       committed the summary. Only the second one publishes. */
+    const counts = await capturedCounts()
     const rows = STORES.map(s => ({
       key: s.key,
       name: s.name,
       room: s.room,
       domain: s.domain,
-      captured: reviewed.has(s.key),
+      captured: (counts.get(s.key) || 0) > 0,
+      capturedProducts: counts.get(s.key) || 0,
+      reviewed: reviewed.has(s.key),
       attributed: isAttributed(s),
       pending: !!s.pending,
     }))
     const todo = rows.filter(r => !r.captured)
     return res.status(200).json({
       ok: true,
-      captureStore: kvConfigured() ? 'configured' : 'NOT CONFIGURED — set KV_REST_API_URL and KV_REST_API_TOKEN',
+      captureStore: dbConfigured() ? 'Neon, configured' : 'NOT CONFIGURED — set DATABASE_URL',
       total: rows.length,
       captured: rows.length - todo.length,
       remaining: todo.length,
+      reviewed: rows.filter(r => r.reviewed).length,
       /* The order to work in. Attributed merchants first because a
          capture on one of those can go live and start earning the
          day it is reviewed; the rest are equally worth capturing but
@@ -112,13 +120,13 @@ export default async function handler(req, res) {
     if (!PASS) return res.status(503).json({ error: 'ADMIN_PASSCODE is not set' })
     if (!authed(req)) return res.status(401).json({ error: 'bad passcode' })
 
-    const box = await readCapture(key)
-    if (!box) {
+    if (!dbConfigured()) return res.status(503).json({ error: 'DATABASE_URL is not set' })
+    const r = await report(key)
+    if (!r) {
       return res.status(404).json({
         error: 'no capture on file for "' + key + '". Capture it from /collect first.',
       })
     }
-    const r = report(box)
 
     /* THE LINE THE OPERATOR SHOULD READ FIRST. A partial capture
        looks exactly like a small catalogue, so it is said in words

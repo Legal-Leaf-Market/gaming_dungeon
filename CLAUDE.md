@@ -32,10 +32,11 @@ nothing else — separate registries, hard cross-links, no shared code (§9).
 ```
 vercel.json      Routing + headers. THE source of truth for routes.
 server.mjs       Local preview only. PARSES vercel.json; never restate a route.
-package.json     Node >= 18, zero dependencies, "type": "module".
+package.json     Node >= 18, ONE dependency (@neondatabase/serverless).
 api/
   _stores.js     THE REGISTRY. 54 merchants + prospects + rejections.
   _scene.js      ONE RULE: which room, or '' for "we don't carry it".
+  _db.js         Neon. Schema on demand, kv + capture tables.
   _capture.js    The capture store, and THE PUBLISH GATE.
   products.js    The scraper, ported from Nicotia. SEE ITS PORT NOTES.
   capture.js     POST a capture · ?report=<key> · ?worklist
@@ -299,11 +300,59 @@ audience. Do not add reciprocal links on the assumption they are symmetrical.
 | Var | Gates |
 |---|---|
 | `ADMIN_PASSCODE` | `/api/capture` POST and `?report`. **Unset returns 503** — fails closed. |
-| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | The capture store, and the catalogue cache. Without them captures cannot be stored and every request pays a cold scrape. |
+| `DATABASE_URL` | Neon Postgres: the capture store and the catalogue cache. Without it captures cannot be stored and every request pays a cold scrape. Same provider Herbal Leaf uses. |
 
 The passcode is typed into the collector's panel and used for one request. It is
 **never** in the bookmarklet URL, which lives in a bookmarks bar in plain sight
 forever, and never on `/collect`, which anybody can load.
+
+### The datastore is Neon, and the one dependency is the driver
+
+The first cut used Upstash Redis, copied from Nicotia's catalogue cache. That was
+a copy of the wrong sister. Herbal Leaf already runs Neon, the owner already has
+it, and a second datastore for one table is a second thing to pay for and forget
+the credentials of.
+
+It is also the better fit on the merits. **Captures are evidence, not cache.**
+They are what you go back to in six months to answer "why does this merchant have
+these four product types in its include list", and a store whose entire design is
+"this will expire" is the wrong shape for that.
+
+`@neondatabase/serverless` is the only dependency in the repo. That costs the
+"zero dependencies" line the sister sites carry, and it is worth being precise
+about what that line was protecting: **the load-bearing property is NO BUILD
+STEP**, which is what broke Legal-Leaf's deploy and produced the "No Next.js
+version detected" failure. Installing a package is not a build step. `vercel.json`
+still has `framework: null` and `buildCommand: null`; Vercel installs
+dependencies for the serverless functions and serves `public/` untouched.
+
+The alternative was hand-rolling Neon's SQL-over-HTTP wire format with plain
+`fetch`, which does work and would have kept the count at zero. It was rejected
+because it means owning a private protocol contract Neon can change under us, to
+save one 130KB dev-time install. That is the trade this repo keeps warning about
+in the other direction.
+
+**Three tables, created on demand** (`CREATE TABLE IF NOT EXISTS`, memoised per
+instance). Herbal Leaf runs Drizzle migrations and that is right for Herbal Leaf,
+which has a build step and a dozen tables; a migration toolchain to manage three
+would be the heavier half of the trade.
+
+- `kv` — the catalogue cache. **Deliberately the same shape as Herbal Leaf's**
+  (`k text primary key, v text, expires_at bigint`) so the two sites could share
+  a database later without a reconciliation.
+- `capture_products` — **one row per product, not one blob per merchant.** The
+  blob version forced a read-modify-write on every page captured, so two tabs
+  capturing two pages of the same shop would race and the loser's page would
+  vanish silently. A row per product makes the merge an UPSERT: atomic, and no
+  read half at all. It also sidesteps the SQL-over-HTTP response ceiling, which
+  "capture everything, filter never" would eventually hit — we keep raw per-card
+  HTML, and a 1,200-product shop is megabytes.
+- `capture_pages` — what was captured and, more usefully, what it admits it did
+  not see.
+
+`product_type` is lifted out of the jsonb into its own indexed column, because
+the histogram is the thing you read before writing an `include` list. Left inside
+the jsonb it would be a sequential scan on every report.
 
 ---
 

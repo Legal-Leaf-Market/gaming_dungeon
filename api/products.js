@@ -99,6 +99,7 @@ const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
 import { STORES } from './_stores.js'
 import { classify as classifyScene } from './_scene.js'
 import { publishable, reviewedKeys } from './_capture.js'
+import { kvGet, kvPut } from './_db.js'
 
 export { STORES }
 
@@ -1416,58 +1417,38 @@ const TTL = 30 * 60 * 1000
 const BUDGET_MS = 45000
 
 /* ---- SHARED CACHE ----------------------------------------------------
-   A full scrape of 17 stores measures 41.6s. maxDuration is 60s, so it
-   fits, but only just: one slow store tips it over and the visitor gets a
-   504. Worse, even when it succeeds, THE FIRST VISITOR WAITED 42 SECONDS.
+   A full scrape of every active store does not fit comfortably inside
+   maxDuration, and even when it does THE FIRST VISITOR PAID FOR IT. The
+   in-memory CACHE only helps a warm instance and the CDN only helps once
+   somebody has already waited. This survives both: the last good payload
+   goes to Neon, and a cold instance serves that instead of scraping.
 
-   In-memory CACHE only helps a warm instance, and the CDN only helps once
-   somebody has already paid. This survives both, so nobody pays: the last
-   good payload is written to KV, and a cold instance serves that
-   immediately instead of scraping.
-
-   Same store and same env vars as the community board (§11), so wiring
-   one turns on the other. With no KV configured every call here no-ops
-   and the behaviour is exactly what it was before. */
-const KV_URL   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL   || ''
-const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || ''
+   Neon rather than a KV service, for the reasons in _db.js: the owner
+   already runs Neon on Herbal Leaf, and a second datastore for one table
+   is a second thing to pay for and forget the credentials of. With
+   DATABASE_URL unset every call here no-ops and the behaviour is exactly
+   what it was without a cache. */
 const KV_KEY = 'gd:catalogue:v1'
-/* Serve from KV rather than scrape while it is younger than this. Longer
-   than TTL on purpose: stale prices beat a spinner, and a background
-   refresh replaces them within the minute. */
+/* Serve from the store rather than scrape while it is younger than this.
+   Longer than TTL on purpose: stale prices beat a spinner, and a
+   background refresh replaces them within the minute. */
 const KV_MAX_AGE = 6 * 60 * 60 * 1000
 
-async function kvGet() {
-  if (!KV_URL || !KV_TOKEN) return null
+async function cacheGet() {
+  const raw = await kvGet(KV_KEY)
+  if (!raw) return null
   try {
-    const r = await fetch(KV_URL, {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + KV_TOKEN, 'Content-Type': 'application/json' },
-      body: JSON.stringify(['GET', KV_KEY]),
-      signal: AbortSignal.timeout(3000),
-    })
-    if (!r.ok) return null
-    const j = await r.json()
-    if (!j || !j.result) return null
-    const box = JSON.parse(j.result)
+    const box = JSON.parse(raw)
     if (!box || !box.at || !box.payload) return null
     if (Date.now() - box.at > KV_MAX_AGE) return null
     return box
   } catch { return null }
 }
 
-async function kvPut(payload) {
-  if (!KV_URL || !KV_TOKEN) return
-  try {
-    await fetch(KV_URL, {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + KV_TOKEN, 'Content-Type': 'application/json' },
-      /* EX is seconds. Expiring the key means a catalogue nobody has
-         refreshed in a day disappears rather than being served forever. */
-      body: JSON.stringify(['SET', KV_KEY,
-        JSON.stringify({ at: Date.now(), payload }), 'EX', 60 * 60 * 24]),
-      signal: AbortSignal.timeout(5000),
-    })
-  } catch { /* never fail a request because the cache write failed */ }
+async function cachePut(payload) {
+  /* 24h expiry so a catalogue nobody has refreshed in a day disappears
+     rather than being served forever. */
+  await kvPut(KV_KEY, JSON.stringify({ at: Date.now(), payload }), 60 * 60 * 24)
 }
 
 export default async function handler(req, res) {
@@ -1487,7 +1468,7 @@ export default async function handler(req, res) {
   /* Cold instance. Ask the shared cache BEFORE scraping. This is the step
      that stops a first-time visitor waiting 42 seconds. */
   if (!fresh) {
-    const box = await kvGet()
+    const box = await cacheGet()
     if (box) {
       CACHE = { at: box.at, payload: box.payload }
       res.setHeader('X-Cache', 'KV')
@@ -1561,7 +1542,7 @@ export default async function handler(req, res) {
      gap this instance happened to hit. Awaited rather than fired and
      forgotten, because a serverless function is frozen the moment the
      response is sent and an unawaited write would simply never land. */
-  if (!truncated && items.length) await kvPut(payload)
+  if (!truncated && items.length) await cachePut(payload)
 
   res.setHeader('X-Cache', fresh ? 'BYPASS' : 'MISS')
   if (truncated) res.setHeader('X-Scrape', 'truncated')

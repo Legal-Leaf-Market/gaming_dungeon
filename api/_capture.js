@@ -6,18 +6,18 @@
    THE ORDER, AND WHY IT IS BACKWARDS FROM THE SISTER SITES
    ------------------------------------------------------------
    Herbal-Leaf, Nicotia and Kawaii Katz all did it the same way:
-   register a vendor, point the scraper at their products.json, ship
-   it, and learn afterwards what actually came back. Every one of the
-   three has a paragraph in its own guide about what that cost.
+   register a vendor, point the scraper at its products.json, ship
+   it, and learn afterwards what actually came back. Every one of
+   the three has a paragraph in its own guide about what that cost.
    Kawaii Katz's is the bluntest — an intake "went onto the shelf
    unread", Tokyo Tiger returned nothing at all and still does, and
    two vendors put 466 products up that earn nothing to this day.
 
-   Gaming Dungeon inverts it. A human opens the merchant in their own
-   browser, runs the collector bookmarklet, and we read what is
-   actually there BEFORE any scraper is pointed at it. Only then does
-   a merchant get an `include` list, a room, and a cleared `pending`
-   flag.
+   Gaming Dungeon inverts it. A human opens the merchant in their
+   own browser, runs the collector bookmarklet, and we read what is
+   actually there BEFORE any scraper is pointed at it. Only then
+   does a merchant get an `include` list, a room, and a cleared
+   `pending` flag.
 
    The inversion is only real if something enforces it, because the
    sister sites did not intend to ship unread vendors either. So:
@@ -33,26 +33,26 @@
 
    TWO PLACES, ON PURPOSE, AND THEY HOLD DIFFERENT THINGS:
 
-     KV                     the RAW capture. Everything the browser
-                            saw, per page, unfiltered. Large,
-                            ephemeral, expires. Written by the
-                            bookmarklet, read by /api/capture?report.
+     Neon                   the RAW capture. Everything the browser
+                            saw, one row per product, unfiltered.
+                            Written by the bookmarklet, read by
+                            /api/capture?report.
 
-     data/captured/<key>.json   the REVIEWED SUMMARY. Small, committed,
-                            diffable. Written by a person who has
-                            looked at the report and decided the
-                            merchant is understood.
+     data/captured/<key>.json   the REVIEWED SUMMARY. Small,
+                            committed, diffable. Written by a person
+                            who has looked at the report and decided
+                            the merchant is understood.
 
-   The split is the point. Raw captures are too big and too churny to
-   commit, and a gate that reads ephemeral cache state is a gate that
-   opens by itself when the cache expires. A committed file is a gate
-   that somebody had to deliberately walk through, and the walking
+   The split is the point. Raw captures are too big and too churny
+   to commit, and a gate that reads mutable database state is a gate
+   that can be opened with an INSERT. A committed file is a gate
+   somebody had to deliberately walk through, and the walking
    through shows up in a pull request.
 
-   `capture-summary` also means the evidence outlives the capture.
-   Six months from now the question "why does this merchant have
-   these four product_types in its include list" has an answer in the
-   repo instead of in a cache that expired in April.
+   It also means the evidence outlives the database. Six months from
+   now the question "why does this merchant have these four
+   product_types in its include list" has an answer in the repo,
+   next to the code that acts on it.
 
    ------------------------------------------------------------
    CAPTURE EVERYTHING, FILTER NEVER
@@ -63,66 +63,45 @@
    missing rows turn out to have changed the answer and the work is
    done twice. So the extractor keeps what it found in full, raw
    source objects and per-card HTML included. Whittling happens
-   downstream, where it can be redone without re-browsing forty pages.
+   downstream, where it can be redone without re-browsing forty
+   pages.
 
    ------------------------------------------------------------
    AN EMPTY CAPTURE IS REFUSED, NOT STORED
    ------------------------------------------------------------
-   Also inherited, also paid for. Captures merge by merchant, so
-   storing an empty one would let a mis-timed run — the bookmarklet
-   pressed before the grid finished rendering — wipe out good earlier
-   work. `merge()` refuses a capture with no products rather than
-   recording it as a merchant with none.
+   Also inherited, also paid for. Running the bookmarklet before the
+   grid finished rendering must not be able to register a merchant
+   as having no products. Under the old blob-per-merchant store this
+   was existential — an empty write REPLACED good earlier work.
+   One row per product makes it merely wrong rather than
+   destructive, and it is still refused, because a merchant recorded
+   as empty is a merchant somebody crosses off the worklist.
    ============================================================ */
 
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { q, dbConfigured } from './_db.js'
 
-const KV_URL   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL   || ''
-const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || ''
-
-const KEY_PREFIX = 'gd:capture:v1:'
-/* 30 days. Long enough to capture a merchant over several sittings,
-   short enough that a raw capture nobody promoted does not sit in
-   the store forever pretending to be current. */
-const KV_TTL_SECONDS = 60 * 60 * 24 * 30
+export { dbConfigured }
 
 export const CAPTURED_DIR = join(process.cwd(), 'data', 'captured')
 
-/* ---------------------------------------------------------------- KV */
+/* ------------------------------------------------------- identity */
 
-async function kv(cmd) {
-  if (!KV_URL || !KV_TOKEN) return null
-  try {
-    const r = await fetch(KV_URL, {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + KV_TOKEN, 'Content-Type': 'application/json' },
-      body: JSON.stringify(cmd),
-      signal: AbortSignal.timeout(6000),
-    })
-    if (!r.ok) return null
-    const j = await r.json()
-    return j && 'result' in j ? j.result : null
-  } catch { return null }
-}
-
-export function kvConfigured() {
-  return !!(KV_URL && KV_TOKEN)
-}
-
-export async function readCapture(merchantKey) {
-  const raw = await kv(['GET', KEY_PREFIX + merchantKey])
-  if (!raw) return null
-  try { return JSON.parse(raw) } catch { return null }
-}
-
-async function writeCapture(merchantKey, box) {
-  return kv(['SET', KEY_PREFIX + merchantKey, JSON.stringify(box), 'EX', String(KV_TTL_SECONDS)])
-}
-
-/* ------------------------------------------------------- merge + store */
-
-/** A product's identity within a capture. URL first; a title is a weak second. */
+/**
+ * A product's identity within a merchant's capture.
+ *
+ * URL first, with the query string and trailing slash stripped: a
+ * Shopify grid links the same product as `/products/x`,
+ * `/collections/all/products/x` and `/products/x?variant=123`, and
+ * three rows for one product would inflate every count a decision
+ * gets made from.
+ *
+ * Title is the fallback rather than the primary even though it is
+ * more stable across those variants, because two genuinely
+ * different products routinely share a title ("Mystery Box") and
+ * collapsing those loses stock we captured.
+ */
 function identity(p) {
   const u = String((p && (p.url || p.href)) || '').split('?')[0].replace(/\/$/, '')
   if (u) return 'u:' + u.toLowerCase()
@@ -130,12 +109,29 @@ function identity(p) {
   return t ? 't:' + t : ''
 }
 
+function num(v) {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
+
+function str(v, max = 400) {
+  const s = v == null ? '' : String(v).trim()
+  return s ? s.slice(0, max) : null
+}
+
+/* ------------------------------------------------------- merge */
+
 /**
- * Merge one page's capture into the merchant's accumulated record.
+ * Store one page's capture.
+ *
+ * An UPSERT per product, so this is atomic and two tabs capturing
+ * two pages of the same shop cannot lose each other's work. The old
+ * KV version read the merchant's whole blob, merged, and wrote it
+ * back, which raced exactly there.
  *
  * Returns { ok, stored, added, total, error }. A refusal is a normal
- * outcome and carries a reason, because the operator is standing in
- * front of the panel waiting to be told what happened.
+ * outcome and carries a reason in words, because the operator is
+ * stood in front of the panel waiting to be told what happened.
  */
 export async function merge(merchantKey, capture) {
   const key = String(merchantKey || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
@@ -143,7 +139,7 @@ export async function merge(merchantKey, capture) {
 
   const incoming = Array.isArray(capture && capture.products) ? capture.products : []
 
-  /* THE REFUSAL THAT PROTECTS EARLIER WORK. See the header. */
+  /* THE REFUSAL. See the header. */
   if (!incoming.length) {
     return {
       ok: false,
@@ -152,117 +148,184 @@ export async function merge(merchantKey, capture) {
     }
   }
 
-  if (!kvConfigured()) {
+  if (!dbConfigured()) {
     return {
       ok: false,
-      error: 'no capture store configured. Set KV_REST_API_URL and KV_REST_API_TOKEN, or use ' +
-             'Copy on the panel and paste the JSON into /collect by hand.',
+      error: 'no capture store configured. Set DATABASE_URL to the Neon connection string, ' +
+             'or use Copy on the panel and paste the JSON into /collect by hand.',
     }
   }
 
-  const prev = (await readCapture(key)) || { merchantKey: key, pages: [], products: [] }
-  const seen = new Map()
-  for (const p of prev.products) { const id = identity(p); if (id) seen.set(id, p) }
-
-  let added = 0
+  const rows = []
+  const seen = new Set()
   for (const p of incoming) {
     const id = identity(p)
-    if (!id) continue
-    if (!seen.has(id)) added++
-    /* Newest wins on a re-capture: prices move, and the reason to run
-       it again is usually that they have. */
-    seen.set(id, p)
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    rows.push({
+      id,
+      productType: str(p.productType || p.product_type || p.type, 200),
+      vendor: str(p.vendor || p.brand, 200),
+      title: str(p.title || p.name, 600),
+      price: num(p.price),
+      data: p,
+    })
   }
+  if (!rows.length) return { ok: false, error: 'capture had products but none carried a usable identity' }
 
-  const pageUrl = String((capture && capture.pageUrl) || (capture && capture.url) || '')
-  const pages = prev.pages.filter(pg => pg.url !== pageUrl)
-  pages.push({
-    url: pageUrl,
-    at: new Date().toISOString(),
-    found: incoming.length,
-    build: String((capture && capture.build) || ''),
-    coverage: (capture && capture.coverage) || null,
-  })
+  try {
+    const before = await q(s => s`
+      SELECT count(*)::int AS n FROM capture_products WHERE merchant_key = ${key}`)
+    const wasTotal = (before && before[0] && before[0].n) || 0
 
-  const box = {
-    merchantKey: key,
-    updated: new Date().toISOString(),
-    build: String((capture && capture.build) || ''),
-    pages,
-    products: Array.from(seen.values()),
+    /* Chunked so one statement never carries a whole 1,200-product
+       page. Neon's SQL-over-HTTP has a request ceiling and the raw
+       per-card HTML we deliberately keep is what would hit it. */
+    const CHUNK = 100
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const slice = rows.slice(i, i + CHUNK)
+      await q(s => s`
+        INSERT INTO capture_products
+          (merchant_key, identity, product_type, vendor, title, price, data)
+        SELECT ${key}, x.identity, x.product_type, x.vendor, x.title, x.price, x.data
+        FROM jsonb_to_recordset(${JSON.stringify(slice.map(r => ({
+          identity: r.id, product_type: r.productType, vendor: r.vendor,
+          title: r.title, price: r.price, data: r.data,
+        })))}::jsonb)
+          AS x(identity text, product_type text, vendor text, title text, price numeric, data jsonb)
+        ON CONFLICT (merchant_key, identity) DO UPDATE SET
+          captured_at  = now(),
+          product_type = excluded.product_type,
+          vendor       = excluded.vendor,
+          title        = excluded.title,
+          price        = excluded.price,
+          /* Newest wins on a re-capture: prices move, and the reason
+             to run it again is usually that they have. */
+          data         = excluded.data`)
+    }
+
+    const pageUrl = String((capture && capture.pageUrl) || (capture && capture.url) || '')
+    if (pageUrl) {
+      await q(s => s`
+        INSERT INTO capture_pages (merchant_key, url, found, build, coverage)
+        VALUES (${key}, ${pageUrl}, ${incoming.length},
+                ${String((capture && capture.build) || '')},
+                ${JSON.stringify((capture && capture.coverage) || null)}::jsonb)
+        ON CONFLICT (merchant_key, url) DO UPDATE SET
+          captured_at = now(), found = excluded.found,
+          build = excluded.build, coverage = excluded.coverage`)
+    }
+
+    const after = await q(s => s`
+      SELECT count(*)::int AS n FROM capture_products WHERE merchant_key = ${key}`)
+    const total = (after && after[0] && after[0].n) || rows.length
+
+    return { ok: true, stored: rows.length, added: total - wasTotal, total, merchantKey: key }
+  } catch (e) {
+    return { ok: false, error: 'capture store rejected the write: ' + (e && e.message ? e.message : 'unknown') }
   }
-
-  await writeCapture(key, box)
-  return { ok: true, stored: incoming.length, added, total: box.products.length, merchantKey: key }
 }
 
 /* ------------------------------------------------------------- report */
 
 /**
- * What did we actually find? This is the thing you read before
- * writing an `include` list.
+ * What did we actually find? The thing you read before writing an
+ * `include` list.
+ *
+ * The histogram is a GROUP BY rather than a download-and-count,
+ * which is the whole reason this is Postgres and not a blob: a
+ * 1,200-product merchant answers this in one indexed query instead
+ * of shipping megabytes of raw card HTML to be parsed in JS.
  *
  * Modelled on `vendor_probe.py` and Kawaii Katz's `pnpm probe`, with
  * one difference that matters: those two ASK THE MERCHANT, over the
- * network, from a datacentre IP. This reads a capture a human already
- * made in their own browser, so it works on the merchants those two
- * cannot reach — the 403-on-Vercel ones, and the ones with no
- * products.json at all.
+ * network, from a datacentre IP. This reads a capture a human
+ * already made in their own browser, so it works on the merchants
+ * those two cannot reach — the 403-on-Vercel ones, and the ones with
+ * no products.json at all.
  */
-export function report(box) {
-  const products = (box && box.products) || []
-  const types = new Map()
-  const vendors = new Map()
-  let priced = 0, sumPrice = 0, minPrice = Infinity, maxPrice = -Infinity, imaged = 0
+export async function report(key) {
+  if (!dbConfigured()) return null
 
-  for (const p of products) {
-    const t = String((p && (p.productType || p.product_type || p.type)) || '(none)').trim() || '(none)'
-    types.set(t, (types.get(t) || 0) + 1)
+  const [totals] = await q(s => s`
+    SELECT count(*)::int AS products,
+           count(*) FILTER (WHERE price IS NOT NULL AND price > 0)::int AS priced,
+           count(*) FILTER (WHERE data ? 'image' AND data->>'image' <> '')::int AS imaged,
+           min(price) AS min_price, max(price) AS max_price, avg(price) AS mean_price,
+           max(captured_at) AS updated
+    FROM capture_products WHERE merchant_key = ${key}`)
 
-    const v = String((p && (p.vendor || p.brand)) || '(none)').trim() || '(none)'
-    vendors.set(v, (vendors.get(v) || 0) + 1)
+  if (!totals || !totals.products) return null
 
-    const n = Number(p && p.price)
-    if (Number.isFinite(n) && n > 0) {
-      priced++; sumPrice += n
-      if (n < minPrice) minPrice = n
-      if (n > maxPrice) maxPrice = n
-    }
-    if (p && (p.image || p.img)) imaged++
+  const types = await q(s => s`
+    SELECT coalesce(nullif(product_type, ''), '(none)') AS t, count(*)::int AS n
+    FROM capture_products WHERE merchant_key = ${key}
+    GROUP BY 1 ORDER BY n DESC`)
+
+  const vendors = await q(s => s`
+    SELECT coalesce(nullif(vendor, ''), '(none)') AS v, count(*)::int AS n
+    FROM capture_products WHERE merchant_key = ${key}
+    GROUP BY 1 ORDER BY n DESC LIMIT 25`)
+
+  const pages = await q(s => s`
+    SELECT url, found, build, coverage, captured_at
+    FROM capture_pages WHERE merchant_key = ${key} ORDER BY captured_at`)
+
+  const samples = await q(s => s`
+    SELECT title FROM capture_products
+    WHERE merchant_key = ${key} AND title IS NOT NULL
+    ORDER BY captured_at LIMIT 15`)
+
+  /* WHAT THE CAPTURE DID NOT SEE IS WORTH MORE THAN WHAT IT DID. */
+  let claimed = 0
+  const notes = []
+  for (const pg of pages || []) {
+    const c = pg.coverage || {}
+    const n = Number(c.claimedTotal) || 0
+    if (n > claimed) claimed = n
+    for (const note of c.notes || []) if (!notes.includes(note)) notes.push(note)
   }
 
-  const desc = m => Array.from(m.entries()).sort((a, b) => b[1] - a[1])
-
-  /* WHAT THE CAPTURE DID NOT SEE IS WORTH MORE THAN WHAT IT DID.
-     A capture holding 24 of 1,180 products looks exactly like a small
-     catalogue. Anything the pages claimed but we did not collect is
-     reported in words, and `partial` is what a reader should look at
-     first. */
-  const pages = (box && box.pages) || []
-  const claimed = pages.reduce((n, pg) => Math.max(n, Number(pg.coverage && pg.coverage.claimedTotal) || 0), 0)
-  const notes = []
-  for (const pg of pages) for (const n of ((pg.coverage && pg.coverage.notes) || [])) if (!notes.includes(n)) notes.push(n)
+  const products = totals.products
+  const partial = !!(claimed && products < claimed)
 
   return {
-    merchantKey: box && box.merchantKey,
-    updated: box && box.updated,
-    pagesCaptured: pages.length,
-    products: products.length,
+    merchantKey: key,
+    updated: totals.updated,
+    pagesCaptured: (pages || []).length,
+    products,
     claimedTotal: claimed || null,
-    partial: !!(claimed && products.length < claimed),
-    coverageNote: claimed && products.length < claimed
+    partial,
+    coverageNote: partial
       ? `SAMPLE, NOT A CATALOGUE: the pages claimed ${claimed} results and this capture holds ` +
-        `${products.length}. Page through the rest before drawing any conclusion from it.`
+        `${products}. Page through the rest before drawing any conclusion from it.`
       : null,
-    productTypes: desc(types),
-    vendors: desc(vendors).slice(0, 25),
-    priced,
-    unpriced: products.length - priced,
-    priceRange: priced ? { min: minPrice, max: maxPrice, mean: Math.round((sumPrice / priced) * 100) / 100 } : null,
-    withoutImage: products.length - imaged,
+    productTypes: (types || []).map(r => [r.t, r.n]),
+    vendors: (vendors || []).map(r => [r.v, r.n]),
+    priced: totals.priced,
+    unpriced: products - totals.priced,
+    priceRange: totals.priced
+      ? {
+          min: Number(totals.min_price),
+          max: Number(totals.max_price),
+          mean: Math.round(Number(totals.mean_price) * 100) / 100,
+        }
+      : null,
+    withoutImage: products - totals.imaged,
     notes,
-    sampleTitles: products.slice(0, 15).map(p => String((p && (p.title || p.name)) || '')).filter(Boolean),
+    sampleTitles: (samples || []).map(r => r.title),
   }
+}
+
+/** Which merchants have any capture at all. Drives the worklist. */
+export async function capturedCounts() {
+  if (!dbConfigured()) return new Map()
+  try {
+    const rows = await q(s => s`
+      SELECT merchant_key, count(*)::int AS n
+      FROM capture_products GROUP BY 1`)
+    return new Map((rows || []).map(r => [r.merchant_key, r.n]))
+  } catch { return new Map() }
 }
 
 /* --------------------------------------------------------- THE GATE */
@@ -271,7 +334,7 @@ export function report(box) {
  * Which merchants have a reviewed capture committed to the repo?
  *
  * Read from disk every call rather than cached at module scope: a
- * serverless instance can outlive a deploy, and a gate that answers
+ * serverless instance can outlive a deploy, and a gate answering
  * from a stale module-level Set would keep a merchant off the shelf
  * for hours after somebody committed its capture. Reading a small
  * directory is cheap; explaining that outage is not.
@@ -298,7 +361,7 @@ export function readReviewed(key) {
 /**
  * May this store be scraped and published?
  *
- * BOTH halves, and the reasons are different:
+ * BOTH halves, and they are different KINDS of thing:
  *
  *   pending    an editorial decision. "We have not decided to stock
  *              this yet." A human sets it.

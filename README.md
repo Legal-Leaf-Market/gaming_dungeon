@@ -18,7 +18,8 @@ npm test         # 23 cases, no framework
 npm run worklist # what still needs capturing
 ```
 
-Node >= 18. No dependencies, no build step, no bundler.
+Node >= 18. One dependency (`@neondatabase/serverless`), no build step, no bundler.
+Set `DATABASE_URL` to a Neon connection string; the schema is created on demand.
 
 ## The one thing to know before editing
 
