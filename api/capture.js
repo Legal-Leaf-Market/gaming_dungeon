@@ -201,12 +201,20 @@ export default async function handler(req, res) {
     })
   }
 
+  /* EVERY MODE, LISTED. This block listed three of the five for a
+     while after ?grid and ?draft were added, which is the same drift
+     the ?debug handler in products.js warns about: a hand-built
+     summary that somebody has to remember to extend. Here it is the
+     only documentation an operator gets when they guess wrong, so a
+     missing line reads as "that feature does not exist". */
   return res.status(400).json({
     error: 'nothing asked for',
     usage: {
-      'POST /api/capture': 'store a capture (x-gd-admin-token header)',
-      'GET /api/capture?worklist': 'what still needs capturing (public)',
-      'GET /api/capture?report=<key>': 'what a merchant stocks (x-gd-admin-token header)',
+      'POST /api/capture': 'store a capture (x-gd-admin-token)',
+      'GET  ?worklist': 'what still needs capturing (public)',
+      'GET  ?report=<key>': 'what a merchant stocks (x-gd-admin-token)',
+      'GET  ?grid=<key>': 'captured products, shaped for the shelf (x-gd-admin-token)',
+      'GET  ?draft=<key>': 'the reviewed-summary file to commit (x-gd-admin-token)',
     },
   })
 }
