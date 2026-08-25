@@ -153,3 +153,70 @@ test('the draft leaves reviewedBy blank', () => {
   assert.ok(/reviewedBy:\s*''/.test(d),
     'draft() must emit an empty reviewedBy, or the gate above is theatre')
 })
+
+/* ------------------------------------------------------------------
+   Attribution, and the reviewed summary actually being consumed.
+   Both of these were broken in the same way: a mechanism existed,
+   looked complete, and nothing called it.
+   ------------------------------------------------------------------ */
+
+test('row() builds the tracked link instead of shipping the bare URL', () => {
+  /* THE MOST EXPENSIVE BUG IN THE PORT, and invisible by
+     construction. buildAff() came across from Nicotia and was never
+     called: Nicotia drops attribution from the row and rebuilds it in
+     the browser, and both halves of that were removed here. Every
+     card linked bare. The link works, the shopper buys, and all 23
+     live GoAffPro codes pay nothing.
+
+     Nothing about that fails, errors or looks wrong from outside,
+     which is why it gets a test rather than a comment. */
+  assert.ok(/url: buildAff\(st, o\.url/.test(src),
+    'row() must emit the affiliate URL, not o.url')
+})
+
+test('buildAff appends ?ref= for a GoAffPro store', () => {
+  /* Reconstructed from source: buildAff is module-private and the
+     file is a handler. The three branches that matter are the shape
+     of every link this site emits. */
+  const fn = src.slice(src.indexOf('function buildAff'), src.indexOf('function isAttributed'))
+  assert.ok(/'ref=' \+ st\.ref/.test(fn), 'the GoAffPro branch must append ?ref=')
+  assert.ok(/base\.includes\('\?'\) \? '&' : '\?'/.test(fn),
+    'a product URL that already has a query must get & rather than a second ?')
+  assert.ok(/if \(!st\.ref\) return base/.test(fn),
+    'an unattributed store must link direct rather than emitting ?ref=undefined')
+})
+
+test('no sister site subId survives', () => {
+  /* The impact and cj templates arrived hardcoded to nicotia. Those
+     networks are unused here today, so this would have shipped
+     mislabelled the first time one was switched on. */
+  assert.equal(/nicotia/i.test(src), false, 'a sister site subId is still in the link templates')
+})
+
+test('the debug report names an unattributed GoAffPro store', () => {
+  /* Roughly half this registry ships with an empty `ref` on purpose.
+     On purpose is fine; unnoticed is the Kawaii Katz failure. The
+     refresh report is the only place it gets said, and it covered cj
+     and impact but not the case that is most of the registry. */
+  assert.ok(/empty `ref`/.test(src), 'the no-ref case must be reported')
+})
+
+test('the reviewed summary is actually consumed by the ingest', () => {
+  /* `include` and `roomMap` are the two decisions a human makes when
+     they read a capture. Nothing read them: the draft produced them,
+     the README promised the ingest would read them, and the ingest
+     did not — so the whole review step was theatre that looked like a
+     control. */
+  assert.ok(/readReviewed/.test(src), 'products.js must read the summary')
+  assert.ok(/rv\.include/.test(src), 'include must gate which product_types ship')
+  assert.ok(/rv\.roomMap/.test(src), 'roomMap must be able to override the classifier')
+})
+
+test('an empty include means everything, not nothing', () => {
+  /* A real choice rather than a missing one: plenty of merchants have
+     no product_type taxonomy, and refusing their whole catalogue
+     because a field is blank would read as "this shop returns
+     nothing" — the exact symptom that is hardest to diagnose. */
+  assert.ok(/Array\.isArray\(rv\.include\) && rv\.include\.length/.test(src),
+    'an absent or empty include must not filter everything out')
+})

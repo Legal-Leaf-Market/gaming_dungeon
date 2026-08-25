@@ -68,7 +68,7 @@ const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
    leaked by default. */
 import { STORES } from './_stores.js'
 import { classify as classifyScene } from './_scene.js'
-import { publishable, reviewedKeys } from './_capture.js'
+import { publishable, reviewedKeys, readReviewed } from './_capture.js'
 import { kvGet, kvPut } from './_db.js'
 
 export { STORES }
@@ -193,11 +193,11 @@ function affTemplate(st) {
     const link = String(st.impact || '').trim()
       .split('#')[0].split('?')[0].replace(/\/+$/, '')
     if (!IMPACT_LINK.test(link)) return ''
-    return `${link}?subId1=nicotia&u={url}`
+    return `${link}?subId1=gamingdungeon&u={url}`
   }
   if (st.network === 'cj') {
     if (!st.cjPid || !st.cjAid) return ''
-    return `https://www.anrdoezrs.net/click-${st.cjPid}-${st.cjAid}?sid=nicotia&url={url}`
+    return `https://www.anrdoezrs.net/click-${st.cjPid}-${st.cjAid}?sid=gamingdungeon&url={url}`
   }
   return ''
 }
@@ -275,9 +275,33 @@ function row(st, o) {
   const cur = o.currency || 'USD'
   /* what the product calls ITSELF, with no marketing copy attached */
   const name = [o.title, variant].filter(Boolean).join(' ')
+  /* ---- the reviewed summary decides first --------------------
+     A human read this merchant's catalogue and wrote down which
+     product_types belong and where. That beats both the strategy's
+     guess and the classifier's. */
+  const rv = st._review || {}
+  const ptype = String(o.ptype || '').trim()
+  const norm = ptype.toLowerCase()
+
+  /* AN EMPTY `include` MEANS EVERYTHING, and that is a real choice
+     rather than a missing one: plenty of merchants have no
+     product_type taxonomy at all, and refusing their whole catalogue
+     because a field is blank would read as "this shop returns
+     nothing". The draft always proposes an include list, so a blank
+     one on a merchant that HAS types is somebody deleting it on
+     purpose. */
+  if (Array.isArray(rv.include) && rv.include.length) {
+    const ok = rv.include.some(t => String(t).trim().toLowerCase() === norm)
+    if (!ok) return null
+  }
+
+  const mapped = rv.roomMap && ptype
+    ? Object.keys(rv.roomMap).find(t => t.toLowerCase() === norm)
+    : null
+
   /* The store's own category knows better than a regex does. When a
      strategy supplies a room it wins outright. */
-  const room = o.room || classify(st, blob, name)
+  const room = (mapped && rv.roomMap[mapped]) || o.room || classify(st, blob, name)
 
   /* '' MEANS WE DO NOT CARRY THIS, AND IT IS HONOURED HERE.
      _scene.js has always returned '' for a washing machine, a gift
@@ -306,7 +330,26 @@ function row(st, o) {
        decisions and out of the fuzzy matching. */
     ptype: o.ptype || undefined,
     image: sizeImage(o.image) || undefined,
-    url: o.url || '',
+    /* THE TRACKED LINK, BUILT HERE, SERVER-SIDE.
+       This was the single most expensive bug in the port and it was
+       invisible by construction. buildAff() came across from Nicotia
+       and was never called: Nicotia deliberately DROPS attribution
+       from the row and rebuilds it in the browser to shrink the
+       payload, shipping `ref` and a `click` template to app.js. Both
+       halves of that were removed here — `ref` is not in
+       publicStores() because commission paperwork should not reach a
+       browser, and grid.js links `it.url` directly.
+
+       So every card would have linked to the bare product URL. The
+       link works, the shopper buys, and all 23 live GoAffPro codes
+       pay nothing. That is Kawaii Katz's sock-vendor failure exactly
+       — 466 products earning nothing to this day — reproduced by
+       inheriting half of a design.
+
+       Building it here rather than in the browser also keeps `ref`
+       server-side, which is why the payload shrink was not worth
+       re-implementing. */
+    url: buildAff(st, o.url || ''),
     cur: cur === 'USD' ? undefined : cur,           // USD is the norm
     desc: desc || undefined,
     vid: o.vid ? String(o.vid) : undefined,
@@ -1272,7 +1315,15 @@ async function scrapeStore(st) {
            the refresh report where it will actually be read. */
         let detail = `via ${door} (${inStock}/${items.length} in stock)`
         if (!isAttributed(st, door)) {
-          detail += st.network === 'cj'
+          detail += !st.network
+            /* The common case here, and it was not covered: most of
+               this registry is GoAffPro `?ref=`, and roughly half of
+               it ships unattributed on purpose. On purpose is fine.
+               Unnoticed is not, and this line is the only place it
+               gets said. */
+            ? '  [NO ATTRIBUTION — ' + st.key + ' has an empty `ref`; these clicks pay nothing. ' +
+              'That may be deliberate (see _stores.js) but it is never silent]'
+            : st.network === 'cj'
             ? '  [NO ATTRIBUTION — set cjPid and cjAid from the CJ dashboard or these clicks pay nothing]'
             : impactFault(st) === 'unset'
             ? '  [NO ATTRIBUTION — IMPACT.' + st.key + ' is empty; paste the whole tracking link or these clicks pay nothing]'
@@ -1374,7 +1425,19 @@ export default async function handler(req, res) {
      `publishable()` also demands a reviewed capture committed to
      data/captured/, which cannot be faked from this file. */
   const reviewed = reviewedKeys()
-  const active = STORES.filter(s => publishable(s, reviewed).ok)
+  const active = STORES.filter(s => publishable(s, reviewed).ok).map(s => ({
+    ...s,
+    /* THE REVIEW IS LOAD-BEARING, NOT PAPERWORK.
+       `include` and `roomMap` are the two decisions a human makes
+       when they read a capture, and until now NOTHING CONSUMED THEM.
+       The draft generator produced them, data/captured/README.md
+       promised "the two fields the ingest will read", and the ingest
+       did not read them — so the entire review step was theatre that
+       looked like a control.
+
+       Attached per store here and applied in row(). */
+    _review: readReviewed(s.key) || {},
+  }))
 
   /* The whole point of leaving Apps Script: every store at once,
      instead of serial fetches on a 6-minute execution clock. */

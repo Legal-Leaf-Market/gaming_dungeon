@@ -183,6 +183,19 @@ the walking through shows up in a pull request.
    publishes nothing — see below.
 6. Commit it, then clear `pending`.
 
+**`include` and `roomMap` are load-bearing, not paperwork.** They are the two
+decisions a human makes when reading a capture, and `row()` applies them: a
+product whose `product_type` is not in `include` is dropped, and `roomMap`
+overrides the classifier. For a while nothing consumed them — the draft produced
+them and `data/captured/README.md` promised the ingest would read them — so the
+whole review step was theatre that looked like a control.
+
+**An empty `include` means everything**, deliberately. Plenty of merchants have
+no `product_type` taxonomy at all, and refusing a whole catalogue because a field
+is blank reads as "this shop returns nothing", which is the hardest symptom to
+diagnose. The draft always proposes a list, so a blank one on a merchant that
+*has* types is somebody deleting it on purpose.
+
 `GET /api/capture?worklist` is public and says what is left. It carries no
 rates, no cookie windows and no affiliate codes. On `/collect` each shop is a
 link and each key copies on click — **bare domains, never the `?ref=` version**,
@@ -294,6 +307,28 @@ No Razer, no Logitech, no Anker, no Crunchyroll. GoAffPro is a Shopify app, so
 its directory is Shopify stores. **It is the launch mechanism, not the
 catalogue** — it gets the dungeon to a dozen live merchants in days, which is
 exactly what makes an Impact application credible three weeks later.
+
+### The link a shopper clicks is built server-side, in `row()`
+
+`buildAff(st, url)` appends `?ref=<code>` to the product URL, or returns it
+untouched when the store has no code. **`row()` calls it**, so `it.url` is
+already the tracked link and the browser never needs `ref`.
+
+That last sentence is the fix for the most expensive bug in the port, and it was
+invisible by construction. `buildAff()` came across from Nicotia **and was never
+called**: Nicotia deliberately drops attribution from the row and rebuilds it in
+the browser to shrink the payload, shipping `ref` and a `click` template to
+`app.js`. Both halves of that were removed here — `ref` is not in
+`publicStores()` because commission paperwork should not reach a browser, and
+`grid.js` links `it.url` directly.
+
+So every card would have linked bare. The link works, the shopper buys, and all
+23 live codes pay nothing. **That is Kawaii Katz's sock-vendor failure exactly**
+— 466 products earning nothing to this day — reproduced by inheriting half of a
+design. `test/products.test.mjs` pins it, because nothing about it errors.
+
+Roughly half the registry ships unattributed on purpose. On purpose is fine;
+**unnoticed is not**, and `?debug` names every empty `ref` in capitals.
 
 ### Never GET a link carrying `?ref=`
 
@@ -610,3 +645,7 @@ the jsonb it would be a sequential scan on every report.
   gate into a rubber stamp (§4).
 - Do NOT resolve `data/captured/` at import time; `capturedDir()` reads cwd per
   call, after a frozen constant made two tests pass for the wrong reason (§4).
+- Do NOT stop `row()` calling `buildAff()`, and do NOT move link-building into
+  the browser to shrink the payload. That is how every card shipped unattributed
+  once already (§5).
+- Do NOT let `include` / `roomMap` stop being applied in `row()` (§4).
