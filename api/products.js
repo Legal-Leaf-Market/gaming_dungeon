@@ -22,72 +22,42 @@
      GET /api/products?debug     per-store counts and which door worked
 
    ============================================================
-   PORT NOTES — WHAT IS DONE AND WHAT IS NOT. READ BEFORE EDITING.
+   THE PORT IS FINISHED. WHAT WAS TAKEN OUT, AND WHY IT MATTERS
    ------------------------------------------------------------
-   DONE:
-     - the registry moved out to _stores.js
-     - classification delegates to _scene.js
-     - the publish gate is _capture.js's, not a `pending` check
-     - the KV namespace is ours
+   This arrived as Nicotia's scraper and carried its subject with it.
+   The scraping is the valuable half and is untouched; the nicotine
+   half is gone. Recorded here because two of the removals were not
+   dead weight — they were ACTIVELY WRONG on this site, and both would
+   have failed silently.
 
-   NOT DONE, AND SAFE ONLY BECAUSE OF THE GATE:
-     This file still carries NICOTINE-SHAPED LOGIC from Nicotia —
-     per-pouch and per-millilitre unit maths, `perPack`, snus brand
-     detection, puff-count guessing, and the six-department SUBCATS
-     map. None of it can produce a wrong card today, because no
-     merchant can reach a shelf without a reviewed capture on file
-     and there are none yet. It WILL produce wrong cards the moment
-     the first merchant is cleared, so:
+   REMOVED AS MERELY DEAD: guessStrength, guessPuffs, isTobaccoSnus,
+   SNUS_BRANDS/SNUS_WORDS, the six-department SUBCATS map and
+   subclassify(), and the `strength`, `puffs`, `tobacco`, `nic0` and
+   `sub` fields on every row. `dept` is `room` throughout, so this
+   file, _stores.js and _scene.js finally use one word for one thing.
 
-     STRIP IT BEFORE CLEARING THE FIRST `pending` FLAG. That is the
-     order. Not "before launch", not "soon" — before the first
-     merchant goes live, because the gate is what is standing in for
-     this work and the gate opens the day somebody commits a
-     capture summary.
+   REMOVED BECAUSE IT WAS WRONG: isApparel(). It dropped hoodies,
+   t-shirts, keychains, stickers and decals — correct for a pouch
+   shop, catastrophic here, where THE WARDROBE IS A ROOM and the Vault
+   stocks pins and keychains. It would have deleted five merchants'
+   entire catalogues with every room still rendering. The tombstone
+   above row() has the full note.
 
-     The specific things to remove or replace, in the order they
-     bite: `row()`'s unit-price computation, `perPack`, `packOf`,
-     `guessPuffs`, `guessStrength`, `isTobaccoSnus`, `SNUS_*`, and
-     the `dept`/`SUBCATS` pair now that `room` and _scene.js own
-     that job. `test/scene.test.mjs` covers the replacement; there
-     is no test standing over the removal, so do it by reading.
+   FIXED, NOT REMOVED: row() now honours `''` from classify(). The
+   contract that '' means "we do not carry this" existed from the
+   first commit and nothing implemented it — the value was computed
+   and discarded, so every off-scene product a general dropshipper
+   carries would have shipped with a blank room. A blank room renders.
+   It just never appears under a facet, which is the version of wrong
+   nobody reports.
+
+   The brand lists were nicotine vocabulary and are now scene
+   vocabulary, deliberately short: MULTIWORD should grow from captures
+   when one shows a two-word brand cut in half, never from guessing.
    ============================================================ */
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
            'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
-
-/* ============================================================
-   THE REGISTRY — the only thing you routinely edit.
-   Lives server-side so commission notes never reach a browser.
-
-     ref       the affiliate code that store issued you
-     ships     US | UK | EU | INTL   (INTL means anywhere)
-     only      ISO country codes, when the store is narrower than its
-               zone. NikoPouches sits in the EU zone but publishes
-               Denmark-only delivery, so only:['DK'].
-     guess     1 = inferred, NOT read off their shipping policy
-     perPack   pouches per can, for the per-pouch price
-     cartPath  Woo carts are not all at /cart/ — see Wave Vape
-     from      where it physically ships from, which sets the wait
-     days      published delivery window, shown before the hand-off
-     ageCheck  how the STORE verifies age at its own checkout:
-                 id        government ID / verified identity service
-                 signature adult signature required at the door
-                 dob       self-declared date of birth
-                 none      nothing published
-                 unknown   NOT ESTABLISHED — their policy has not been
-                           read. Renders "Age check unverified" in the
-                           cart, which is a different claim from `none`
-                           and must not be rounded to it.
-               Surfaced in the cart. A shopper handing money to ten
-               different vendors should be told which of them actually
-               check, rather than being shown ten identical Buy buttons.
-
-   `ships`, `only`, `from`, `days` and `ageCheck` below were read off
-   each vendor's own published policy in Aug 2026 — EXCEPT on the two
-   Impact stores, which carry guess:1 and ageCheck:'unknown' because
-   neither policy page could be opened. Re-check quarterly.
-   ============================================================ */
 
 /* THE REGISTRY LIVES IN _stores.js. Underscore-prefixed so Vercel
    does not publish it as a function, which matters: it holds our
@@ -123,43 +93,6 @@ function publicStores() {
 /* ============================================================
    CLASSIFIERS
    ============================================================ */
-const SNUS_BRANDS = /(general|siberia|skruf|g[oö]teborgs|rap[eé]|odens?|jakobssons?|thunder|ettan|grov|kronan|catch|kaliber|r[oö]da lacket|knox|granit|probe|mocca)\b/i
-const SNUS_WORDS = /\b(l[oö]s(e|vikt)?|loose|portion snus|original portion|white portion|moist snuff|chewing tobacco|dipping tobacco|makla)\b/i
-
-function isTobaccoSnus(text) {
-  if (!text) return false
-  if (/tobacco[- ]free|nicotine pouch|all[- ]white/i.test(text)) return false
-  return SNUS_BRANDS.test(text) || SNUS_WORDS.test(text)
-}
-
-function guessStrength(text) {
-  if (!text) return ''
-  const m = String(text).match(/(\d+(?:\.\d+)?)\s*mg/i)
-  return m ? Number(m[1]) : ''
-}
-
-/* A disposable advertises its life in puffs and it is right there in
-   the title: "Switch Pro Kit 30K", "Mate 60K", "15000 Puffs". Skip mAh
-   — a battery rating is not a puff count. */
-function guessPuffs(text) {
-  if (!text) return ''
-  const s = String(text)
-  let m = s.match(/(\d{1,3}(?:[.,]\d)?)\s*k\b(?!\s*mah)/i)
-  if (m) {
-    const k = Number(String(m[1]).replace(',', '.'))
-    if (k >= 1 && k <= 200) return k * 1000
-  }
-  m = s.match(/(\d{3,7})\s*(?:\+\s*)?puffs?\b/i)
-  if (m) {
-    const n = Number(m[1])
-    if (n >= 300 && n <= 200000) return n
-  }
-  return ''
-}
-
-/* Per-product department. A store can span shelves — Wave Vape sells
-   disposables AND pods, EightVape sells four departments — so the
-   product's own signals win and the store's dept is only a fallback. */
 function classify(st, blob, name) {
   /* ONE RULE, ONE FILE. The body of this used to be ~110 lines of
      nicotine vocabulary. It is now a delegation, because the same
@@ -184,79 +117,6 @@ function classify(st, blob, name) {
    First match wins and every list ends in a catch-all, so a product
    always lands somewhere nameable instead of a silent "other".
    ============================================================ */
-const SUBCATS = {
-  pouch: [
-    /* caffeine pouches contain NO nicotine — a genuinely different
-       product sharing a shelf, and the one most worth separating */
-    ['energy',    /\b(caffeine|energy)\b|hype\+|guarana/],
-    ['lozenge',   /\blozenges?\b/],
-    ['chew',      /\bmint chew\b|chewing tobacco/],
-    ['snus',      /\bsnus\b|\bportion\b|l[oö]svikt/],
-    ['nicotine',  /./],
-  ],
-  disposable: [
-    ['prefilled', /\bpre-?filled\b|\be-?pods?\b/],
-    ['vape',      /./],
-  ],
-  device: [
-    ['coil',      /\bcoils?\b|mesh coil/],
-    ['tank',      /\btanks?\b|atomi[sz]ers?|\brta\b|\brda\b|\brdta\b/],
-    ['pod',       /\bpods?\b|\bcartridges?\b/],
-    ['mod',       /\bmods?\b|\bbatter(y|ies)\b|\d{2,3}\s*w\b/],
-    ['accessory', /drip tip|charger|cable|lanyard|\bglass\b|o-?ring|\bcase\b/],
-    ['kit',       /./],
-  ],
-  liquid: [
-    ['salt',      /\bnic ?salts?\b|\bsalt ?nic\b|\bsalts?\b/],
-    ['shortfill', /\bshortfill\b|short fill|\b(60|100|120|200)\s*ml\b/],
-    ['eliquid',   /./],
-  ],
-  cigar: [
-    /* pipe tobacco is sold by WEIGHT, not by the stick — app.js carries
-       the matching unit override, without which it renders "per stick" */
-    ['pipe',      /\bpipe tobacco\b|\bflake\b|ready ?rubbed/],
-    ['rolling',   /cigarette tubes?|filter tubes?|make.your.own|\bmyo\b|rolling tobacco/],
-    ['cigarillo', /\bcigarillos?\b|\blittle cigars?\b|\bsmall cigars?\b|\bfiltered cigars?\b/],
-    ['sampler',   /\bsamplers?\b|\bassortment\b|variety pack|gift (pack|set|box)/],
-    ['premium',   /./],
-  ],
-  gear: [
-    ['wraps',     /\bwraps?\b|rolling papers?|\bcones?\b|\bblunt\b/],
-    ['tubes',     /\btubes?\b/],
-    ['lighter',   /\blighters?\b|\btorch\b|butane|jet flame/],
-    ['cutter',    /\bcutters?\b|\bpunch\b|guillotine|v-?cut\b/],
-    ['humidor',   /humidor|humidif|boveda|hygrometer|\bcedar\b/],
-    ['ashtray',   /ashtray/],
-    ['case',      /\bcase\b|\bholder\b|\bstand\b|\btravel\b/],
-    ['pipe',      /\bpipes?\b|\btamper\b|\breamer\b/],
-    ['tool',      /draw enhancer|\bpoker\b|\bneedle\b/],
-    ['accessory', /./],
-  ],
-}
-
-function subclassify(dept, name) {
-  const rules = SUBCATS[dept]
-  if (!rules) return ''
-  const n = String(name || '').toLowerCase()
-  for (const [key, rx] of rules) if (rx.test(n)) return key
-  return ''
-}
-
-/* NOT PRODUCTS. Checkout add-ons, gift cards and "Select 10 for $69.99"
-   bundle placeholders were being scraped as catalogue rows — 313 of
-   them, including 258 copies of "RELX Shipping Protection". They carry
-   prices, so they compete for the cheapest-per-unit badge, and they
-   inflate every count on the page. */
-/* Black Buffalo's feed carries 36 per-state EXCISE TAX line items and a
-   rewards coupon listed at $20.00 — all priced, all therefore eligible for
-   the cheapest-per-unit badge, none of them a product. Same failure mode as
-   the 258 repeated RELX shipping-protection rows. */
-/* Some junk cannot be caught by title at all. Black Buffalo files 42 rows
-   as product_type "Fee" — 36 named "<State> Excise Tax" and 6 named only
-   "California SET", "Indiana SET - Pouches" and so on, where SET is State
-   Excise Tax. No title regex can distinguish "Indiana SET - Pouches" from
-   a product without also eating real ones, but the vendor already told us
-   what it is. Type-first, exactly like classify(). */
 const NONPRODUCT_TYPE = /^(fee|tax|shipping|insurance)$/i
 
 const NONPRODUCT = /shipping protection|shipping insurance|route protect|\bgift ?cards?\b|\begift\b|free gift|\bautoship\b|subscription plan|expired mystery|mystery box|\bdonation\b|^\s*select \d+ for|\bexcise tax\b|rewards coupon|\d+-off\b/i
@@ -382,57 +242,69 @@ function impactFault(st) {
    Both are pure functions of data already present, and together they
    were about a third of the payload. */
 
-/* Nearly every store sells a hoodie, and this site has no honest unit
-   for one — "gear" already covers cutters and humidors at a flat price,
-   which is at least a real accessory to the product being sold. Merch
-   is not an accessory to anything; it is a different business wearing
-   the same storefront. Black Buffalo alone ships 15 of these (hats,
-   flask, sunglasses, tumbler), and they carry an EMPTY product_type, so
-   vendor metadata cannot rescue them either. Title-only, because a
-   description mentioning a free t-shirt promo must not drop a can of
-   pouches off the shelf. Dropped in row(), before a dept is even
-   assigned, so it never reaches the client at all. */
-function isApparel(name) {
-  return /\b(hoodie|sweatshirt|t[- ]?shirt|tee shirt|long[- ]sleeved?|windbreaker|jacket|snapback|hats?|beanie|bandana|koozie|tumbler|flask|sunglasses|bottle opener|coaster|lanyard|keychain|sticker pack|decal)\b/i.test(name)
-}
+/* ============================================================
+   isApparel() WAS HERE AND IT HAD TO GO. NOT because it was dead
+   weight, but because it was ACTIVELY WRONG on this site.
+
+   On Nicotia it dropped hoodies, t-shirts, snapbacks, keychains,
+   stickers and decals, correctly: a pouch shop selling branded merch
+   is a different business wearing the same storefront, and there is
+   no honest per-pouch price for a hat.
+
+   Here, THE WARDROBE IS A ROOM. Gaming Tees is a registered merchant
+   whose entire catalogue is t-shirts; Kawaii Fashion Store, Cozy
+   Kawaii, BestofKawaii and BerryKawaii are four more. And the Vault
+   explicitly stocks keychains, enamel pins and stickers.
+
+   Inheriting this rule would have emptied two of the nine rooms and
+   deleted five merchants' entire catalogues, silently, with the rooms
+   still rendering. That is the exact shape of failure this repo keeps
+   writing up: a filter copied from a sister site whose subject was
+   different, hiding real inventory while nothing errors.
+
+   If a genuine merch problem appears later — a 3D-printer shop
+   selling branded hoodies — the answer is a per-merchant `exclude`
+   written from that merchant's capture, not a global regex.
+   ============================================================ */
 
 function row(st, o) {
   const blob = [o.title, o.variant, o.tags, o.desc].filter(Boolean).join(' ')
-  const strength = guessStrength(blob)
-  const puffs = guessPuffs(blob)
   const desc = cleanDesc(o.desc)
   const variant = o.variant === 'Default Title' ? '' : (o.variant || '')
   const brand = o.brand || st.name
   const cur = o.currency || 'USD'
   /* what the product calls ITSELF, with no marketing copy attached */
   const name = [o.title, variant].filter(Boolean).join(' ')
-  if (isApparel(name)) return null
   /* The store's own category knows better than a regex does. When a
-     strategy supplies a dept it wins outright. */
-  const dept = o.dept || classify(st, blob, name)
+     strategy supplies a room it wins outright. */
+  const room = o.room || classify(st, blob, name)
+
+  /* '' MEANS WE DO NOT CARRY THIS, AND IT IS HONOURED HERE.
+     _scene.js has always returned '' for a washing machine, a gift
+     card or a backlink package, and until now this line took the
+     value and shipped the row anyway — so the refusal was computed
+     and then thrown away. Every off-scene product a general
+     dropshipper carries would have reached a shelf with a blank room,
+     and a blank room renders: it just would not appear under any
+     facet, which is the version of wrong nobody reports.
+
+     Returning null drops it at the same gate as the non-products. */
+  if (!room) return null
+
   return {
     k: st.key,
-    dept,
-    sub: subclassify(dept, name) || undefined,
+    room,
     brand: brand === st.name ? undefined : brand,   // default = store name
     title: o.title || '',
     variant: variant || undefined,
-    strength: strength === '' ? undefined : strength,
-    puffs: puffs === '' ? undefined : puffs,
     price: o.price ? String(o.price) : undefined,
     compareAt: o.compareAt ? String(o.compareAt) : undefined,
     oos: o.available === false ? 1 : undefined,     // in stock is the norm
-    tobacco: isTobaccoSnus(blob) ? 1 : undefined,
     /* Shopify's product_type, kept verbatim. NOT folded into `blob` — the
        recurring defect in this file is text rules reading a field that
        only looks like the right one, so this stays available for explicit
        decisions and out of the fuzzy matching. */
     ptype: o.ptype || undefined,
-    /* Nicotine-free on the VENDOR's authority, never on the title's.
-       "Wintergreen ZERO Pouches" is nicotine-free because Black Buffalo
-       tags it Nicotine-Free, not because it says ZERO — plenty of brands
-       use ZERO for zero sugar, zero tobacco or a flavour name. */
-    nic0: /nicotine[\s-]?free/i.test(o.ptype || '') ? 1 : undefined,
     image: sizeImage(o.image) || undefined,
     url: o.url || '',
     cur: cur === 'USD' ? undefined : cur,           // USD is the norm
@@ -557,23 +429,28 @@ async function get(url, ms = 12000) {
 
    LONGEST FIRST: alternation is first-match, so "cuba blackline" has to
    precede "cuba black" or it would match "cuba black" and strand "line". */
+/* MULTI-WORD BRAND NAMES, so `brandFrom()` does not truncate one at
+   the first space. Nicotia's list was 25 nicotine brands and product
+   lines; none of them mean anything here, and leaving them in would
+   have been 25 regex alternatives matching nothing forever.
+
+   THIS LIST IS DELIBERATELY SHORT AND SHOULD GROW FROM CAPTURES, not
+   from guessing. Every entry below is a brand that actually appears
+   in this registry's merchants or their obvious stock. Add one when a
+   capture shows a two-word brand being cut in half, and not before:
+   an invented entry silently reshapes a brand nobody sells.
+
+   `pulsar gaming` is the live example — the registry carries Pulsar
+   Gaming Gears, and without this `brandFrom` would file it as
+   "Pulsar". */
 const MULTIWORD = new RegExp('^(' + [
-  /* multi-word brands */
-  "juice head", "zeo universe", "white fox", "killa switch", "snus o'?clock",
-  "ice energy", "loop mix", "nic nac", "kelly white", "lucy breakers",
-  /* product lines within a brand */
-  "zyn ultra",
-  "velo plus",
-  "pablo exclusive", "pablo gold", "pablo silver",
-  "cuba blackline", "cuba whiteline", "cuba black", "cuba white", "cuba ninja",
-  "fedrs energy", "fedrs ice",
-  "kurwa fatality", "kurwa collection",
-  "iceberg energy",
-  "killa exclusive",
-  "rogue max",
-  "garant extreme",
-  "aroma essence", "aroma attention",
-  "ace x",
+  "pulsar gaming", "fosi audio", "slick audio", "noam audio",
+  "creative arcades", "mixbox arcade", "frontline gaming", "games burner",
+  "krazed gaming", "awkward games", "waffle cone", "odin gaming",
+  "custom gaming", "ficmax gaming", "anime keycaps", "anime mousepads",
+  "cover alpha", "mazz comics", "distro manga", "maximus collectibles",
+  "cozy kawaii", "kawaii fashion", "gaming tees", "cable pro",
+  "portable monitor", "miami pc", "3d printernational",
 ].join('|') + ')', 'i')
 
 const normName = s => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -753,13 +630,13 @@ function wooPrice(prices, field = 'price') {
 }
 
 /* Route a Woo product onto a shelf using the store's own category
-   slugs. This is what deptMap was written for — it just used to be fed
+   slugs. This is what roomMap was written for — it just used to be fed
    by the category walk. `categories[].slug` from the API does the same
    job without scraping a single page. */
-function wooDept(st, p) {
-  if (!st.deptMap) return undefined
+function wooRoom(st, p) {
+  if (!st.roomMap) return undefined
   for (const c of p.categories || []) {
-    if (st.deptMap[c.slug]) return st.deptMap[c.slug]
+    if (st.roomMap[c.slug]) return st.roomMap[c.slug]
   }
   return undefined
 }
@@ -793,7 +670,7 @@ async function wooStoreApi(st) {
      Variations are the buyable rows; parents only supply brand,
      department and a fallback image. If the clock cuts the parent
      sweep short, a variation degrades to the store's own brand and
-     dept rather than disappearing. Losing that is much cheaper than
+     room rather than disappearing. Losing that is much cheaper than
      losing 4,925 products. */
   const variations = await wooSweep(st, 'variation').catch(() => [])
   const parents = await wooSweep(st, '').catch(() => [])
@@ -827,7 +704,7 @@ async function wooStoreApi(st) {
   for (const p of parents) {
     if (p.type === 'variable' || p.has_options) continue   // not purchasable
     const r = row(st, {
-      brand: brandOf(p), title: p.name, dept: wooDept(st, p),
+      brand: brandOf(p), title: p.name, room: wooRoom(st, p),
       tags: (p.categories || []).map(c => c.name).join(' '),
       price: wooPrice(p.prices), compareAt: wooPrice(p.prices, 'regular_price'),
       available: p.is_in_stock !== false,
@@ -867,7 +744,7 @@ async function wooStoreApi(st) {
       brand: brandOf(parent),
       title: v.name || parent?.name || '',
       variant: label,
-      dept: wooDept(st, parent || v),
+      room: wooRoom(st, parent || v),
       tags: [(parent?.categories || []).map(c => c.name).join(' '), label].join(' '),
       price: wooPrice(v.prices), compareAt: wooPrice(v.prices, 'regular_price'),
       available: v.is_in_stock !== false,
@@ -902,7 +779,7 @@ function lastMatch(text, re) {
   return last
 }
 
-function wooCards(st, html, dept, seen) {
+function wooCards(st, html, room, seen) {
   const out = []
   const re = /<h3[^>]*class="[^"]*product-title[^"]*"[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi
   let m
@@ -932,7 +809,7 @@ function wooCards(st, html, dept, seen) {
     const oos = /class="[^"]*\boutofstock\b/i.test(back.slice(-2500))
 
     const r = row(st, {
-      brand: st.name, title, tags: title, dept,
+      brand: st.name, title, tags: title, room,
       price, available: !oos, image: img, url, vid: pid,
     })
     if (r) out.push(r)
@@ -953,10 +830,10 @@ async function wooCategoryWalk(st) {
   const seen = new Set()
 
   const out = await pool(cats, 3, async (cat) => {
-    /* deptMap routes each category onto the right shelf. EightVape's
-       categories span four of ours, so the store's own dept is only a
+    /* roomMap routes each category onto the right shelf. EightVape's
+       categories span four of ours, so the store's own room is only a
        fallback for anything unmapped. */
-    const dept = (st.deptMap && st.deptMap[cat]) || st.dept
+    const room = (st.roomMap && st.roomMap[cat]) || st.room
     const rows = []
     for (let page = 1; page <= MAX_CAT_PAGES; page++) {
       if (outOfTime(4000)) break
@@ -965,7 +842,7 @@ async function wooCategoryWalk(st) {
       try { res = await get(url, 8000) } catch { break }
       if (!res.ok) break
       const html = await res.text()
-      const got = wooCards(st, html, dept, seen)
+      const got = wooCards(st, html, room, seen)
       rows.push(...got)
       if (!got.length) break
       if (!html.includes(`/page/${page + 1}/`)) break
@@ -1074,17 +951,30 @@ async function bigCommerceCards(st) {
    specific survivor is the brand; if nothing survives, the leading
    token of the title is — Nicokick titles all start with it.
    Measured across all 409 pouches: 17 brands, 100% assigned. */
-const MAGENTO_GENERIC = /nicotine pouch|nicokick|offers?|acquisition|learn more|explore |powerstep|christmas|advent|metal nicotine|alternative nicotine|limited|mixpack|all products|all-non|bestseller|multipack|specials|better together|shop|^new$|^sale$/i
-const MAGENTO_FLAVOUR = /^(mint|wintergreen|spearmint|peppermint|menthol|citrus|coffee|berry|fruits?|flavou?rs?|cinnamon|apple|cherry|mango|melon|tropical|vanilla|smooth|bold|cool|ice|unflavou?red|sweet|sour)$/i
+/* Magento category names that are navigation, not brands. Nicotia's
+   version led with "nicotine pouch|nicokick|metal nicotine"; those are
+   gone. What is left is the genuinely generic half, which is the part
+   that was doing the work. */
+const MAGENTO_GENERIC = /offers?|learn more|explore |christmas|advent|limited|all products|bestsellers?|multipack|bundles?|specials|clearance|shop|^new$|^sale$|^featured$|^gifts?$/i
+/* A bare attribute standing alone is not a brand. Nicotia's list was
+   flavours; ours is the equivalent for this scene — a colour or a
+   switch type as a whole category name means the taxonomy is faceted,
+   not branded.
+
+   NARROW ON PURPOSE. "Cherry" is a real keyboard-switch brand and
+   "Ice" appears in real product lines, so both are absent: this only
+   catches a word that is the ENTIRE category name, and over-matching
+   here erases a brand rather than a flavour. */
+const MAGENTO_NOT_BRAND = /^(black|white|red|blue|green|pink|purple|silver|gold|clear|rgb|wireless|wired|small|medium|large|new|used|refurbished)$/i
 
 /* The only brands here that are genuinely two words. Everything else is
    one, so a blind "take two capitalised tokens" turns "FRE Wintergreen
    9mg" into its own brand and splits FRE's 58 products across cards. */
-const MULTIWORD_BRAND = /^(juice head|zeo universe|white fox|killa switch)/i
+const MULTIWORD_BRAND = /^(pulsar gaming|fosi audio|creative arcades|frontline gaming)/i
 
 function magentoBrand(p) {
   const cats = (p.categories || []).map(c => String(c.name || '').trim())
-    .filter(n => n && !MAGENTO_GENERIC.test(n) && !MAGENTO_FLAVOUR.test(n))
+    .filter(n => n && !MAGENTO_GENERIC.test(n) && !MAGENTO_NOT_BRAND.test(n))
   if (cats.length) return cats.reduce((a, b) => (b.length < a.length ? b : a))
   const name = String(p.name || '').trim()
   const multi = name.match(MULTIWORD_BRAND)
@@ -1112,7 +1002,7 @@ async function magentoGraphql(st) {
   }}`
 
   for (const uid of cats) {
-    const dept = (st.deptMap && st.deptMap[uid]) || st.dept
+    const room = (st.roomMap && st.roomMap[uid]) || st.room
     for (let page = 1; page <= 12; page++) {
       if (outOfTime(4000)) break
       let res
@@ -1141,7 +1031,7 @@ async function magentoGraphql(st) {
         const r = row(st, {
           brand: magentoBrand(p),
           title: p.name,
-          dept,
+          room,
           tags: (p.categories || []).map(c => c.name).join(' '),
           price: price != null ? String(price) : '',
           /* only a discount when regular actually exceeds final */
@@ -1456,7 +1346,7 @@ export default async function handler(req, res) {
   const fresh = 'refresh' in q
 
   /* Must go through respond(). Returning CACHE.payload directly meant a
-     warm instance ignored ?summary, ?dept and ?debug entirely and shipped
+     warm instance ignored ?summary, ?room and ?debug entirely and shipped
      the whole catalogue every time — which silently defeated the entire
      progressive-load design, because the manifest request WAS the full
      2,950-item payload. */
@@ -1520,13 +1410,7 @@ export default async function handler(req, res) {
     count: items.length,
     truncated,
     dropped,
-    byDept: items.reduce((a, i) => { a[i.dept] = (a[i.dept] || 0) + 1; return a }, {}),
-    /* per-shelf subcategory counts, so ?debug shows the tree without
-       having to pull 7MB of rows to count them by hand */
-    bySub: items.reduce((a, i) => {
-      const k = i.dept + '/' + (i.sub || '—')
-      a[k] = (a[k] || 0) + 1; return a
-    }, {}),
+    byRoom: items.reduce((a, i) => { a[i.room] = (a[i.room] || 0) + 1; return a }, {}),
     updated: new Date().toISOString(),
     items,
   }
@@ -1555,10 +1439,10 @@ export default async function handler(req, res) {
    The catalogue is scraped once and sliced on the way out, so a
    department request costs no extra fetching — only less JSON.
 
-     ?summary        manifest only: stores, per-dept counts, meta.
+     ?summary        manifest only: stores, per-room counts, meta.
                      A few KB. The page renders its chrome from this
                      while the products are still in flight.
-     ?dept=pouch     one shelf
+     ?room=pouch     one shelf
      (nothing)       everything
      ?debug          human-readable per-store report
    ============================================================ */
@@ -1569,26 +1453,25 @@ function manifest(p) {
 
 function respond(res, payload, q) {
   if ('debug' in q) {
-    /* Hand-built rather than spread, so anything added to the payload has
-       to be added HERE too or it silently will not show. bySub and
-       dropped were missing for exactly that reason, and their absence
-       read as "the subcategory work never deployed" when it had. */
+    /* Hand-built rather than spread, so anything added to the payload
+       has to be added HERE too or it silently will not show. On
+       Nicotia two fields were missing for exactly that reason, and
+       their absence read as "that work never deployed" when it had. */
     return res.status(200).json({
       ok: true, updated: payload.updated, total: payload.count,
       truncated: payload.truncated,
       dropped: payload.dropped,
-      byDept: payload.byDept,
-      bySub: payload.bySub,
+      byRoom: payload.byRoom,
       stores: payload.meta.map(m => `${m.key}: ${m.result} (${m.count}) — ${m.detail}`),
     })
   }
   if ('summary' in q) return res.status(200).json(manifest(payload))
-  if (q.dept && q.dept !== 'all') {
-    const want = String(q.dept)
+  if (q.room && q.room !== 'all') {
+    const want = String(q.room)
     return res.status(200).json({
       ...manifest(payload),
-      dept: want,
-      items: payload.items.filter(i => i.dept === want),
+      room: want,
+      items: payload.items.filter(i => i.room === want),
     })
   }
   return res.status(200).json(payload)

@@ -38,7 +38,7 @@ api/
   _scene.js      ONE RULE: which room, or '' for "we don't carry it".
   _db.js         Neon. Schema on demand, kv + capture tables.
   _capture.js    The capture store, and THE PUBLISH GATE.
-  products.js    The scraper, ported from Nicotia. SEE ITS PORT NOTES.
+  products.js    The scraper, ported from Nicotia. De-nicotined (§6c).
   capture.js     POST a capture · ?report=<key> · ?worklist
   collector.js   Generates the bookmarklet from typed source.
   _scan.js       "Scan everything": the CRAWLING half. Read §4b.
@@ -268,6 +268,56 @@ Twenty domains in the source file (`animekeycaps`, `anime-mousepad`,
 network on one catalogue**. Three are taken, on search demand. Treat the rest as
 one merchant we already have. The tell in a capture is identical titles and
 identical image URLs across two domains.
+
+---
+
+## 6c. The port is finished: what came out of `products.js`
+
+It arrived as Nicotia's scraper and carried its subject with it. The scraping is
+the valuable half and is untouched; the nicotine half is gone. **Two of the
+removals were not dead weight — they were actively wrong here, and both would
+have failed silently.**
+
+**Merely dead, now removed:** `guessStrength`, `guessPuffs`, `isTobaccoSnus`,
+`SNUS_BRANDS`/`SNUS_WORDS`, the six-department `SUBCATS` map and `subclassify()`,
+and the `strength` / `puffs` / `tobacco` / `nic0` / `sub` fields on every row.
+`dept` is `room` throughout, so this file, `_stores.js` and `_scene.js` finally
+use one word for one thing.
+
+**Wrong, now removed: `isApparel()`.** It dropped hoodies, t-shirts, snapbacks,
+keychains, stickers and decals. Correct for a pouch shop — branded merch is a
+different business wearing the same storefront. Catastrophic here, where **the
+Wardrobe is a room**: Gaming Tees sells nothing else, four kawaii merchants join
+it, and the Vault explicitly stocks pins, keychains and stickers. Inheriting it
+would have deleted five merchants' entire catalogues with every room still
+rendering. A genuine merch problem later gets a per-merchant `exclude` written
+from that merchant's capture, **never a global regex**.
+
+**Fixed, not removed: `row()` now honours `''` from `classify()`.** The contract
+that `''` means "we do not carry this" existed from the first commit and nothing
+implemented it — the value was computed and discarded. Every off-scene product a
+general dropshipper carries would have shipped with a blank room, and a blank
+room renders; it just never appears under a facet, which is the version of wrong
+nobody reports.
+
+**The brand lists were nicotine vocabulary and are now scene vocabulary,
+deliberately short.** `MULTIWORD` exists so `brandFrom()` does not cut a two-word
+brand in half. Grow it **from a capture that shows the truncation**, never from
+guessing: an invented entry silently reshapes a brand nobody sells.
+
+### The ordering rule in `_scene.js`: what a thing IS beats what it is ABOUT
+
+Found by a test, not by a shopper. **"Retro Gaming T-Shirt" filed under the
+Arcade Floor**, because `retro gaming` matched before anything looked at
+`t-shirt`. It is a shirt. A room of arcade cabinets with a t-shirt in it is wrong
+in the quiet way: it renders, it is plausible, and only somebody who came for a
+cabinet notices.
+
+So `wardrobe` and `vault` sit **above** the three theme rooms (`arcade`,
+`battlestation`, `play`). A garment or collectible noun is a claim about what the
+object *is*; a theme word is a claim about its *subject*, and the first is
+stronger. It costs the theme rooms nothing — a cabinet, a keyboard and a Steam
+key contain no garment noun — and `test/scene.test.mjs` pins both halves.
 
 ---
 
@@ -502,7 +552,7 @@ the jsonb it would be a sequential scan on every report.
   comments included (§4b).
 - Do NOT build a second card component for the preview (§6b).
 - Do NOT let the preview endpoint feed `/api/products` or any public page (§6b).
-- Do NOT clear the nicotine-shaped leftovers in `products.js` off the to-do list
-  without doing them — read its PORT NOTES header. They must come out **before
-  the first `pending` flag is cleared**, because the gate is what is currently
-  standing in for that work.
+- Do NOT reintroduce `isApparel()` or any global apparel/merch filter — it would
+  empty the Wardrobe and half the Vault (§6c).
+- Do NOT let `row()` stop honouring `''` from `classify()` (§6c).
+- Do NOT add to `MULTIWORD` from guesswork; grow it from captures (§6c).

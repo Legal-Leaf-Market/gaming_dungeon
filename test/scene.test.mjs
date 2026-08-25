@@ -118,6 +118,26 @@ test('an empty title is refused', () => {
   assert.equal(room('   '), '')
 })
 
+test('what a thing IS beats what it is ABOUT', () => {
+  /* A REAL MISS, not a hypothetical. "Retro Gaming T-Shirt" filed
+     under the Arcade Floor because `retro gaming` matched before
+     anything looked at `t-shirt`. It is a shirt. A room of arcade
+     cabinets with a t-shirt in it is wrong in the quiet way: it
+     renders, it is plausible, and only somebody who came for a
+     cabinet notices.
+
+     Fixed by putting wardrobe and vault above the three theme rooms.
+     These cases pin BOTH halves — the garment wins, and the theme
+     rooms still keep everything that is genuinely theirs. */
+  assert.equal(room('Retro Gaming T-Shirt'), 'wardrobe')
+  assert.equal(room('Zelda Hoodie'), 'wardrobe')
+  assert.equal(room('Arcade Cabinet 2-Player Upright'), 'arcade')
+  assert.equal(room('SNES Cartridge Cleaner'), 'arcade')
+  assert.equal(room('Retro Handheld Console 400 Games'), 'arcade')
+  assert.equal(room('65% Hot-Swap Mechanical Keyboard'), 'battlestation')
+  assert.equal(room('Steam Key Bundle'), 'play')
+})
+
 test('every room the registry can name has display metadata', async () => {
   /* A room key in _stores.js with no entry in ROOMS_META renders as a
      blank door on the map. Cheap to assert, invisible if it breaks. */

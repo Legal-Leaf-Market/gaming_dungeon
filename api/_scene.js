@@ -27,10 +27,15 @@
 
    2. STRONG SIGNALS next, most specific first. `arcade cabinet`
       beats `cabinet`; `dice tower` beats `tower`. Every rule below
-      is ordered specific-to-generic within its room, and the rooms
-      themselves are ordered so that the ones with unambiguous
-      vocabulary (tabletop, audio, power) get first refusal on a
-      title before the broad ones (play, vault) see it.
+      is ordered specific-to-generic within its room, and the ROOMS
+      are ordered on two principles:
+
+        - unambiguous object vocabulary first (tabletop, audio,
+          power, workshop), so they get first refusal on a title;
+        - then WHAT A THING IS beats WHAT IT IS ABOUT — wardrobe and
+          vault above arcade, battlestation and play. A garment or a
+          collectible noun is a claim about the object; a theme word
+          is a claim about its subject. See the note above wardrobe.
 
    3. THE STORE'S OWN ROOM is the fallback, never the first answer.
       A store spans rooms: Krazed Gaming sells both games and mouse
@@ -146,29 +151,21 @@ const ROOMS = [
     'case fan', 'thermal paste', 'soldering (iron|station)',
   ].join('|'), 'i')],
 
-  ['arcade', new RegExp([
-    'arcade (cabinet|machine|stick|1up|button|joystick)', '\\bcoin-?op\\b', '\\bcoin door\\b',
-    'fight ?stick', 'sanwa', '\\bseimitsu\\b', '\\bjamma\\b',
-    'retro (console|handheld|gaming|game)', '\\bretrogam', '\\bemulat',
-    '\\bnes\\b', '\\bsnes\\b', '\\bn64\\b', 'game ?boy', '\\bgamecube\\b',
-    '\\bgenesis\\b', '\\bmega drive\\b', '\\bdreamcast\\b', '\\bneo ?geo\\b',
-    '\\bps1\\b', '\\bps2\\b', '\\bpsp\\b', '\\bnintendo ds\\b',
-    'cartridge (cleaner|case|storage)', 'disc (repair|resurfac)', '\\bcrt\\b',
-    '\\bpinball\\b', 'light ?gun',
-  ].join('|'), 'i')],
+  /* ---- WHAT THE THING IS beats WHAT IT IS ABOUT ----------------
+     Wardrobe and the Vault sit ABOVE the three theme rooms, and this
+     is the fix for a real miss rather than a preference.
 
-  ['battlestation', new RegExp([
-    'mechanical keyboard', '\\bkeyboards?\\b', '\\bkeycaps?\\b', '\\bswitches?\\b tester',
-    '\\bkeeb\\b', 'artisan cap', 'wrist rest', 'switch (puller|lube)',
-    'gaming (mouse|mice)', '\\bmouse ?pad', '\\bmousepad', 'deskmat', 'desk ?mat',
-    'mouse (bungee|skates|feet|grip)', 'gaming chair', '\\bergonomic chair\\b',
-    'monitor (arm|stand|riser|mount)', 'portable monitor', '\\bmonitors?\\b',
-    '\\bprojector', 'ultrawide', 'standing desk', 'desk (pad|shelf|organiser|organizer)',
-    '\\bcontrollers?\\b', '\\bgamepad', 'thumb ?grips', 'controller (charger|stand|skin)',
-    '\\bwebcam', 'capture card', 'stream ?deck', 'ring light', '\\bboom arm\\b',
-    '\\brgb (strip|light|panel)\\b', '\\bled strip\\b',
-  ].join('|'), 'i')],
+     "Retro Gaming T-Shirt" filed under the Arcade Floor, because
+     `retro gaming` matched before anything looked at `t-shirt`. It is
+     a shirt. "Retro gaming" is its subject, the way "Zelda" is a
+     hoodie's subject, and a room full of arcade cabinets with a
+     t-shirt in it is wrong in the quiet way: it renders, it is
+     plausible, and only somebody who wanted a cabinet notices.
 
+     A garment or a collectible noun says what the object physically
+     IS, which is a stronger claim than a theme word, so it wins.
+     This costs nothing on the theme rooms: an arcade cabinet, a
+     mechanical keyboard and a Steam key contain no garment noun. */
   ['wardrobe', new RegExp([
     '\\bt-?shirts?\\b', '\\btees?\\b', '\\bhoodies?\\b', 'sweatshirt', '\\bjackets?\\b',
     '\\bcrewneck\\b', '\\bjoggers?\\b', '\\bsweatpants\\b', '\\bleggings\\b',
@@ -178,7 +175,6 @@ const ROOMS = [
     '\\bkigurumi\\b', '\\bkimono\\b', '\\bharajuku\\b', '\\bapparel\\b',
     '\\bbackpacks?\\b', '\\btote bags?\\b',
   ].join('|'), 'i')],
-
   ['vault', new RegExp([
     '\\bfigures?\\b', '\\bfigurines?\\b', '\\bnendoroid\\b', '\\bfigma\\b', '\\bscale figure\\b',
     '\\bstatues?\\b', '\\bbust\\b', '\\bfunko\\b', '\\bpop! ?vinyl\\b', '\\bvinyl figure\\b',
@@ -190,13 +186,37 @@ const ROOMS = [
     '\\btrading figures?\\b', '\\bmodel kit\\b', '\\bgunpla\\b', '\\bgundam\\b',
     'advent calendar', '\\bmystery box\\b',
   ].join('|'), 'i')],
-
+  ['arcade', new RegExp([
+    'arcade (cabinet|machine|stick|1up|button|joystick)', '\\bcoin-?op\\b', '\\bcoin door\\b',
+    'fight ?stick', 'sanwa', '\\bseimitsu\\b', '\\bjamma\\b',
+    'retro (console|handheld|gaming|game)', '\\bretrogam', '\\bemulat',
+    '\\bnes\\b', '\\bsnes\\b', '\\bn64\\b', 'game ?boy', '\\bgamecube\\b',
+    '\\bgenesis\\b', '\\bmega drive\\b', '\\bdreamcast\\b', '\\bneo ?geo\\b',
+    '\\bps1\\b', '\\bps2\\b', '\\bpsp\\b', '\\bnintendo ds\\b',
+    'cartridge (cleaner|case|storage)', 'disc (repair|resurfac)', '\\bcrt\\b',
+    '\\bpinball\\b', 'light ?gun',
+  ].join('|'), 'i')],
+  ['battlestation', new RegExp([
+    'mechanical keyboard', '\\bkeyboards?\\b', '\\bkeycaps?\\b', '\\bswitches?\\b tester',
+    '\\bkeeb\\b', 'artisan cap', 'wrist rest', 'switch (puller|lube)',
+    'gaming (mouse|mice)', '\\bmouse ?pad', '\\bmousepad', 'deskmat', 'desk ?mat',
+    'mouse (bungee|skates|feet|grip)', 'gaming chair', '\\bergonomic chair\\b',
+    'monitor (arm|stand|riser|mount)', 'portable monitor', '\\bmonitors?\\b',
+    '\\bprojector', 'ultrawide', 'standing desk', 'desk (pad|shelf|organiser|organizer)',
+    '\\bcontrollers?\\b', '\\bgamepad', 'thumb ?grips', 'controller (charger|stand|skin)',
+    '\\bwebcam', 'capture card', 'stream ?deck', 'ring light', '\\bboom arm\\b',
+    '\\brgb (strip|light|panel)\\b', '\\bled strip\\b',
+  ].join('|'), 'i')],
   ['play', new RegExp([
     '\\bsteam key\\b', '\\bgame key\\b', '\\bcd key\\b', '\\bgame code\\b',
     '\\bgift card\\b (steam|xbox|playstation|nintendo)',
     '\\bvideo ?game\\b', '\\bpc game\\b', '\\bps5\\b', '\\bxbox\\b', '\\bswitch game\\b',
     '\\bgame pass\\b', '\\bdlc\\b', '\\bseason pass\\b', '\\bexpansion\\b',
   ].join('|'), 'i')],
+
+
+
+
 ]
 
 /**
