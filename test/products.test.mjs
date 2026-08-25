@@ -90,3 +90,66 @@ test('apparel and collectibles are NOT refused', () => {
     assert.notEqual(classify(vault, good), '', good + ' must survive')
   }
 })
+
+/* ------------------------------------------------------------------
+   The draft generator, and the counterweight it required.
+   ------------------------------------------------------------------ */
+
+import { publishable } from '../api/_capture.js'
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+test('the gate refuses a summary with an empty reviewedBy', async () => {
+  /* THE WHOLE REASON THIS TEST EXISTS. Once a summary file can be
+     produced by one command, "the file exists" stops being evidence
+     that anybody read the catalogue — which is the only thing the
+     file was ever standing for. The draft generator leaves reviewedBy
+     blank deliberately; this is what makes that blank mean something.
+
+     Not a security control: anybody can type a name. The point is
+     that an unreviewed merchant fails LOUDLY rather than publishing
+     quietly. */
+  const dir = mkdtempSync(join(tmpdir(), 'gd-gate-'))
+  const cwd = process.cwd()
+  try {
+    process.chdir(dir)
+    const captured = join(dir, 'data', 'captured')
+    const { mkdirSync } = await import('node:fs')
+    mkdirSync(captured, { recursive: true })
+
+    const st = { key: 'acme', room: 'play', pending: false }
+
+    writeFileSync(join(captured, 'acme.json'), JSON.stringify({ key: 'acme', reviewedBy: '' }))
+    let v = publishable(st, new Set(['acme']))
+    assert.equal(v.ok, false, 'blank reviewedBy must not publish')
+    assert.match(v.why, /NOT REVIEWED/)
+
+    writeFileSync(join(captured, 'acme.json'), JSON.stringify({ key: 'acme', reviewedBy: '   ' }))
+    assert.equal(publishable(st, new Set(['acme'])).ok, false, 'whitespace is not a reviewer')
+
+    writeFileSync(join(captured, 'acme.json'), JSON.stringify({ key: 'acme', reviewedBy: 'jacob' }))
+    assert.equal(publishable(st, new Set(['acme'])).ok, true, 'a named reviewer publishes')
+  } finally {
+    process.chdir(cwd)
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('pending still beats a reviewed file', () => {
+  /* The two halves are independent: `pending` is the editorial
+     decision, the file is the factual precondition. Neither one
+     overrides the other. */
+  const v = publishable({ key: 'acme', room: 'play', pending: true }, new Set(['acme']))
+  assert.equal(v.ok, false)
+  assert.match(v.why, /PENDING/)
+})
+
+test('the draft leaves reviewedBy blank', () => {
+  /* Asserted on the source: draft() needs a database to run, and the
+     property that matters is a constant in the code rather than
+     anything the data could change. */
+  const d = readFileSync(new URL('../api/_capture.js', import.meta.url), 'utf8')
+  assert.ok(/reviewedBy:\s*''/.test(d),
+    'draft() must emit an empty reviewedBy, or the gate above is theatre')
+})

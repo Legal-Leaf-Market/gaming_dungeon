@@ -116,6 +116,52 @@ The inversion is only real because something enforces it:
   committed at `data/captured/<key>.json`.
 - `products.js` filters on `publishable()`, not on `!pending`.
 
+### The draft generator, and the counterweight it required
+
+Hand-writing `data/captured/<key>.json` is twenty minutes of transcribing a
+histogram, and twenty minutes of tedium at the one step that must not be skipped
+is a step that gets skipped. So `draft()` writes it.
+
+**Which immediately threatens the thing the gate is for.** A generator that fills
+in `include` and hands you a file to commit turns "a human read this catalogue"
+into "a human ran a command", and the gate becomes a rubber stamp that still
+looks like a gate. That is worse than the tedium because it is invisible.
+
+So the split is deliberate:
+
+- **Measured facts are filled in** — counts, the product_type histogram, price
+  range, coverage, rows without an image. Nobody retypes a number.
+- **Judgement is proposed and marked as a proposal.** `include` and `roomMap`
+  arrive as suggestions with the evidence attached. The threshold is stated in
+  the file: a type is proposed for inclusion when ≥60% of its products land in a
+  real room.
+- **`reviewedBy` arrives empty, and `publishable()` refuses a blank one.** A file
+  generated and committed without anybody looking publishes nothing.
+
+That last one is not a security control and does not pretend to be — anybody can
+type a name. The point is that they have to type it, and that an unreviewed
+merchant fails **loudly** instead of publishing quietly.
+
+**The per-type room breakdown is the useful part.** A bare histogram says
+"Accessories: 52". What you need before writing an include list is where those 52
+would *land*:
+
+```
+Accessories   52 -> battlestation 40, power 9  (3 refused)
+```
+
+One line answers "does this type belong", "which room does it want" and "is this
+merchant carrying junk". That is why the draft runs the real classifier over
+every captured row.
+
+**The endpoint returns the JSON; it does not write it.** Not a serverless
+limitation dressed up as a rule — the file has to arrive through a commit,
+because the commit is what makes the gate a thing somebody walked through.
+`tools/draft.mjs` writes it locally, and **refuses to overwrite a file whose
+`reviewedBy` is already filled in**: re-running it would wipe somebody's reading
+and reset the gate to closed, which reads as "the tool is broken" rather than as
+"you just deleted a review".
+
 So **editing `pending: false` publishes nothing.** That is the point. `pending`
 is an editorial flag anybody can flip in a text editor at midnight, and
 flipping it is precisely how the sister sites shipped catalogues nobody had
@@ -130,9 +176,12 @@ the walking through shows up in a pull request.
 3. `GET /api/capture?report=<key>` with the passcode. **Read `readThisFirst`
    before anything else** — a capture holding 24 of 1,180 products looks
    exactly like a small catalogue.
-4. Write the reviewed summary to `data/captured/<key>.json` and commit it.
-   `data/captured/README.md` has the shape.
-5. Only now clear `pending`.
+4. **Draft the summary** rather than hand-writing it:
+   `npm run draft -- <key>` (needs `DATABASE_URL`; `node --env-file=.env` works),
+   or the **Draft the capture file** button on `/collect`.
+5. **Read it, and fill in `reviewedBy`.** A summary with a blank `reviewedBy`
+   publishes nothing — see below.
+6. Commit it, then clear `pending`.
 
 `GET /api/capture?worklist` is public and says what is left. It carries no
 rates, no cookie windows and no affiliate codes. On `/collect` each shop is a
@@ -556,3 +605,8 @@ the jsonb it would be a sequential scan on every report.
   empty the Wardrobe and half the Vault (§6c).
 - Do NOT let `row()` stop honouring `''` from `classify()` (§6c).
 - Do NOT add to `MULTIWORD` from guesswork; grow it from captures (§6c).
+- Do NOT make `draft()` fill in `reviewedBy`, and do NOT drop the gate's check
+  for it. That pairing is the only thing keeping the generator from turning the
+  gate into a rubber stamp (§4).
+- Do NOT resolve `data/captured/` at import time; `capturedDir()` reads cwd per
+  call, after a frozen constant made two tests pass for the wrong reason (§4).

@@ -136,9 +136,21 @@ ships.</p>
 <div class="card">
   <label>Merchant key <input id="pvKey" placeholder="goretrogame"/></label>
   <label style="margin-left:8px">Passcode <input id="pvToken" type="password" placeholder="ADMIN_PASSCODE"/></label>
-  <p><button id="pvGo">Show the shelf</button> <span id="pvMsg" class="build"></span></p>
+  <p><button id="pvGo">Show the shelf</button>
+     <button id="pvDraft" style="background:none;color:var(--accent);border:1px solid var(--accent)">Draft the capture file</button>
+     <span id="pvMsg" class="build"></span></p>
 </div>
 <div id="pvGrid"></div>
+<div class="card" id="pvDraftBox" hidden>
+  <p style="margin-top:0"><strong>Save as <code id="pvPath"></code>, then commit it.</strong></p>
+  <p style="font-size:13px;margin:6px 0"><code>include</code> and <code>roomMap</code> are
+  <em>proposals from the numbers</em>, not answers. <strong><code>reviewedBy</code> is empty on
+  purpose</strong> &mdash; a summary with a blank one publishes nothing, which is what stops this
+  generator from turning the gate into a rubber stamp. There is a one-command version:
+  <code>npm run draft -- &lt;key&gt;</code>.</p>
+  <textarea id="pvDraftJson" style="min-height:280px"></textarea>
+  <p><button id="pvCopyDraft">Copy</button> <span id="pvDraftMsg" class="build"></span></p>
+</div>
 
 <h2>5 · WHAT IS LEFT TO CAPTURE</h2>
 <p>Live from <code>/api/capture?worklist</code>. Merchants with attribution already
@@ -266,6 +278,39 @@ earning the day it is reviewed.</p>
            did not mean to spend. */
         window.GDGrid.mount(host, o.j.items, { preview: true });
       }).catch(function () { msg.textContent = 'Preview failed.'; });
+  };
+
+  /* ---- draft the capture file ---------------------------------------
+     Shows the JSON rather than writing it: the file has to arrive
+     through a commit, because the commit is what makes the gate a
+     thing somebody walked through rather than a thing a script did. */
+  document.getElementById('pvDraft').onclick = function () {
+    var msg = document.getElementById('pvMsg');
+    var key = document.getElementById('pvKey').value.trim();
+    var token = document.getElementById('pvToken').value.trim();
+    if (!key) { msg.textContent = 'Which merchant?'; return; }
+    if (!token) { msg.textContent = 'Passcode first.'; return; }
+    msg.textContent = 'drafting…';
+
+    fetch('/api/capture?draft=' + encodeURIComponent(key), {
+      headers: { 'x-gd-admin-token': token }
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (o) {
+        if (!o.ok) { msg.textContent = 'Refused: ' + (o.j.error || 'unknown'); return; }
+        msg.textContent = '';
+        document.getElementById('pvPath').textContent = o.j.path;
+        document.getElementById('pvDraftJson').value = JSON.stringify(o.j.file, null, 2);
+        document.getElementById('pvDraftBox').hidden = false;
+      }).catch(function () { msg.textContent = 'Draft failed.'; });
+  };
+
+  document.getElementById('pvCopyDraft').onclick = function () {
+    var out = document.getElementById('pvDraftMsg');
+    try {
+      navigator.clipboard.writeText(document.getElementById('pvDraftJson').value);
+      out.textContent = 'copied';
+      setTimeout(function () { out.textContent = ''; }, 1200);
+    } catch (e) { out.textContent = 'select it and copy by hand'; }
   };
 
   /* ---- worklist ----------------------------------------------------

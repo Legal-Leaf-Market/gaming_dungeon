@@ -84,7 +84,23 @@ import { q, dbConfigured, dbHealth } from './_db.js'
 
 export { dbConfigured, dbHealth }
 
-export const CAPTURED_DIR = join(process.cwd(), 'data', 'captured')
+/**
+ * Resolved at CALL time, not at import.
+ *
+ * It was a module-level constant, and a test caught what that costs:
+ * two assertions passed for the WRONG REASON. They asserted "a blank
+ * reviewedBy does not publish" and got the right answer because the
+ * frozen path pointed somewhere the file did not exist, so every
+ * summary read as missing. The only case that failed was the one
+ * where a file was supposed to be FOUND.
+ *
+ * That is the shape of a bug worth fixing rather than working around:
+ * a constant that makes the failure path look correct while breaking
+ * the success path. Reading cwd per call costs nothing.
+ */
+export function capturedDir() {
+  return join(process.cwd(), 'data', 'captured')
+}
 
 /* ------------------------------------------------------- identity */
 
@@ -317,6 +333,142 @@ export async function report(key) {
   }
 }
 
+/* ============================================================
+   THE DRAFT — turning a capture into the file that is the gate.
+   ------------------------------------------------------------
+   Writing data/captured/<key>.json by hand is twenty minutes of
+   transcribing a histogram, and twenty minutes of tedium at the one
+   step that must not be skipped is a step that gets skipped. So this
+   drafts it.
+
+   WHICH IMMEDIATELY THREATENS THE THING THE GATE IS FOR. A generator
+   that fills in `include` with everything and hands you a file to
+   commit turns "a human read this catalogue" into "a human ran a
+   command", and the gate becomes a rubber stamp that still looks like
+   a gate. That is a worse failure than the tedium, because it is
+   invisible: the file exists, the merchant publishes, and nobody
+   knows the reading never happened.
+
+   So the split is deliberate:
+
+   MEASURED FACTS ARE FILLED IN. Counts, the product_type histogram,
+   the price range, coverage, how many rows carry no image. Nobody
+   needs to retype a number this already knows.
+
+   JUDGEMENT IS PROPOSED AND MARKED AS A PROPOSAL. `include` and
+   `roomMap` arrive as suggestions with the evidence attached, never
+   as settled answers.
+
+   AND `reviewedBy` ARRIVES EMPTY, WITH TEETH. publishable() refuses a
+   summary whose reviewedBy is blank, so a file generated and
+   committed without anybody looking publishes nothing. That is the
+   counterweight to the convenience, added in the same change that
+   added the convenience.
+
+   ------------------------------------------------------------
+   THE PER-TYPE ROOM BREAKDOWN IS THE USEFUL PART
+   ------------------------------------------------------------
+   A bare histogram says "Accessories: 52". What you actually need
+   before writing an include list is where those 52 would LAND:
+
+     Accessories  52 -> battlestation 40, power 9, refused 3
+
+   That one line answers "does this type belong on the shelf", "which
+   room does it want", and "is this merchant carrying junk" at once,
+   and it is why the draft runs the real classifier over every
+   captured row rather than summarising titles.
+   ============================================================ */
+
+/**
+ * Build the reviewed-summary file for a merchant, from its capture.
+ *
+ * Returns the object to write to data/captured/<key>.json, or null
+ * when there is no capture to draft from.
+ */
+export async function draft(key, classify, storeFor) {
+  if (!dbConfigured()) return null
+
+  const rows = await q(s => s`
+    SELECT title, price, product_type, vendor, data
+    FROM capture_products WHERE merchant_key = ${key}`)
+  if (!rows || !rows.length) return null
+
+  const st = storeFor ? storeFor(key) : null
+  const rep = await report(key)
+
+  /* Per product_type: how many, which rooms, how many refused. */
+  const types = new Map()
+  for (const r of rows) {
+    const t = (r.product_type || '').trim() || '(none)'
+    if (!types.has(t)) types.set(t, { type: t, n: 0, rooms: {}, refused: 0 })
+    const e = types.get(t)
+    e.n++
+    const room = classify(st || { room: '' }, r.title || '',
+      [r.product_type, r.vendor].filter(Boolean).join(' '))
+    if (!room) e.refused++
+    else e.rooms[room] = (e.rooms[room] || 0) + 1
+  }
+
+  const analysis = Array.from(types.values()).sort((a, b) => b.n - a.n).map(e => {
+    const ranked = Object.entries(e.rooms).sort((a, b) => b[1] - a[1])
+    const top = ranked[0]
+    /* A PROPOSAL, and the threshold is stated rather than hidden: a
+       type is proposed for inclusion when most of it lands somewhere
+       real. Everything else is proposed for exclusion WITH the
+       numbers, so disagreeing is a judgement rather than a guess. */
+    const placed = e.n - e.refused
+    const propose = placed / e.n >= 0.6 ? 'include' : 'exclude'
+    return {
+      type: e.type,
+      n: e.n,
+      rooms: Object.fromEntries(ranked),
+      refused: e.refused,
+      propose,
+      /* Only when the type's products disagree with the store's
+         default room. A roomMap entry that restates the default is
+         noise somebody has to read past. */
+      suggestRoom: top && st && top[0] !== st.room ? top[0] : undefined,
+    }
+  })
+
+  const include = analysis.filter(a => a.propose === 'include' && a.type !== '(none)').map(a => a.type)
+  const roomMap = {}
+  for (const a of analysis) if (a.propose === 'include' && a.suggestRoom) roomMap[a.type] = a.suggestRoom
+
+  return {
+    key,
+    /* EMPTY ON PURPOSE. publishable() refuses a blank one. */
+    reviewedBy: '',
+    reviewedOn: new Date().toISOString().slice(0, 10),
+    capture: {
+      products: rep.products,
+      pagesCaptured: rep.pagesCaptured,
+      claimedTotal: rep.claimedTotal,
+      partial: rep.partial,
+      platform: (rows[0] && rows[0].data && rows[0].data.source) || null,
+      priceRange: rep.priceRange,
+      unpriced: rep.unpriced,
+      withoutImage: rep.withoutImage,
+      notes: rep.notes,
+    },
+    /* The evidence the two proposals below were made from. Kept in
+       the committed file so that in six months "why these four types"
+       has an answer next to the code that acts on it. */
+    productTypes: analysis,
+    include,
+    roomMap,
+    readThisBeforeCommitting: [
+      rep.coverageNote ||
+        'Coverage looks complete for the pages captured.',
+      'include and roomMap are PROPOSALS from the numbers above, not answers. ' +
+        'A type is proposed for inclusion when 60% or more of its products land in a real room.',
+      'Fill in reviewedBy. A summary with an empty reviewedBy publishes nothing — ' +
+        'that is deliberate, and it is what stops this generator becoming a rubber stamp.',
+      'Then clear `pending` in api/_stores.js and commit both together.',
+    ],
+  }
+}
+
 /**
  * Captured products, shaped like catalogue items so the SAME grid
  * renderer draws them.
@@ -392,9 +544,10 @@ export async function capturedCounts() {
  */
 export function reviewedKeys() {
   try {
-    if (!existsSync(CAPTURED_DIR)) return new Set()
+    const dir = capturedDir()
+    if (!existsSync(dir)) return new Set()
     return new Set(
-      readdirSync(CAPTURED_DIR)
+      readdirSync(dir)
         .filter(f => f.endsWith('.json'))
         .map(f => f.slice(0, -5))
     )
@@ -403,7 +556,7 @@ export function reviewedKeys() {
 
 export function readReviewed(key) {
   try {
-    const p = join(CAPTURED_DIR, key + '.json')
+    const p = join(capturedDir(), key + '.json')
     if (!existsSync(p)) return null
     return JSON.parse(readFileSync(p, 'utf8'))
   } catch { return null }
@@ -435,6 +588,28 @@ export function publishable(st, reviewed = reviewedKeys()) {
       ok: false,
       why: 'NO CAPTURE ON FILE: data/captured/' + st.key + '.json does not exist. ' +
            'Capture it from /collect first. Clearing `pending` alone does not publish a merchant.',
+    }
+  }
+
+  /* THE COUNTERWEIGHT TO THE DRAFT GENERATOR.
+     Once a summary file can be produced by one command, "the file
+     exists" stops being evidence that anybody read the catalogue —
+     which was the entire thing the file was standing for. A named
+     reviewer is the smallest honest signal that a person looked, and
+     the generator deliberately leaves it blank so the last step is
+     always a human one.
+
+     It is not a security control and is not pretending to be. Anybody
+     can type a name. The point is that they have to type it, and that
+     an unreviewed merchant fails LOUDLY here instead of publishing
+     quietly. */
+  const summary = readReviewed(st.key)
+  if (!summary || !String(summary.reviewedBy || '').trim()) {
+    return {
+      ok: false,
+      why: 'CAPTURE NOT REVIEWED: data/captured/' + st.key + '.json has an empty ' +
+           '`reviewedBy`. The draft generator leaves it blank on purpose — fill in ' +
+           'who read the catalogue.',
     }
   }
   return { ok: true, why: '' }

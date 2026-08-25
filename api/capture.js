@@ -20,7 +20,7 @@
 
 import { STORES, isAttributed, byKey } from './_stores.js'
 import { classify } from './_scene.js'
-import { merge, report, reviewedKeys, capturedCounts, dbConfigured, dbHealth, previewItems } from './_capture.js'
+import { merge, report, reviewedKeys, capturedCounts, dbConfigured, dbHealth, previewItems, draft } from './_capture.js'
 
 const PASS = process.env.ADMIN_PASSCODE || ''
 
@@ -115,6 +115,31 @@ export default async function handler(req, res) {
          nothing is waiting on them. */
       next: todo.slice().sort((a, b) => (b.attributed ? 1 : 0) - (a.attributed ? 1 : 0)),
       rows,
+    })
+  }
+
+  /* --------------------------------------------- GET ?draft=<key>
+     The reviewed-summary file, drafted from the capture. Returns the
+     JSON to write to data/captured/<key>.json; it does NOT write it,
+     and that is not a serverless limitation dressed up as a rule —
+     the file has to arrive through a commit, because the commit is
+     what makes the gate a thing somebody walked through. */
+  const draftKey = String(q.draft || '').trim()
+  if (draftKey) {
+    if (!PASS) return res.status(503).json({ error: 'ADMIN_PASSCODE is not set' })
+    if (!authed(req)) return res.status(401).json({ error: 'bad passcode' })
+    if (!dbConfigured()) return res.status(503).json({ error: 'DATABASE_URL is not set' })
+
+    const file = await draft(draftKey, classify, byKey)
+    if (!file) {
+      return res.status(404).json({
+        error: 'no capture on file for "' + draftKey + '". Scan it from /collect first.',
+      })
+    }
+    return res.status(200).json({
+      ok: true,
+      path: 'data/captured/' + draftKey + '.json',
+      file,
     })
   }
 

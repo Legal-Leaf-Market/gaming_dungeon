@@ -16,6 +16,7 @@ sister to this one.
 npm run dev      # http://localhost:3000, api/ included
 npm test         # 23 cases, no framework
 npm run worklist # what still needs capturing
+npm run draft -- <key>   # draft data/captured/<key>.json from a capture
 ```
 
 Node >= 18. One dependency (`@neondatabase/serverless`), no build step, no bundler.
