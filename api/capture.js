@@ -18,8 +18,9 @@
    forever, and never on /collect, which anybody can load.
    ============================================================ */
 
-import { STORES, isAttributed } from './_stores.js'
-import { merge, report, reviewedKeys, capturedCounts, dbConfigured, dbHealth } from './_capture.js'
+import { STORES, isAttributed, byKey } from './_stores.js'
+import { classify } from './_scene.js'
+import { merge, report, reviewedKeys, capturedCounts, dbConfigured, dbHealth, previewItems } from './_capture.js'
 
 const PASS = process.env.ADMIN_PASSCODE || ''
 
@@ -114,6 +115,32 @@ export default async function handler(req, res) {
          nothing is waiting on them. */
       next: todo.slice().sort((a, b) => (b.attributed ? 1 : 0) - (a.attributed ? 1 : 0)),
       rows,
+    })
+  }
+
+  /* ---------------------------------------------- GET ?grid=<key>
+     The operator preview. Same gating as ?report -- it is a
+     merchant's catalogue, which is not ours to serve to the public --
+     and it returns catalogue-shaped rows so /collect can mount the
+     SAME grid.js the storefront uses. */
+  const gridKey = String(q.grid || '').trim()
+  if (gridKey) {
+    if (!PASS) return res.status(503).json({ error: 'ADMIN_PASSCODE is not set' })
+    if (!authed(req)) return res.status(401).json({ error: 'bad passcode' })
+    if (!dbConfigured()) return res.status(503).json({ error: 'DATABASE_URL is not set' })
+
+    const items = await previewItems(gridKey, classify, byKey)
+    const st = byKey(gridKey)
+    return res.status(200).json({
+      ok: true,
+      merchantKey: gridKey,
+      name: (st && st.name) || gridKey,
+      /* The classifier's '' means "we do not carry this". Counting it
+         here is the cheapest early warning that a merchant is mostly
+         off-scene, which is a reason to drop them rather than a
+         reason to widen _scene.js. */
+      offScene: items.filter(i => !i.room).length,
+      items,
     })
   }
 

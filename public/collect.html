@@ -9,6 +9,7 @@
 <meta name="robots" content="noindex,nofollow"/>
 <meta name="color-scheme" content="dark"/>
 <link rel="stylesheet" href="/css/tokens.css"/>
+<link rel="stylesheet" href="/css/app.css"/>
 <style>
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);
@@ -124,12 +125,28 @@ blocked, press <strong>Copy</strong> and paste below.</p>
   <p><button id="pasteSend">Store it</button> <span id="pasteMsg" class="build"></span></p>
 </div>
 
-<h2>4 · WHAT IS LEFT TO CAPTURE</h2>
+<h2>4 · LOOK AT WHAT YOU CAPTURED</h2>
+<p>The <strong>same grid the storefront uses</strong>, over the raw capture. Nothing
+here is published &mdash; the gate is still <code>data/captured/</code> &mdash; but
+you can see a merchant's shelf the moment you scan it, and the room shown on each
+card is where <code>_scene.js</code> would actually file it. A room that comes out
+obviously wrong on real titles is a pattern to fix <em>before</em> the merchant
+ships.</p>
+
+<div class="card">
+  <label>Merchant key <input id="pvKey" placeholder="goretrogame"/></label>
+  <label style="margin-left:8px">Passcode <input id="pvToken" type="password" placeholder="ADMIN_PASSCODE"/></label>
+  <p><button id="pvGo">Show the shelf</button> <span id="pvMsg" class="build"></span></p>
+</div>
+<div id="pvGrid"></div>
+
+<h2>5 · WHAT IS LEFT TO CAPTURE</h2>
 <p>Live from <code>/api/capture?worklist</code>. Merchants with attribution already
 in place are listed first, because a capture on one of those can go live and start
 earning the day it is reviewed.</p>
 <div id="worklist" class="build">loading…</div>
 
+<script src="/js/grid.js"></script>
 <script>
 /* ---------------------------------------------------------------------------
    THE ORIGIN IS PREPENDED TO EVERY INSTALL METHOD, and it is load-bearing.
@@ -217,6 +234,39 @@ earning the day it is reviewed.</p>
     try { if (window.opener) window.opener.postMessage({ type: 'gd-relay-ready' }, location.origin); }
     catch (e) {}
   }
+
+  /* ---- operator preview ---------------------------------------------
+     Mounts grid.js -- the storefront's renderer, unmodified. That is
+     deliberate and it is the whole value: a preview built from its own
+     card component would drift, and it would drift in the direction
+     that hides the problem, staying pretty while the real shelf broke. */
+  document.getElementById('pvGo').onclick = function () {
+    var msg = document.getElementById('pvMsg');
+    var host = document.getElementById('pvGrid');
+    var key = document.getElementById('pvKey').value.trim();
+    var token = document.getElementById('pvToken').value.trim();
+    if (!key) { msg.textContent = 'Which merchant?'; return; }
+    if (!token) { msg.textContent = 'Passcode first.'; return; }
+    msg.textContent = 'loading…';
+    host.innerHTML = '';
+
+    fetch('/api/capture?grid=' + encodeURIComponent(key), {
+      headers: { 'x-gd-admin-token': token }
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (o) {
+        if (!o.ok) { msg.textContent = 'Refused: ' + (o.j.error || 'unknown'); return; }
+        if (!o.j.items.length) {
+          msg.textContent = 'No capture on file for ' + key + '. Scan it first.';
+          return;
+        }
+        msg.textContent = o.j.items.length + ' captured' +
+          (o.j.offScene ? ' · ' + o.j.offScene + ' would be dropped as off-scene' : '') + '.';
+        /* preview:true renders divs rather than outbound links: these
+           are unreviewed rows and a stray click on one is a click we
+           did not mean to spend. */
+        window.GDGrid.mount(host, o.j.items, { preview: true });
+      }).catch(function () { msg.textContent = 'Preview failed.'; });
+  };
 
   /* ---- worklist ----------------------------------------------------
      THE LINKS HERE ARE BARE DOMAINS AND MUST STAY THAT WAY.

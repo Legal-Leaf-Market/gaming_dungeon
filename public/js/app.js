@@ -49,7 +49,7 @@
     });
   };
 
-  var state = { items: [], stores: [], reached: false };
+  var state = { items: [], stores: [], shopNames: {}, reached: false };
 
   /* ---------------------------------------------------------- routing
      The path decides the room. One document, one source of truth for
@@ -96,28 +96,48 @@
   }
 
   /* ------------------------------------------------------------ room */
+  /* ------------------------------------------------------------ room
+     THE GRID IS grid.js AND THIS FILE DOES NOT DRAW CARDS. /collect's
+     operator preview mounts the same renderer over captured products,
+     which is the whole point: a preview has to look exactly like the
+     shelf or it is not a preview of anything. A second card component
+     would drift, and it would drift invisibly in the direction that
+     matters -- the preview would go on looking fine while the real
+     shelf broke. */
   function renderRoom(room) {
     $('#map').hidden = true;
     $('#roomView').hidden = false;
     $('#roomName').textContent = room.name;
     $('#roomBlurb').textContent = room.blurb;
+    mountGrid(room.key);
+  }
 
-    var mine = state.items.filter(function (it) { return it.room === room.key; });
+  function mountGrid(roomKey) {
+    var mine = state.items.filter(function (it) {
+      return !roomKey || it.room === roomKey;
+    });
     var grid = $('#grid'), empty = $('#roomEmpty');
 
-    if (mine.length) {
-      empty.hidden = true;
-      grid.innerHTML = mine.map(card).join('');
+    if (!mine.length) {
+      grid.innerHTML = '';
+      empty.hidden = false;
+      empty.innerHTML = emptyWords(roomKey);
       return;
     }
-
-    grid.innerHTML = '';
-    empty.hidden = false;
-    empty.innerHTML = emptyWords(room);
+    empty.hidden = true;
+    /* The WHOLE catalogue is handed over with the room preselected,
+       rather than a pre-filtered slice. The facets have to be able to
+       count what you would get by switching rooms, and they cannot do
+       that from a slice that already excluded it. */
+    window.GDGrid.mount(grid, state.items, {
+      room: roomKey || '',
+      shopNames: state.shopNames
+    });
   }
 
   /* FOUR STATES, FOUR DIFFERENT SENTENCES. See the header. */
-  function emptyWords(room) {
+  function emptyWords(roomKey) {
+    var roomName = (window.GDGrid && window.GDGrid.ROOMS[roomKey]) || 'this room';
     if (!state.reached) {
       return '<strong>The catalogue did not answer.</strong><br>' +
         'That is this site being unreachable, not the room being empty. ' +
@@ -126,43 +146,34 @@
     }
     if (!state.stores.length) {
       return '<strong>Nothing is stocked yet, and that is on purpose.</strong><br>' +
-        '54 shops are registered. None of them has been published, because ' +
-        'no merchant here goes on a shelf until somebody has opened it in a ' +
-        'browser and read what it actually sells. That is the reverse of how ' +
-        'the sister sites were built, and it is the reverse deliberately: one ' +
-        'of them has a vendor that has returned zero products since the day it ' +
-        'was added.<br><br>' +
+        '54 shops are registered. None has been published, because no merchant ' +
+        'here goes on a shelf until somebody has opened it in a browser and read ' +
+        'what it actually sells. That is the reverse of how the sister sites were ' +
+        'built, and it is the reverse deliberately: one of them has a vendor that ' +
+        'has returned zero products since the day it was added.<br><br>' +
         'The room fills when a capture lands in <code>data/captured/</code>. ' +
         'Until then the <a href="/arcade">arcade</a> is open.';
     }
-    return '<strong>Nothing in this room yet.</strong><br>' +
-      'Shops are live on the site, but none of the ones read so far stock ' +
-      'anything that belongs in ' + esc(room.name) + '. Try the ' +
-      '<a href="/">map</a>.';
+    return '<strong>Nothing in ' + esc(roomName) + ' yet.</strong><br>' +
+      'Shops are live, but none of the ones read so far stock anything that ' +
+      'belongs in here. Try the <a href="/">map</a>.';
   }
 
-  function card(it) {
-    return '<a class="card" href="' + esc(it.url) + '" rel="nofollow sponsored noopener" target="_blank">' +
-      '<span class="shot">' + (it.image ? '<img loading="lazy" alt="" src="' + esc(it.image) + '"/>' : '') + '</span>' +
-      '<span class="body">' +
-        '<h4>' + esc(it.name || it.title) + '</h4>' +
-        '<span class="shop">' + esc(it.storeName || it.store || '') + '</span>' +
-        (it.price ? '<span class="price">' + esc(money(it.price, it.currency)) + '</span>' : '') +
-      '</span>' +
-    '</a>';
-  }
 
-  function money(n, cur) {
-    var v = Number(n);
-    if (!isFinite(v)) return '';
-    try { return new Intl.NumberFormat(undefined, { style:'currency', currency: cur || 'USD' }).format(v); }
-    catch (e) { return '$' + v.toFixed(2); }
-  }
-
-  /* ------------------------------------------------------------ boot */
   function boot() {
     var room = currentRoom();
-    if (room) renderRoom(room); else renderMap();
+    if (room) { renderRoom(room); return; }
+    renderMap();
+    /* THE FRONT PAGE IS A SHELF TOO, not just a table of contents.
+       A browse-first shop whose front door is nine links to empty
+       rooms gives a visitor nothing to look at. The map is how you
+       navigate deliberately; the grid under it is how you wander,
+       which is the thesis. It stays hidden until there is stock. */
+    var all = $('#allGrid');
+    if (!all) return;
+    if (!state.items.length) { all.hidden = true; return; }
+    all.hidden = false;
+    window.GDGrid.mount(all, state.items, { shopNames: state.shopNames });
   }
 
   fetch('/api/products')
@@ -179,6 +190,15 @@
         return it;
       });
       state.stores = j.stores || [];
+      state.shopNames = {};
+      for (var s2 = 0; s2 < state.stores.length; s2++) {
+        state.shopNames[state.stores[s2].key] = state.stores[s2].name;
+      }
+      /* A card wants a display name, not a slug. Denormalised once
+         here rather than looked up per card on every redraw. */
+      for (var n = 0; n < state.items.length; n++) {
+        state.items[n].shopName = state.shopNames[state.items[n].k] || state.items[n].k;
+      }
     })
     .catch(function () { /* state.reached stays false; the words differ */ })
     .then(boot);

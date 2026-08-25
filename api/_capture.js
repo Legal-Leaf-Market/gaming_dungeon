@@ -317,6 +317,57 @@ export async function report(key) {
   }
 }
 
+/**
+ * Captured products, shaped like catalogue items so the SAME grid
+ * renderer draws them.
+ *
+ * THIS IS THE PREVIEW, AND IT IS NOT A BACK DOOR ROUND THE GATE.
+ * It is admin-gated, it is served only to /collect (which is
+ * noindex and an operator tool), and nothing it returns reaches
+ * /api/products or a shopper. What it buys is the ability to LOOK at
+ * a merchant's catalogue the moment it is scanned, instead of
+ * hand-reading a JSON histogram and imagining the shelf.
+ *
+ * That matters for the decision it feeds. "Does this merchant belong
+ * in the Vault or the Wardrobe" and "is this the same dropship stock
+ * as the other anime domain" are both questions you answer far faster
+ * by looking at ninety product cards than by reading a table, and the
+ * second one is a question the registry explicitly asks somebody to
+ * settle before publishing either shop.
+ *
+ * Rooms are assigned here by the real classifier rather than left
+ * blank, so the preview also shows where _scene.js WOULD file each
+ * product. A room that comes out obviously wrong on real titles is a
+ * pattern to fix before the merchant ships, not after.
+ */
+export async function previewItems(key, classify, storeFor) {
+  if (!dbConfigured()) return []
+  const rows = await q(s => s`
+    SELECT merchant_key, title, price, product_type, vendor, data
+    FROM capture_products
+    WHERE merchant_key = ${key}
+    ORDER BY captured_at
+    LIMIT 1000`)
+  return (rows || []).map(r => {
+    const d = r.data || {}
+    const st = storeFor ? storeFor(r.merchant_key) : null
+    return {
+      k: r.merchant_key,
+      shopName: (st && st.name) || r.merchant_key,
+      title: r.title || d.title || '',
+      price: r.price == null ? undefined : String(r.price),
+      cur: d.currency || undefined,
+      image: d.image || undefined,
+      url: d.url || undefined,
+      ptype: r.product_type || undefined,
+      oos: d.available === false ? 1 : undefined,
+      room: classify
+        ? classify(st || { room: '' }, r.title || '', [r.product_type, r.vendor].filter(Boolean).join(' '))
+        : '',
+    }
+  })
+}
+
 /** Which merchants have any capture at all. Drives the worklist. */
 export async function capturedCounts() {
   if (!dbConfigured()) return new Map()

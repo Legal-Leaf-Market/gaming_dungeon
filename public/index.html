@@ -70,6 +70,14 @@
     <p class="empty" id="roomEmpty" hidden></p>
   </section>
 
+  <!-- The whole dungeon on one shelf, under the map. Hidden until
+       there is stock: an empty grid under a map of empty rooms says
+       the same thing twice. -->
+  <section class="allshelf" id="allShelf">
+    <h2 class="sec">EVERYTHING</h2>
+    <div id="allGrid" hidden></div>
+  </section>
+
   <!-- ===========================================================
        THE DOORS OUT. The mall runs ONE WAY, and that is a
        compliance fact rather than a design choice: a gaming and
@@ -113,6 +121,7 @@
   </p>
 </footer>
 
+<script src="/js/grid.js"></script>
 <script src="/js/app.js"></script>
 </body>
 </html>

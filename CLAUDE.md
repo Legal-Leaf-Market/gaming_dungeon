@@ -47,7 +47,8 @@ public/
   index.html     The dungeon. Markup only.
   css/tokens.css Family design system, our accent (§8)
   css/app.css    Components
-  js/app.js      Engine: the map, rooms, cards, empty states
+  js/grid.js     THE SHELF. Cards, facets, sort. ONE renderer (§6b)
+  js/app.js      The map, room routing, empty states
   collect.html   Operator tool: install the bookmarklet, relay tab, worklist
   arcade.html    THE ARCADE. Byte-portable across all sister sites (§7)
   js/arcade-*.js The cabinets
@@ -270,6 +271,49 @@ identical image URLs across two domains.
 
 ---
 
+## 6b. The grid is ONE renderer with two callers
+
+`public/js/grid.js`. `GDGrid.mount(root, items, opts)` and nothing else.
+
+- **`/`** — the storefront, fed by `/api/products` (published only).
+- **`/collect`** — the operator preview, fed by `/api/capture?grid=<key>`
+  (captured, unpublished, admin-gated).
+
+Those show the same products at different stages of their life, and the value of
+the preview is precisely that **it looks exactly like the shelf**. A second card
+component built "just for preview" would drift, and it would drift in the
+direction that hides the problem: the preview would go on looking fine while the
+real shelf broke. Do not add one.
+
+**The preview is not a back door round the gate.** It is admin-gated, served only
+to a noindex operator page, and nothing it returns reaches `/api/products` or a
+shopper. What it buys is being able to *look* at ninety product cards the moment
+a merchant is scanned, which is how you actually answer "Vault or Wardrobe?" and
+"is this the same dropship stock as the other anime domain?" — the second being a
+question §5 explicitly asks somebody to settle before publishing either shop. It
+also renders each card in the room `_scene.js` would file it under, so a bad
+pattern shows up on real titles before the merchant ships.
+
+**Facets are single-select and bidirectionally coupled**, lifted from Herbal
+Leaf: room and shop each constrain the other, and a facet's counts are computed
+against the pool with the OTHER facet applied but **not itself**. Without that
+the counts you are choosing between are wrong the moment you pick one.
+Zero-count options are **removed, not greyed** — a visible choice that lands on
+an empty grid is a dead end the interface offered you.
+
+**The default sort is a seeded shuffle that spreads the shops**, not price and
+not alphabet. Both of those put one merchant's whole catalogue at the top, which
+makes an aggregator read as a single shop; a plain shuffle still clumps, and
+twelve adjacent cards from one merchant read as sorted to anybody scrolling. So
+it round-robins across shops and shuffles within each. Same reasoning as Herbal
+Leaf's shelf shuffle.
+
+**A card says what it knows and nothing more.** No price rather than `$0.00`, no
+invented "was" price, no fake ratings. A struck-through price the merchant's own
+checkout refuses to honour is the worst thing this kind of site can ship.
+
+---
+
 ## 6. `_scene.js` — one rule, one file
 
 `classify()` returns a room key or `''`, and **`''` means we do not carry it.**
@@ -456,6 +500,8 @@ the jsonb it would be a sequential scan on every report.
 - Do NOT raise the 300-request cap without a reason written down beside it (§4b).
 - Do NOT put a backtick anywhere inside `captureSource` or `scanSource`,
   comments included (§4b).
+- Do NOT build a second card component for the preview (§6b).
+- Do NOT let the preview endpoint feed `/api/products` or any public page (§6b).
 - Do NOT clear the nicotine-shaped leftovers in `products.js` off the to-do list
   without doing them — read its PORT NOTES header. They must come out **before
   the first `pending` flag is cleared**, because the gate is what is currently
