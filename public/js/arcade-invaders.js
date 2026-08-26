@@ -51,7 +51,7 @@
 
     var ctx = cv.getContext("2d");
     var raf = 0, over = false, won = false, score = 0, best = 0;
-    try { best = parseInt(localStorage.getItem("ll_arcade_invaders") || "0", 10) || 0; } catch (e) { best = 0; }
+    try { best = parseInt(localStorage.getItem("gd_arcade_invaders") || "0", 10) || 0; } catch (e) { best = 0; }
 
     var ship, rows, shots, bombs, dir, step, tick;
 
@@ -161,7 +161,7 @@
 
       if ((over || won) && score > best) {
         best = score;
-        try { localStorage.setItem("ll_arcade_invaders", String(best)); } catch (e) {}
+        try { localStorage.setItem("gd_arcade_invaders", String(best)); } catch (e) {}
       }
     }
 

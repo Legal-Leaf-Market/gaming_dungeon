@@ -657,6 +657,33 @@ head is the authority, so `/collect` and `/arcade` cannot be re-added by
 accident. `test/server.test.mjs` checks the committed sitemap against the
 running server and fails if it is stale.
 
+### The three policy pages, and why they were written last
+
+`/disclosure`, `/privacy`, `/terms`. Written **after** auditing what the site
+actually does, because a boilerplate policy describing cookies we do not set is
+not harmless padding — it is a false statement about our own conduct, and the
+kind that survives for years because nobody re-reads a policy page.
+
+The audit deleted more than it documented. **`api/subscribe.js` and
+`api/track.js` were inherited from Nicotia and nothing on this site called
+either** — `source: 'nicotia-market'`, env vars named `NM_*`. `subscribe`
+accepted an email address on a public unauthenticated endpoint and forwarded it
+to whatever `NM_CRM_WEBHOOK` pointed at: a spam relay waiting for somebody to
+set the variable. **A public PII intake nobody uses is a liability, not an
+asset.** Both deleted. If a newsletter is wanted later, build it then, with this
+site's own naming.
+
+What survived the audit is a genuinely short surface, and the policy says so: no
+accounts, no cookies, no analytics, one `localStorage` key for the arcade high
+score (`gd_arcade_invaders`, never sent anywhere), and three third parties who
+see an ordinary request — Google Fonts, Vercel, Neon. Neon holds merchant
+catalogues and not one field about a person.
+
+`test/server.test.mjs` **checks the policy against the code**: no `document.cookie`
+write, no analytics snippet, exactly one storage key and the policy must name it,
+and no `api/*.js` may read `body.email`. A policy that drifts from the code now
+fails a test rather than sitting there being wrong.
+
 **`/disclosure`** is the affiliate disclosure, and it is the one compliance
 obligation here with teeth outside our own codebase. It states plainly that
 roughly half the links pay us and half do not, that the price is identical
@@ -722,3 +749,8 @@ anything. A test asserts the page serves and that the front page links it.
 - Do NOT hand-edit `public/sitemap.xml`; run `npm run sitemap` (§10b).
 - Do NOT drop `rel="nofollow sponsored"` from a card because that merchant has
   no code filled in (§10b).
+- Do NOT add analytics, a cookie, a newsletter or an endpoint that reads
+  personal data without rewriting `/privacy` in the same commit. Tests enforce
+  the pairing (§10b).
+- Do NOT copy `api/subscribe.js` or `api/track.js` back from a sister site
+  (§10b).

@@ -57,7 +57,15 @@ test('every api/*.js endpoint is reachable in dev', async () => {
     .filter(f => f.endsWith('.js') && !f.startsWith('_'))
     .map(f => '/api/' + f.slice(0, -3))
 
-  assert.ok(endpoints.length >= 5, 'expected the real endpoints, found ' + endpoints.length)
+  /* Named, not counted. The first version asserted `length >= 5` and
+     broke the moment two dead endpoints were legitimately deleted --
+     a guard whose only repair is bumping a number teaches people to
+     bump the number. These three are the ones the site cannot work
+     without, so name them; the loop below still covers whatever else
+     is in api/. */
+  for (const must of ['/api/products', '/api/capture', '/api/collector']) {
+    assert.ok(endpoints.includes(must), must + ' is missing from api/')
+  }
 
   for (const path of endpoints) {
     const r = await fetch(BASE + path)
@@ -150,4 +158,71 @@ test('the disclosure page is reachable and linked from the front page', async ()
   assert.equal((await fetch(BASE + '/disclosure')).status, 200)
   const home = await (await fetch(BASE + '/')).text()
   assert.ok(home.includes('/disclosure'), 'the front page must link the disclosure')
+})
+
+test('the three policy pages serve and cross-link each other', async () => {
+  /* A policy page nothing links to is a page nobody reads, and the
+     affiliate disclosure is the one obligation here with teeth
+     outside our own codebase. */
+  await boot()
+  const pages = ['/disclosure', '/privacy', '/terms']
+  for (const p of pages) {
+    const r = await fetch(BASE + p)
+    assert.equal(r.status, 200, p + ' does not serve')
+    const html = await r.text()
+    for (const other of pages.filter(x => x !== p)) {
+      assert.ok(html.includes('href="' + other + '"'), p + ' must link ' + other)
+    }
+  }
+  const home = await (await fetch(BASE + '/')).text()
+  for (const p of pages) assert.ok(home.includes('href="' + p + '"'), 'the front page must link ' + p)
+})
+
+test('the privacy policy does not describe things the site does not do', () => {
+  /* THE POINT OF WRITING IT LAST. A boilerplate policy that mentions
+     cookies we do not set or a newsletter we do not run is not
+     harmless padding — it is a false statement about our own conduct,
+     and it is the kind that survives for years because nobody
+     re-reads a policy page.
+
+     Two dead endpoints were deleted rather than documented while this
+     was written: /api/subscribe accepted email addresses and
+     forwarded them to a webhook named after a sister site, and
+     nothing on this site called it. A public PII intake nobody uses
+     is a liability, not an asset. */
+  const priv = readFileSync(join(ROOT, 'public', 'privacy.html'), 'utf8')
+  const claimsNoCookies = /set no cookies/i.test(priv)
+  assert.ok(claimsNoCookies, 'the policy should say we set no cookies')
+
+  const pages = readdirSync(join(ROOT, 'public')).filter(f => f.endsWith('.html'))
+  const js = readdirSync(join(ROOT, 'public', 'js')).filter(f => f.endsWith('.js'))
+  const all = [...pages.map(f => join(ROOT, 'public', f)),
+               ...js.map(f => join(ROOT, 'public', 'js', f))]
+    .map(f => readFileSync(f, 'utf8')).join('\n')
+
+  assert.equal(/document\.cookie\s*=/.test(all), false,
+    'something sets a cookie but the privacy policy says we set none')
+  for (const tracker of ['gtag(', 'googletagmanager', 'plausible.io', 'fathom', 'hotjar']) {
+    assert.equal(all.includes(tracker), false,
+      tracker + ' is present but the privacy policy says there is no analytics')
+  }
+
+  /* The one storage key the policy names, asserted to be the only one
+     and to be the key it actually names. */
+  const keys = [...all.matchAll(/localStorage\.(?:get|set)Item\(\s*["']([^"']+)/g)].map(m => m[1])
+  assert.deepEqual([...new Set(keys)], ['gd_arcade_invaders'],
+    'the privacy policy names exactly one storage key; the code disagrees')
+  assert.ok(priv.includes('gd_arcade_invaders'), 'the policy must name the key it stores')
+})
+
+test('no endpoint accepts personal data', () => {
+  /* /api/subscribe took an email and forwarded it to NM_CRM_WEBHOOK.
+     Nothing called it, and a public unauthenticated email intake is a
+     spam relay waiting for somebody to set the env var. Deleted, and
+     this stops it coming back by copy-paste from a sister site. */
+  const api = readdirSync(join(ROOT, 'api')).filter(f => f.endsWith('.js'))
+  for (const f of api) {
+    const src = readFileSync(join(ROOT, 'api', f), 'utf8')
+    assert.equal(/body\.email\b/.test(src), false, f + ' reads an email address')
+  }
 })
