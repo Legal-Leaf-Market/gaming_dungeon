@@ -19,6 +19,8 @@ npm run worklist # what still needs capturing
 npm run draft -- <key>   # draft data/captured/<key>.json from a capture
 ```
 
+Copy `.env.example` to `.env` first — `npm run dev` reads it.
+
 Node >= 18. One dependency (`@neondatabase/serverless`), no build step, no bundler.
 Set `DATABASE_URL` to a Neon connection string; the schema is created on demand.
 

@@ -11,8 +11,9 @@
 // worked while the preview 404'd. Parsing the real config makes that class of
 // bug impossible. If you add a route, add it to vercel.json ONLY.
 import { createServer } from "node:http"
-import { readFile, stat } from "node:fs/promises"
+import { readFile, stat, readdir } from "node:fs/promises"
 import { join, extname, normalize } from "node:path"
+import { existsSync, readFileSync } from "node:fs"
 
 const ROOT = process.cwd()
 const PUBLIC = join(ROOT, "public")
@@ -62,18 +63,54 @@ try {
   console.log("[dev] could not read vercel.json:", err.message)
 }
 
-// serverless functions — mirrors Vercel mapping api/foo.js -> /api/foo
-const API = {
-  "/api/products": "./api/products.js",
-  "/api/subscribe": "./api/subscribe.js",
-  "/api/track": "./api/track.js",
+// ---- serverless functions, DISCOVERED FROM DISK -----------------------------
+// This was a hand-written map of three routes and it was already wrong: it
+// listed Nicotia's endpoints, so /api/capture and /api/collector -- the two
+// the entire capture workflow runs on -- returned 404 locally while working
+// fine in production. That is exactly the drift this file's own header brags
+// about preventing for ROUTES, reproduced one section further down for
+// FUNCTIONS.
+//
+// So it reads api/ the way Vercel does: every .js file becomes /api/<name>,
+// and files beginning with `_` are helpers rather than endpoints. Adding an
+// endpoint now needs no edit here and cannot be forgotten.
+const API = {}
+try {
+  for (const f of await readdir(join(ROOT, "api"))) {
+    if (!f.endsWith(".js") || f.startsWith("_")) continue
+    API["/api/" + f.slice(0, -3)] = "./api/" + f
+  }
+} catch (err) {
+  console.log("[dev] could not read api/:", err.message)
 }
-// NOTE: modules are cached. Restart the server after editing anything in api/,
-// or you will test stale code. (Legal-Leaf lost an afternoon to this once.)
-const apiCache = new Map()
+
+// ---- .env, if there is one --------------------------------------------------
+// Without DATABASE_URL and ADMIN_PASSCODE the capture store is dead and the
+// site's own empty state says so, which reads as "the app is broken" rather
+// than "dev has no credentials". Node's --env-file cannot be passed through
+// `npm run dev`, so this reads the file directly. Anything already in the
+// environment wins, so an explicit export still overrides it.
+if (existsSync(join(ROOT, ".env"))) {
+  let loaded = 0
+  for (const line of readFileSync(join(ROOT, ".env"), "utf8").split(/\r?\n/)) {
+    const m = line.match(/^\s*(?:export\s+)?([A-Z0-9_]+)\s*=\s*(.*)$/)
+    if (!m) continue
+    if (process.env[m[1]] !== undefined) continue
+    process.env[m[1]] = m[2].trim().replace(/^["']|["']$/g, "")
+    loaded++
+  }
+  if (loaded) console.log(`[dev] loaded ${loaded} vars from .env`)
+}
+
+// NO MODULE CACHE. It used to cache handlers, with a note saying "restart the
+// server after editing anything in api/, or you will test stale code --
+// Legal-Leaf lost an afternoon to this once". A footgun with a comment
+// attached is still a footgun, and that one costs an afternoon per person
+// rather than per project. A cache-busting query re-imports on every request.
+// It leaks a module per request, which is irrelevant in a dev server you
+// restart daily and worth it to make an edit visible on reload.
 async function loadApi(path) {
-  if (!apiCache.has(path)) apiCache.set(path, await import(API[path]))
-  return apiCache.get(path)
+  return import(API[path] + "?t=" + Date.now())
 }
 
 // Give Node's ServerResponse the small Vercel helper surface the handlers use.
@@ -166,6 +203,11 @@ const server = createServer(async (req, res) => {
 })
 
 server.listen(PORT, () => {
-  console.log(`[dev] Nicotia Market dev server -> http://localhost:${PORT}`)
+  console.log(`[dev] Gaming Dungeon -> http://localhost:${PORT}`)
   console.log(`[dev] routes from vercel.json: ${REWRITES.length} rewrites, ${REDIRECTS.size} redirects`)
+  // Printed rather than assumed. A missing endpoint is the failure this
+  // section just had, and it stays invisible until something 404s.
+  console.log(`[dev] api: ${Object.keys(API).sort().join(" ") || "(none found)"}`)
+  if (!process.env.DATABASE_URL) console.log("[dev] no DATABASE_URL -- the capture store will report itself unconfigured")
+  if (!process.env.ADMIN_PASSCODE) console.log("[dev] no ADMIN_PASSCODE -- /api/capture writes will 503")
 })

@@ -79,7 +79,7 @@ it off the public internet.
 
 ---
 
-## 3. Routing — ONE file
+## 3. Routing and dev — ONE source of truth, twice over
 
 Legal-Leaf keeps routes in **both** `vercel.json` and a hardcoded map in
 `server.mjs`, and its own guide documents an outage caused by the two drifting
@@ -90,6 +90,30 @@ a route there and the local preview picks it up. Never hardcode a route in
 `cleanUrls: true` means `public/foo.html` serves at `/foo`. Every room URL
 (`/vault`, `/workshop`, `/battlestation` …) rewrites to `index.html` and the
 room is chosen client-side from the path.
+
+**`server.mjs` discovers `api/*.js` from disk**, the way Vercel does: every
+`.js` file becomes `/api/<name>`, `_`-prefixed files are helpers and are not
+served. It used to hold a hand-written map of Nicotia's three endpoints, so
+`/api/capture` and `/api/collector` — the two the entire capture workflow runs
+on — **404'd locally for the whole life of the project** while working fine in
+production. That is precisely the drift this file's header brags about
+preventing for routes, reproduced one section down for functions. Adding an
+endpoint now needs no edit anywhere.
+
+**There is no module cache.** It used to cache handlers, with a note saying
+restart after editing anything in `api/` "or you will test stale code". A
+footgun with a comment attached is still a footgun, and that one costs an
+afternoon per person rather than per project. Handlers re-import per request.
+
+**`.env` is read automatically** if present — `--env-file` cannot be passed
+through `npm run dev`, and without `DATABASE_URL` the site's own empty state
+says the capture store is unconfigured, which reads as "the app is broken".
+Startup prints what it found and warns about what is missing.
+
+`test/server.test.mjs` **boots the real server** and probes every endpoint from
+disk. Every other test here reads source or calls a function, and none of them
+would have caught this: the bug was not in any function, it was in the wiring,
+and wiring is only testable by running the thing.
 
 ---
 
