@@ -696,6 +696,69 @@ anything. A test asserts the page serves and that the front page links it.
 
 ---
 
+## 10c. Brand assets: all of them are generated
+
+`npm run branding` rebuilds **every** raster from `public/assets/mark.svg`:
+
+```
+public/favicon.ico              16 + 32 + 48, BMP payloads
+public/assets/icon-192.png      manifest, purpose "any"
+public/assets/icon-512.png      manifest, purpose "any"
+public/assets/icon-maskable-192.png   manifest, purpose "maskable"
+public/assets/icon-maskable-512.png   manifest, purpose "maskable"
+public/assets/apple-touch-icon.png    180, opaque
+public/manifest.webmanifest     the manifest itself
+```
+
+**Never hand-edit any of them.** This is Herbal-Leaf's rule (`scripts/branding.py`,
+its own hard "do not") and it is not tidiness: a hand-made favicon is a fork of
+the logo that nobody can see is a fork. The mark changes, the SVG in the `<link>`
+updates, and the `.ico` in the tab goes on showing last year's artwork for as
+long as anybody's browser has it cached. `test/branding.test.mjs` regenerates
+every asset in memory and **compares bytes**, so a hand-edit and a forgotten
+`npm run branding` both go red.
+
+**`tools/branding.mjs` is not an SVG renderer and must not be treated as one.**
+There is no cairosvg, no rsvg-convert, no ImageMagick and no headless browser on
+the machines this repo is worked on, and the whole dependency list is one
+Postgres driver — adding a rendering stack to make eight small squares would be
+the heaviest thing here by an order of magnitude. It gets away with reading the
+rects straight out of the SVG because the mark is *only* axis-aligned `<rect>`s
+on a 32px grid, with no curves, paths, gradients or text. `parseMark()`
+**throws** on anything else rather than skipping it, so adding a `<path>` to the
+mark fails the build loudly instead of quietly shipping an icon with a shape
+missing. If the mark ever needs one, teach this file — do not work around it.
+
+**Two families of icon, and neither substitutes for the other.** A `maskable`
+icon is cropped by the platform to whatever shape it likes, and only the centre
+circle of 80% diameter survives; the mark's corners sit at 46% from centre,
+outside it. So the maskable pair is drawn inset at 19% on a full-bleed plate,
+and the plain pair keeps its transparent rounded corners. Ship only maskable and
+desktop shows a small mark adrift on a big square; ship only `any` and Android
+clips the coin door. The apple-touch icon is opaque for a third reason: iOS
+never reads the manifest and never honours alpha, and would composite our
+transparent corners onto black — *nearly* our background, which is what lets
+that bug survive review.
+
+`favicon.ico` lives at the **root**, not in `assets/`. The `<link>` tags settle
+it for browsers; `/favicon.ico` is still requested blind by crawlers, unfurlers
+and feed readers that never parse a head, and a 404 there is the one icon
+failure nobody ever sees in their own tab. Its payloads are **BMP, not PNG**:
+the only reason to ship `.ico` at all is the clients that ignore
+`<link rel="icon">`, and those are the same clients that predate PNG-in-ICO.
+
+The manifest is generated for the same reason the sitemap is, and its colours
+are read from `--bg` in `tokens.css` rather than restated — `background_color`
+paints the splash screen and `theme_color` paints the status bar, both are the
+site's ground by definition, and a hardcoded copy would drift silently and only
+on installed devices. `render()` warns if `mark.svg`'s plate and `--bg` disagree.
+
+`/collect` gets the icons but **no `<link rel="manifest">`**: `start_url` is
+`/`, so an install prompt fired from the operator tool would install the
+storefront, which is a confusing thing to offer somebody who came here to paste
+a passcode. `arcade.html` is byte-identical across all four sister sites and was
+not touched.
+
 ## 11b. `test/ingest.test.mjs` runs the whole money path
 
 Every other test here reads source or calls one function. This one drives the
@@ -744,7 +807,7 @@ before you trust it.
 
 ## 11. Verify before you merge
 
-1. `npm test` — 68 cases. The collector test parses the assembled program with
+1. `npm test` — 79 cases. The collector test parses the assembled program with
    `new Function`, which is the point of having it: a syntax error there does
    not fail locally, it fails silently on a stranger's website with no error
    event.
@@ -754,6 +817,10 @@ before you trust it.
    stamp in the panel must match the one on `/collect`. **A stale collector does
    not throw** — it returns a smaller catalogue that looks entirely plausible.
 4. Touching `_scene.js`: add a test case in the same commit.
+5. Touching `mark.svg`: `npm run branding` in the same commit, and eyeball
+   `icon-512.png` and `icon-maskable-512.png`. The byte-compare test proves they
+   were regenerated; only a human can see that they still look like a coin door
+   (§10c).
 
 ---
 
@@ -794,6 +861,14 @@ before you trust it.
 - Do NOT open `robots.txt` before a real domain AND a published merchant, and
   do NOT forget to (§10b). Both failure directions are quiet.
 - Do NOT hand-edit `public/sitemap.xml`; run `npm run sitemap` (§10b).
+- Do NOT hand-edit a PNG, the `.ico` or `manifest.webmanifest`; edit
+  `public/assets/mark.svg` and run `npm run branding` (§10c).
+- Do NOT add a `<path>`, gradient or text to `mark.svg` without teaching
+  `tools/branding.mjs` to draw it. It throws on purpose (§10c).
+- Do NOT point `<link rel="manifest">` at `/collect` or any operator page (§10c).
+- Do NOT let a test derive its subject list from the flag it is checking. The
+  opacity test did, so deleting `plate: true` removed the file from the test
+  instead of failing it; a mutation run caught it (§10c).
 - Do NOT drop `rel="nofollow sponsored"` from a card because that merchant has
   no code filled in (§10b).
 - Do NOT add analytics, a cookie, a newsletter or an endpoint that reads

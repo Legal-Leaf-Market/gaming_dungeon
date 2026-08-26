@@ -7,7 +7,14 @@
 <!-- OPERATOR TOOL. noindex, in no nav, in no sitemap. It is not a
      shopper page and a crawler finding it helps nobody. -->
 <meta name="robots" content="noindex,nofollow"/>
+<meta name="theme-color" content="#0a0413"/>
 <meta name="color-scheme" content="dark"/>
+<!-- Icons, but NO <link rel="manifest">. The manifest's start_url is
+     "/", so an install prompt fired from the operator tool would
+     install the storefront -- a confusing thing to offer somebody who
+     came here to paste a passcode. -->
+<link rel="icon" href="/favicon.ico" sizes="32x32"/>
+<link rel="icon" href="/assets/mark.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="/css/tokens.css"/>
 <link rel="stylesheet" href="/css/app.css"/>
 <style>

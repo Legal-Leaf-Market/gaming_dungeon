@@ -226,3 +226,58 @@ test('no endpoint accepts personal data', () => {
     assert.equal(/body\.email\b/.test(src), false, f + ' reads an email address')
   }
 })
+
+test('every local file the pages link to actually serves', async () => {
+  /* THE FAVICON CLASS OF BUG, CLOSED FOR GOOD. A <link> pointing at a
+     file that is not there does not error, does not warn and does not
+     show up in any log we read: the tab just keeps the browser's
+     default glyph, or the home-screen icon comes out blank, on a
+     device nobody here owns.
+
+     Read out of the pages rather than listed, so a link added later
+     is covered without anybody remembering this test exists. */
+  await boot()
+  const pages = readdirSync(join(ROOT, 'public')).filter(f => f.endsWith('.html'))
+  const seen = new Map()
+
+  for (const f of pages) {
+    const html = readFileSync(join(ROOT, 'public', f), 'utf8')
+    for (const m of html.matchAll(/(?:href|src)="(\/[^"#?]*)"/g)) {
+      const url = m[1]
+      /* Rewrites and clean URLs are already covered by their own
+         test; this one is about files. */
+      if (!/\.[a-z0-9]+$/i.test(url)) continue
+      if (!seen.has(url)) seen.set(url, [])
+      seen.get(url).push(f)
+    }
+  }
+
+  assert.ok(seen.has('/manifest.webmanifest'), 'no page links the manifest')
+  assert.ok(seen.has('/favicon.ico'), 'no page links favicon.ico')
+
+  for (const [url, from] of seen) {
+    const r = await fetch(BASE + url)
+    assert.equal(r.status, 200, url + ' is linked from ' + from.join(', ') + ' but does not serve')
+  }
+})
+
+test('the manifest serves as a manifest, not as a download', async () => {
+  /* Content-Type is the whole of it. Served as octet-stream the
+     browser does not parse it, no install prompt ever appears, and
+     nothing anywhere says so — the feature is simply absent. Vercel
+     needs telling too; there is a header rule in vercel.json beside
+     the one for the sitemap. */
+  await boot()
+  const r = await fetch(BASE + '/manifest.webmanifest')
+  assert.equal(r.status, 200)
+  assert.match(r.headers.get('content-type') || '', /application\/manifest\+json/,
+    'the dev server is guessing a type for .webmanifest')
+
+  const cfg = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'))
+  const rule = (cfg.headers || []).find(h => h.source === '/manifest.webmanifest')
+  assert.ok(rule, 'vercel.json has no Content-Type rule for the manifest, so production will guess')
+  assert.ok(rule.headers.some(h => h.key === 'Content-Type' && /manifest\+json/.test(h.value)))
+
+  const mf = await r.json()
+  assert.equal(mf.name, 'Gaming Dungeon')
+})
