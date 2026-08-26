@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "node server.mjs",
-    "test": "node --test test/*.test.mjs",
+    "test": "node --experimental-test-module-mocks --test test/*.test.mjs",
     "worklist": "node tools/worklist.mjs",
     "draft": "node tools/draft.mjs",
     "sitemap": "node tools/sitemap.mjs"

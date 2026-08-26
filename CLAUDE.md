@@ -56,7 +56,8 @@ public/
 data/captured/   THE GATE. One reviewed capture per publishable merchant.
 docs/
   SCENE_AFFILIATES.md  The merchant research this site was built from.
-test/            node --test. No framework.
+test/            node --test. No framework. `ingest.test.mjs` is the
+                 end-to-end one (§11b).
 ```
 
 ---
@@ -695,9 +696,55 @@ anything. A test asserts the page serves and that the front page links it.
 
 ---
 
+## 11b. `test/ingest.test.mjs` runs the whole money path
+
+Every other test here reads source or calls one function. This one drives the
+real chain on a fake shop:
+
+```
+reviewed summary  ->  publishable() lets the store through
+fake products.json ->  the Shopify strategy maps it
+include / roomMap ->  the human's decisions are applied
+_scene.js         ->  what is left gets a room, or is refused
+buildAff()        ->  the surviving URLs carry the tracking code
+respond()         ->  the payload the grid receives
+```
+
+**That chain had four bugs no unit test caught**, because every one was a
+mechanism that existed and was never called: `buildAff` uninvoked,
+`include`/`roomMap` unread, `row()` discarding the classifier's refusal, and the
+dev server not serving the endpoints. Running the whole thing is the only kind
+of test that finds those.
+
+No network, no database: `fetch` is replaced with a fake shop and `_stores.js`
+with a one-merchant registry. **Mocking the registry rather than adding a test
+hook to it is deliberate** — production code carrying scaffolding for its own
+tests is what this repo keeps deleting from inherited files. It needs
+`--experimental-test-module-mocks`, which `npm test` passes; if a future Node
+drops the flag this fails loudly with "bad option", which is the right way for
+it to break.
+
+### It was mutation-tested, and that caught a vacuous assertion
+
+A suite that passes on a chain you just claimed had four bugs deserves suspicion,
+so each fix was reverted in turn to confirm the test fails. Three did. **The
+`roomMap` assertion did not** — it used the t-shirt, and the classifier already
+puts a shirt in the wardrobe, so it passed with `roomMap` disabled entirely. It
+proves the ordering fix, not `roomMap`.
+
+The fixture now carries a coiled USB-C cable typed `Accessories`: the classifier
+files it under `power`, correctly in general, and this merchant's summary maps
+Accessories to `battlestation`. Disabling `roomMap` now fails.
+
+**An assertion that cannot fail is worse than no assertion, because it is
+counted.** If you add a case here, revert the code it guards and watch it go red
+before you trust it.
+
+---
+
 ## 11. Verify before you merge
 
-1. `npm test` — 23 cases. The collector test parses the assembled program with
+1. `npm test` — 68 cases. The collector test parses the assembled program with
    `new Function`, which is the point of having it: a syntax error there does
    not fail locally, it fails silently on a stranger's website with no error
    event.
