@@ -1,10 +1,51 @@
+# ============================================================
+# PRE-LAUNCH. THE WHOLE SITE IS CLOSED TO CRAWLERS ON PURPOSE.
+# ------------------------------------------------------------
+# Two facts make this the right posture today, and both stop being
+# true on the same day:
+#
+#   1. NOTHING IS PUBLISHED. 54 merchants are registered and none has
+#      cleared the capture gate, so every room says "nothing is
+#      stocked yet". Letting Google index that costs us the first
+#      impression on every one of these URLs to sell an empty shop.
+#
+#   2. THIS IS A THROWAWAY ADDRESS. gaming-dungeon.vercel.app is a
+#      deploy URL, not the domain. If it gets indexed and a real
+#      domain lands later, the two compete: duplicate content, split
+#      signal, and a canonical mess that is far more work to unpick
+#      than it ever was to prevent.
+#
+# Blocking now costs nothing, because there is nothing to index.
+#
+# ------------------------------------------------------------
+# HOW TO OPEN IT, WHICH IS THE PART THAT GETS FORGOTTEN
+# ------------------------------------------------------------
+# When a real domain is live AND at least one merchant is published:
+#
+#   1. Replace everything below with the LAUNCH block at the bottom.
+#   2. Set SITE_URL to the real domain and run `npm run sitemap`.
+#   3. Check /sitemap.xml lists what you expect and nothing noindex.
+#
+# A `Disallow: /` nobody remembers to remove is a site that quietly
+# never gets traffic, and the symptom — "our SEO isn't working" —
+# points nowhere near this file. It is in CLAUDE.md's launch
+# checklist for that reason.
+# ============================================================
+
 User-agent: *
-Allow: /
+Disallow: /
 
-# /collect is an operator tool and /api costs a live scrape of every
-# shop when it is crawled. Kawaii Katz's guide is blunt about the
-# second one and it is the same engine here.
-Disallow: /collect
-Disallow: /api/
-
-Sitemap: https://gamingdungeon.com/sitemap.xml
+# ============================================================
+# THE LAUNCH BLOCK — paste this over everything above.
+# ------------------------------------------------------------
+# User-agent: *
+# Allow: /
+#
+# # /collect is an operator tool. /api costs a live scrape of every
+# # shop when it is crawled — Kawaii Katz's guide is blunt about that
+# # and it is the same engine here.
+# Disallow: /collect
+# Disallow: /api/
+#
+# Sitemap: https://REAL-DOMAIN-HERE/sitemap.xml
+# ============================================================

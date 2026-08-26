@@ -624,6 +624,50 @@ the jsonb it would be a sequential scan on every report.
 
 ---
 
+## 10b. Pre-launch posture, and the checklist that undoes it
+
+**`robots.txt` currently blocks the entire site**, and that is deliberate. Two
+facts make it right today and both stop being true on the same day:
+
+1. **Nothing is published.** Every room says "nothing is stocked yet". Letting
+   Google index that spends the first impression on every URL selling an empty
+   shop.
+2. **`gaming-dungeon.vercel.app` is a deploy URL, not a domain.** If it gets
+   indexed and a real domain lands later, the two compete — duplicate content,
+   split signal, and a canonical mess far more work to unpick than to prevent.
+
+Blocking costs nothing while there is nothing to index. **But a `Disallow: /`
+nobody remembers to remove is a site that quietly never gets traffic, and the
+symptom — "our SEO isn't working" — points nowhere near that file.** So:
+
+### Launch checklist
+
+1. A real domain is live **and** at least one merchant is published.
+2. Paste the LAUNCH block at the bottom of `public/robots.txt` over the rest.
+3. `SITE_URL=https://the-real-domain npm run sitemap`.
+4. Check `/sitemap.xml` lists what you expect and nothing `noindex`.
+5. Update the `Sitemap:` line to the real domain.
+
+`npm run sitemap` **generates** `public/sitemap.xml` from two real sources — the
+rewrites in `vercel.json` and the pages in `public/` — because a hand-written
+sitemap is a third list to keep in step, and this repo has been bitten twice by
+exactly that (`server.mjs`'s API map, the `/api/capture` usage block). A page
+whose own `<meta name="robots">` says `noindex` is **never** listed: the page's
+head is the authority, so `/collect` and `/arcade` cannot be re-added by
+accident. `test/server.test.mjs` checks the committed sitemap against the
+running server and fails if it is stale.
+
+**`/disclosure`** is the affiliate disclosure, and it is the one compliance
+obligation here with teeth outside our own codebase. It states plainly that
+roughly half the links pay us and half do not, that the price is identical
+either way, that money buys neither position nor inclusion, and that the
+merchant's own checkout is always the truth on price. Every outbound product
+link carries `rel="nofollow sponsored"` **whether or not that merchant pays us**
+— sorting the disclosure by our own convenience is how disclosure stops meaning
+anything. A test asserts the page serves and that the front page links it.
+
+---
+
 ## 11. Verify before you merge
 
 1. `npm test` — 23 cases. The collector test parses the assembled program with
@@ -673,3 +717,8 @@ the jsonb it would be a sequential scan on every report.
   the browser to shrink the payload. That is how every card shipped unattributed
   once already (§5).
 - Do NOT let `include` / `roomMap` stop being applied in `row()` (§4).
+- Do NOT open `robots.txt` before a real domain AND a published merchant, and
+  do NOT forget to (§10b). Both failure directions are quiet.
+- Do NOT hand-edit `public/sitemap.xml`; run `npm run sitemap` (§10b).
+- Do NOT drop `rel="nofollow sponsored"` from a card because that merchant has
+  no code filled in (§10b).

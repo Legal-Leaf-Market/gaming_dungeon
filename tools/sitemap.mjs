@@ -1,0 +1,71 @@
+/* Generate public/sitemap.xml from the routes that actually exist.
+   ------------------------------------------------------------
+     npm run sitemap
+
+   TWO SOURCES, BOTH REAL, NEITHER RESTATED HERE:
+
+     vercel.json   the room URLs, read from the rewrites
+     public/*.html the standalone pages, read from disk
+
+   A hand-written sitemap is a third list to keep in step with the
+   other two, and this repo has now been bitten twice by exactly that
+   -- server.mjs's API map, and the /api/capture usage block. A
+   sitemap that drifts is worse than most drift, because the failure
+   is a crawler being sent to a 404 and nobody on the team ever
+   seeing it.
+
+   A PAGE THAT SAYS noindex IS NEVER LISTED. That is read out of the
+   file's own meta tag rather than from a list here, so /collect and
+   /arcade cannot be added back by accident: the page's own head is
+   the authority on whether it wants to be indexed. Listing a noindex
+   page in a sitemap is a direct contradiction, and Google reports it
+   as an error rather than guessing which one you meant.
+*/
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
+
+/* No domain is owned yet, so this is the deploy URL. It is the ONLY
+   place the site's public address is written down; change it here
+   when the domain lands and re-run. */
+export const SITE = process.env.SITE_URL || 'https://gaming-dungeon.vercel.app'
+
+export function routes(root = process.cwd()) {
+  const out = new Set(['/'])
+
+  /* Room URLs, from the same file the server routes on. */
+  const cfg = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8'))
+  for (const r of cfg.rewrites || []) {
+    /* A :param route is a template, not a page. /shop/:key becomes a
+       real URL only once a shop is published, and publishing one does
+       not currently regenerate this -- so it is left out rather than
+       guessed at. Worth revisiting when the first shop ships. */
+    if (r.source.includes(':')) continue
+    out.add(r.source)
+  }
+
+  /* Standalone pages, minus anything that asked not to be indexed. */
+  for (const f of readdirSync(join(root, 'public'))) {
+    if (!f.endsWith('.html') || f === 'index.html') continue
+    const html = readFileSync(join(root, 'public', f), 'utf8')
+    if (/name=["']robots["'][^>]*noindex/i.test(html)) continue
+    out.add('/' + f.replace(/\.html$/, ''))
+  }
+
+  return Array.from(out).sort()
+}
+
+export function build(root = process.cwd(), site = SITE) {
+  const urls = routes(root).map(p =>
+    '  <url><loc>' + site + (p === '/' ? '/' : p) + '</loc></url>').join('\n')
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.w3.org/1999/xhtml/../../schemas/sitemap/0.9">\n'
+      .replace('http://www.w3.org/1999/xhtml/../../schemas/sitemap/0.9',
+               'http://www.sitemaps.org/schemas/sitemap/0.9') +
+    urls + '\n</urlset>\n'
+}
+
+if (import.meta.url === 'file://' + process.argv[1]) {
+  const xml = build()
+  writeFileSync(join(process.cwd(), 'public', 'sitemap.xml'), xml)
+  console.log('\n  ' + routes().join('\n  ') + '\n\n  wrote public/sitemap.xml (' + SITE + ')\n')
+}

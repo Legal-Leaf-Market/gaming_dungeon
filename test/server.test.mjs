@@ -102,3 +102,52 @@ test('the API map is not hand-written', () => {
   assert.equal(/"\/api\/(products|capture|collector|track|subscribe)"\s*:/.test(src), false,
     'a hardcoded /api/... route is back in server.mjs')
 })
+
+test('the sitemap lists exactly the routes that serve, and nothing noindex', async () => {
+  /* A sitemap is a third list to keep in step with vercel.json and
+     public/, and this repo has been bitten twice by exactly that kind
+     of drift. Here the failure is a crawler sent to a 404, which
+     nobody on the team ever sees. So the file is generated, and this
+     checks the generated file against the running server. */
+  await boot()
+  const { routes } = await import('../tools/sitemap.mjs')
+  const xml = readFileSync(join(ROOT, 'public', 'sitemap.xml'), 'utf8')
+
+  /* Parse the URL rather than regexing a path out of it — the first
+     attempt matched the `//` in `https://` and reported a stale
+     sitemap that was in fact correct. */
+  const listed = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => new URL(m[1]).pathname)
+  assert.deepEqual(listed.sort(), routes().sort(),
+    'public/sitemap.xml is stale — run `npm run sitemap`')
+
+  for (const path of listed) {
+    const r = await fetch(BASE + path)
+    assert.equal(r.status, 200, path + ' is in the sitemap but does not serve')
+    const html = await r.text()
+    assert.equal(/name=["']robots["'][^>]*noindex/i.test(html), false,
+      path + ' is noindex but is listed in the sitemap')
+  }
+})
+
+test('robots.txt and the sitemap do not contradict each other', () => {
+  /* Pre-launch robots blocks everything, so it must NOT also advertise
+     a sitemap: "crawl nothing, here is a list of things to crawl" is
+     the kind of contradiction Search Console reports as an error and
+     a human reads straight past. */
+  const robots = readFileSync(join(ROOT, 'public', 'robots.txt'), 'utf8')
+  const active = robots.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'))
+  const blocksAll = active.some(l => /^Disallow:\s*\/\s*$/i.test(l.trim()))
+  const advertises = active.some(l => /^Sitemap:/i.test(l.trim()))
+  assert.equal(blocksAll && advertises, false,
+    'robots.txt blocks everything AND advertises a sitemap')
+})
+
+test('the disclosure page is reachable and linked from the front page', async () => {
+  /* An affiliate site that does not disclose is the one compliance
+     problem here with teeth outside our own codebase. A page nothing
+     links to is a page nobody reads. */
+  await boot()
+  assert.equal((await fetch(BASE + '/disclosure')).status, 200)
+  const home = await (await fetch(BASE + '/')).text()
+  assert.ok(home.includes('/disclosure'), 'the front page must link the disclosure')
+})
