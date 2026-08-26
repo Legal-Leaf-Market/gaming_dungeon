@@ -648,6 +648,10 @@ symptom — "our SEO isn't working" — points nowhere near that file.** So:
 3. `SITE_URL=https://the-real-domain npm run sitemap`.
 4. Check `/sitemap.xml` lists what you expect and nothing `noindex`.
 5. Update the `Sitemap:` line to the real domain.
+6. Update `og:url` and `og:image` in `index.html`, `disclosure.html`,
+   `privacy.html` and `terms.html` to the real domain, **and** `SITE` in
+   `tools/sitemap.mjs`. A test fails if those two disagree, so this step
+   cannot be half-done (§10c).
 
 `npm run sitemap` **generates** `public/sitemap.xml` from two real sources — the
 rewrites in `vercel.json` and the pages in `public/` — because a hand-written
@@ -707,6 +711,7 @@ public/assets/icon-512.png      manifest, purpose "any"
 public/assets/icon-maskable-192.png   manifest, purpose "maskable"
 public/assets/icon-maskable-512.png   manifest, purpose "maskable"
 public/assets/apple-touch-icon.png    180, opaque
+public/assets/og.png            1200x630 share card
 public/manifest.webmanifest     the manifest itself
 ```
 
@@ -752,6 +757,41 @@ are read from `--bg` in `tokens.css` rather than restated — `background_color`
 paints the splash screen and `theme_color` paints the status bar, both are the
 site's ground by definition, and a hardcoded copy would drift silently and only
 on installed devices. `render()` warns if `mark.svg`'s plate and `--bg` disagree.
+
+### The share card, and the font that had to exist for it
+
+`public/assets/og.png` is 1200x630 because that is the frame Discord, iMessage,
+Slack and the timeline all crop into, and it is **fully opaque** because about
+half of those clients put the card on white. Without it every link to this site
+unfurls as a grey rectangle with a line of text in it, which for a mall shared
+in group chats is most of how anybody would have arrived. Like every icon
+failure it looks fine to us: we are the only people who never see our own links
+unfurl.
+
+**It needed type, and there is nothing here to set type with** — no rasteriser,
+no font loader, no canvas. Press Start 2P, the face the site already uses for
+headings, is a bitmap font pretending to be a webfont, so the honest way to
+reproduce it is a bitmap font: `FONT` in `tools/branding.mjs` is 5x7 cells drawn
+as strings, scaled by **whole numbers only** (fractional scaling is what makes
+pixel type look like a mistake). It is uppercase, digits and punctuation, and
+`drawText` **throws** on a glyph it does not have — the same posture as
+`parseMark`, and for the same reason: a card reading `GAMING DUNGEN` would ship
+and nobody here would ever see it. Writing the tests found two missing glyphs
+that way, `+` among them, on a site whose three sister links are all 21+.
+
+The layout is **derived from the content**, not placed by hand. The first
+version used six hand-tuned numbers and sat 30px low, which is invisible until
+the card is next to somebody else's in a channel. Change the tagline or a type
+size and it re-centres; a tagline too wide for the card throws rather than
+running off the edge.
+
+`og:image` and `og:url` **cannot be relative** — no unfurler resolves one — so
+they hardcode a host, in four HTML files, and `tools/sitemap.mjs` hardcodes it
+in a fifth place. `test/branding.test.mjs` fails if they disagree, because the
+drift lands on the day a domain is bought and the symptom is a card that goes on
+loading from the old deploy, looking perfectly fine until that deploy is
+deleted. SVG is not an option however tempting: no major unfurler accepts
+`image/svg+xml` for `og:image`.
 
 `/collect` gets the icons but **no `<link rel="manifest">`**: `start_url` is
 `/`, so an install prompt fired from the operator tool would install the
@@ -807,7 +847,7 @@ before you trust it.
 
 ## 11. Verify before you merge
 
-1. `npm test` — 79 cases. The collector test parses the assembled program with
+1. `npm test` — 85 cases. The collector test parses the assembled program with
    `new Function`, which is the point of having it: a syntax error there does
    not fail locally, it fails silently on a stranger's website with no error
    event.
@@ -818,9 +858,9 @@ before you trust it.
    not throw** — it returns a smaller catalogue that looks entirely plausible.
 4. Touching `_scene.js`: add a test case in the same commit.
 5. Touching `mark.svg`: `npm run branding` in the same commit, and eyeball
-   `icon-512.png` and `icon-maskable-512.png`. The byte-compare test proves they
-   were regenerated; only a human can see that they still look like a coin door
-   (§10c).
+   `icon-512.png`, `icon-maskable-512.png` and `og.png`. The byte-compare test
+   proves they were regenerated; only a human can see that they still look like
+   a coin door (§10c).
 
 ---
 
@@ -866,6 +906,10 @@ before you trust it.
 - Do NOT add a `<path>`, gradient or text to `mark.svg` without teaching
   `tools/branding.mjs` to draw it. It throws on purpose (§10c).
 - Do NOT point `<link rel="manifest">` at `/collect` or any operator page (§10c).
+- Do NOT point `og:image` at an SVG, and do NOT make it relative. No unfurler
+  accepts either (§10c).
+- Do NOT let `drawText` skip a glyph it does not have. It throws so that a
+  missing letter fails the build instead of shipping on every shared link (§10c).
 - Do NOT let a test derive its subject list from the flag it is checking. The
   opacity test did, so deleting `plate: true` removed the file from the test
   instead of failing it; a mutation run caught it (§10c).

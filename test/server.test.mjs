@@ -252,8 +252,23 @@ test('every local file the pages link to actually serves', async () => {
     }
   }
 
+  /* og:image and og:url are absolute -- no unfurler resolves a
+     relative one -- so they are not href/src and the sweep above
+     misses them entirely. They are the links most likely to rot,
+     because the only person who ever sees one resolve is a stranger
+     pasting our URL into a chat. */
+  for (const f of pages) {
+    const html = readFileSync(join(ROOT, 'public', f), 'utf8')
+    for (const m of html.matchAll(/<meta property="og:(?:image|url)" content="(https?:[^"]+)"/g)) {
+      const path = new URL(m[1]).pathname
+      if (!seen.has(path)) seen.set(path, [])
+      seen.get(path).push(f + ' (og)')
+    }
+  }
+
   assert.ok(seen.has('/manifest.webmanifest'), 'no page links the manifest')
   assert.ok(seen.has('/favicon.ico'), 'no page links favicon.ico')
+  assert.ok(seen.has('/assets/og.png'), 'no page names a share card')
 
   for (const [url, from] of seen) {
     const r = await fetch(BASE + url)

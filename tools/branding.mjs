@@ -314,6 +314,10 @@ export const ASSETS = [
      but not quite our background -- the "nearly" is what makes that
      bug survive review. */
   { file: 'apple-touch-icon.png', size: 180, plate: true },
+  /* The share card. Not an icon: it is the only asset with type on
+     it, and the only one sized by what Discord and the timeline crop
+     to rather than by what a home screen wants. */
+  { file: 'og.png', card: true },
 ]
 
 /* The mark's backing rect: the first filled shape, which on a 32px
@@ -385,6 +389,206 @@ export function manifest(root = process.cwd()) {
   }
 }
 
+/* ============================================================
+   7. THE SHARE CARD
+   ------------------------------------------------------------
+   An affiliate mall gets shared in Discord, in group chats and on
+   the timeline, which for this audience is most of how anybody
+   arrives. Without og:image every one of those unfurls as a grey
+   rectangle with a line of text in it -- and like every other icon
+   failure, it looks fine to us, because we are the only people who
+   never see our own links unfurl.
+
+   IT NEEDS TEXT, AND THERE IS NOTHING HERE TO SET TYPE WITH. No
+   rasteriser, no font loader, no canvas. Press Start 2P -- the face
+   the site already uses for headings -- is a BITMAP font pretending
+   to be a webfont, so the honest way to reproduce it here is a bitmap
+   font: 5x7 cells, drawn as strings, scaled by whole numbers only.
+   Fractional scaling is what makes pixel type look like a mistake,
+   so `drawText` takes an integer and multiplies.
+
+   THE FONT IS UPPERCASE-ONLY AND `drawText` THROWS on a glyph it does
+   not have, for the same reason parseMark throws on a <path>: a
+   missing letter is invisible in a file nobody opens, and a card
+   reading "GAMING DUNGEN" would ship.
+
+   SVG is not an option here however tempting -- no major unfurler
+   accepts image/svg+xml for og:image, so this has to be a raster.
+   ============================================================ */
+
+const FONT = {
+  ' ': '.....|.....|.....|.....|.....|.....|.....',
+  '!': '..#..|..#..|..#..|..#..|..#..|.....|..#..',
+  '\'': '.#...|.#...|.....|.....|.....|.....|.....',
+  '+': '.....|..#..|..#..|#####|..#..|..#..|.....',
+  '?': '.###.|#...#|....#|...#.|..#..|.....|..#..',
+  '&': '.##..|#..#.|#.#..|.#...|#.#.#|#..#.|.##.#',
+  ',': '.....|.....|.....|.....|.##..|.##..|.#...',
+  '-': '.....|.....|.....|#####|.....|.....|.....',
+  '.': '.....|.....|.....|.....|.....|.##..|.##..',
+  '/': '....#|....#|...#.|..#..|.#...|#....|#....',
+  '0': '.###.|#...#|#..##|#.#.#|##..#|#...#|.###.',
+  '1': '..#..|.##..|..#..|..#..|..#..|..#..|.###.',
+  '2': '.###.|#...#|....#|...#.|..#..|.#...|#####',
+  '3': '#####|...#.|..#..|...#.|....#|#...#|.###.',
+  '4': '...#.|..##.|.#.#.|#..#.|#####|...#.|...#.',
+  '5': '#####|#....|####.|....#|....#|#...#|.###.',
+  '6': '..##.|.#...|#....|####.|#...#|#...#|.###.',
+  '7': '#####|....#|...#.|..#..|.#...|.#...|.#...',
+  '8': '.###.|#...#|#...#|.###.|#...#|#...#|.###.',
+  '9': '.###.|#...#|#...#|.####|....#|...#.|.##..',
+  ':': '.....|.##..|.##..|.....|.##..|.##..|.....',
+  'A': '.###.|#...#|#...#|#####|#...#|#...#|#...#',
+  'B': '####.|#...#|#...#|####.|#...#|#...#|####.',
+  'C': '.###.|#...#|#....|#....|#....|#...#|.###.',
+  'D': '####.|#...#|#...#|#...#|#...#|#...#|####.',
+  'E': '#####|#....|#....|####.|#....|#....|#####',
+  'F': '#####|#....|#....|####.|#....|#....|#....',
+  'G': '.###.|#...#|#....|#.###|#...#|#...#|.###.',
+  'H': '#...#|#...#|#...#|#####|#...#|#...#|#...#',
+  'I': '#####|..#..|..#..|..#..|..#..|..#..|#####',
+  'J': '..###|...#.|...#.|...#.|...#.|#..#.|.##..',
+  'K': '#...#|#..#.|#.#..|##...|#.#..|#..#.|#...#',
+  'L': '#....|#....|#....|#....|#....|#....|#####',
+  'M': '#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#',
+  'N': '#...#|##..#|#.#.#|#.#.#|#..##|#...#|#...#',
+  'O': '.###.|#...#|#...#|#...#|#...#|#...#|.###.',
+  'P': '####.|#...#|#...#|####.|#....|#....|#....',
+  'Q': '.###.|#...#|#...#|#...#|#.#.#|#..#.|.##.#',
+  'R': '####.|#...#|#...#|####.|#.#..|#..#.|#...#',
+  'S': '.####|#....|#....|.###.|....#|....#|####.',
+  'T': '#####|..#..|..#..|..#..|..#..|..#..|..#..',
+  'U': '#...#|#...#|#...#|#...#|#...#|#...#|.###.',
+  'V': '#...#|#...#|#...#|#...#|#...#|.#.#.|..#..',
+  'W': '#...#|#...#|#...#|#.#.#|#.#.#|##.##|#...#',
+  'X': '#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#',
+  'Y': '#...#|#...#|.#.#.|..#..|..#..|..#..|..#..',
+  'Z': '#####|....#|...#.|..#..|.#...|#....|#####',
+}
+const CELL_W = 5, CELL_H = 7, TRACK = 1   /* one blank column between glyphs */
+
+export function textWidth(str, scale) {
+  const n = str.length
+  return n ? (n * (CELL_W + TRACK) - TRACK) * scale : 0
+}
+
+function drawText(px, W, H, str, x, y, scale, rgb, alpha = 1) {
+  let cx = x
+  for (const ch of str) {
+    const g = FONT[ch]
+    if (g === undefined) {
+      throw new Error('branding: no glyph for "' + ch + '". The card font is uppercase and punctuation only; ' +
+        'add the glyph to FONT rather than letting the letter vanish.')
+    }
+    const rows = g.split('|')
+    for (let ry = 0; ry < CELL_H; ry++) {
+      for (let rx = 0; rx < CELL_W; rx++) {
+        if (rows[ry][rx] !== '#') continue
+        /* Whole-number scaling: one font pixel becomes a scale x scale
+           block, hard-edged. Antialiasing a pixel font is how it stops
+           looking like a pixel font. */
+        for (let dy = 0; dy < scale; dy++) {
+          for (let dx = 0; dx < scale; dx++) {
+            const ox = cx + rx * scale + dx, oy = y + ry * scale + dy
+            if (ox < 0 || oy < 0 || ox >= W || oy >= H) continue
+            const o = (oy * W + ox) * 4
+            px[o] = rgb[0] * alpha + px[o] * (1 - alpha)
+            px[o + 1] = rgb[1] * alpha + px[o + 1] * (1 - alpha)
+            px[o + 2] = rgb[2] * alpha + px[o + 2] * (1 - alpha)
+            px[o + 3] = 255
+          }
+        }
+      }
+    }
+    cx += (CELL_W + TRACK) * scale
+  }
+  return cx
+}
+
+function fillRect(px, W, H, x, y, w, h, rgb, alpha = 1) {
+  for (let oy = Math.max(0, y); oy < Math.min(H, y + h); oy++) {
+    for (let ox = Math.max(0, x); ox < Math.min(W, x + w); ox++) {
+      const o = (oy * W + ox) * 4
+      px[o] = rgb[0] * alpha + px[o] * (1 - alpha)
+      px[o + 1] = rgb[1] * alpha + px[o + 1] * (1 - alpha)
+      px[o + 2] = rgb[2] * alpha + px[o + 2] * (1 - alpha)
+      px[o + 3] = 255
+    }
+  }
+}
+
+/* 1200x630 is not a preference, it is what the unfurlers crop to.
+   Anything meaningful must sit well inside it: Discord and iMessage
+   letterbox the card differently and both will eat the edges. */
+export const CARD = { w: 1200, h: 630 }
+
+export function renderCard(mark, opts = {}) {
+  const { w: W, h: H } = CARD
+  const px = new Uint8ClampedArray(W * H * 4)
+  const bg = colour(plate(mark))
+  const violet = colour(opts.accent || '#a78bfa')
+  const gold = colour(opts.gold || '#f0b93c')
+  const ink = colour(opts.ink || '#efe6f7')
+
+  fillRect(px, W, H, 0, 0, W, H, bg)
+
+  /* A hairline frame, inset. Gives the card an edge when a client
+     puts it on a white background, which about half of them do. */
+  fillRect(px, W, H, 0, 0, W, 6, violet, 0.9)
+  fillRect(px, W, H, 0, H - 6, W, 6, violet, 0.35)
+
+  /* LAID OUT FROM THE CONTENT, NOT FROM SIX MAGIC NUMBERS. Every
+     measurement below is derived, so changing the tagline or a type
+     size re-centres the card instead of quietly leaving it 30px low
+     -- which is exactly what the hand-placed first version did, and
+     the kind of thing you only see once it is next to somebody
+     else's link in a Discord channel. */
+  const TITLE = 11, TAG = 5
+  const lineH = CELL_H * TITLE
+  const gaps = { line: 26, rule: 34, tag: 34 }
+  const ruleH = 6
+  const textH = lineH + gaps.line + lineH + gaps.rule + ruleH + gaps.tag + CELL_H * TAG
+
+  const MK = 260, mx = 96
+  const blockH = Math.max(MK, textH)
+  const top = Math.round((H - blockH) / 2)
+
+  /* The mark, drawn at card scale rather than upscaled from an icon:
+     these are rects, so there is no reason to ever resample one. */
+  const my = top + Math.round((blockH - MK) / 2)
+  const icon = rasterize(mark, MK)
+  for (let y = 0; y < MK; y++) {
+    for (let x = 0; x < MK; x++) {
+      const s = (y * MK + x) * 4, a = icon[s + 3] / 255
+      if (!a) continue
+      const o = ((my + y) * W + (mx + x)) * 4
+      px[o] = icon[s] * a + px[o] * (1 - a)
+      px[o + 1] = icon[s + 1] * a + px[o + 1] * (1 - a)
+      px[o + 2] = icon[s + 2] * a + px[o + 2] * (1 - a)
+      px[o + 3] = 255
+    }
+  }
+
+  const tx = mx + MK + 76
+  let ty = top + Math.round((blockH - textH) / 2)
+  drawText(px, W, H, 'GAMING', tx, ty, TITLE, ink)
+  ty += lineH + gaps.line
+  drawText(px, W, H, 'DUNGEON', tx, ty, TITLE, violet)
+  ty += lineH + gaps.rule
+  fillRect(px, W, H, tx, ty, textWidth('DUNGEON', TITLE), ruleH, gold)
+  ty += ruleH + gaps.tag
+
+  const tagline = opts.tagline || 'A ROOM TO WANDER'
+  /* Refuse rather than run off the edge. A tagline wider than the
+     card is not a layout that degrades, it is a word cut in half. */
+  if (tx + textWidth(tagline, TAG) > W - 48) {
+    throw new Error('branding: the tagline "' + tagline + '" does not fit the card')
+  }
+  drawText(px, W, H, tagline, tx, ty, TAG, ink, 0.72)
+
+  return px
+}
+
 /* SPLIT FROM build() SO THE TEST CAN REBUILD WITHOUT WRITING. The
    committed assets are checked by regenerating them in memory and
    comparing bytes, the same way the sitemap is checked -- which only
@@ -398,9 +602,14 @@ export function render(root = process.cwd()) {
   const out = []
 
   for (const a of ASSETS) {
-    const buf = a.ico
-      ? encodeICO(a.ico.map(size => ({ size, rgba: rasterize(mark, size) })))
-      : encodePNG(rasterize(mark, a.size, { inset: a.inset, background: a.plate ? bg : null }), a.size, a.size)
+    let buf
+    if (a.ico) {
+      buf = encodeICO(a.ico.map(size => ({ size, rgba: rasterize(mark, size) })))
+    } else if (a.card) {
+      buf = encodePNG(renderCard(mark), CARD.w, CARD.h)
+    } else {
+      buf = encodePNG(rasterize(mark, a.size, { inset: a.inset, background: a.plate ? bg : null }), a.size, a.size)
+    }
     out.push({ file: a.root ? a.file : 'assets/' + a.file, buf })
   }
 

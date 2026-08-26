@@ -23,7 +23,8 @@ import { readFileSync, existsSync } from 'node:fs'
 import { inflateSync } from 'node:zlib'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { render, manifest, manifestIcons, parseMark, ASSETS, plate, tokenBg } from '../tools/branding.mjs'
+import { render, manifest, manifestIcons, parseMark, ASSETS, plate, tokenBg, CARD, textWidth, renderCard } from '../tools/branding.mjs'
+import { SITE } from '../tools/sitemap.mjs'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 const pub = f => join(ROOT, 'public', f)
@@ -255,5 +256,127 @@ test('the plain icons keep their transparent corners', () => {
     let solid = 0
     for (let i = 3; i < px.data.length; i += 4) if (px.data[i] === 255) solid++
     assert.ok(solid > px.w * px.w * 0.6, a.file + ' is mostly transparent; the plate did not draw')
+  }
+})
+
+/* ================================================== the share card */
+
+test('the share card is the size the unfurlers crop to, and is opaque', () => {
+  /* 1200x630 is not a preference, it is the frame Discord, iMessage,
+     Slack and the timeline all crop into. And it must be fully
+     opaque: about half of those clients put the card on a white
+     background, where a transparent pixel is not subtle. */
+  const px = decodePNG(readFileSync(pub('assets/og.png')))
+  assert.equal(px.w, 1200)
+  assert.equal(px.h, 630)
+  assert.deepEqual([px.w, px.h], [CARD.w, CARD.h], 'the file and CARD disagree about the size')
+
+  let clear = 0
+  for (let i = 3; i < px.data.length; i += 4) if (px.data[i] !== 255) clear++
+  assert.equal(clear, 0, 'the share card has transparent pixels')
+})
+
+test('the share card actually has the type on it', () => {
+  /* The failure this catches is a card that renders as an empty
+     rectangle -- which is exactly what an og:image is FOR avoiding,
+     so a blank one is worse than none.
+
+     ASSERTED STRUCTURALLY, NOT BY PIXEL COUNT. The first draft
+     compared counts of specific colours against numbers I had picked
+     by eye; when they failed I nearly replaced them with the numbers
+     the current card happens to produce, which would have made the
+     test say "the card is what the card is". What actually matters is
+     that the two thirds of the canvas to the right of the mark are
+     not empty, and that the rule under the title is a solid bar. Both
+     survive a recolour and neither can be satisfied by a blank. */
+  const px = decodePNG(readFileSync(pub('assets/og.png')))
+  const bg = plate(parseMark(readFileSync(pub('assets/mark.svg'), 'utf8')))
+  const ground = [parseInt(bg.slice(1, 3), 16), parseInt(bg.slice(3, 5), 16), parseInt(bg.slice(5, 7), 16)]
+  const at = (x, y) => px.data.subarray((y * px.w + x) * 4, (y * px.w + x) * 4 + 3)
+  const isGround = (x, y) => { const c = at(x, y); return c[0] === ground[0] && c[1] === ground[1] && c[2] === ground[2] }
+
+  /* The type column: right of the mark, inside the frame lines. */
+  let lit = 0
+  for (let y = 40; y < px.h - 40; y++) {
+    for (let x = 432; x < px.w - 48; x++) if (!isGround(x, y)) lit++
+  }
+  assert.ok(lit > 5000, 'the right two thirds of the card are empty: no type drew (' + lit + ' lit pixels)')
+
+  /* The rule is the one solid horizontal bar on the card, so a long
+     unbroken run of one colour proves it drew. Letters cannot fake
+     this: the widest solid run in a 5-cell glyph is 5 units. */
+  let longest = 0
+  for (let y = 40; y < px.h - 40; y++) {
+    let run = 0, prev = ''
+    for (let x = 432; x < px.w - 48; x++) {
+      const c = at(x, y), k = c[0] + ',' + c[1] + ',' + c[2]
+      if (k === prev && !isGround(x, y)) { run++; if (run > longest) longest = run }
+      else { run = 1; prev = k }
+    }
+  }
+  assert.ok(longest > 300, 'no solid rule under the title (longest run ' + longest + 'px)')
+})
+
+test('the card font refuses a glyph it does not have', () => {
+  /* Same posture as parseMark refusing a <path>: a missing letter is
+     invisible in a file nobody opens, and "GAMING DUNGEN" would go
+     out on every link the site ever gets shared through. */
+  const mark = parseMark(readFileSync(pub('assets/mark.svg'), 'utf8'))
+  assert.throws(() => renderCard(mark, { tagline: 'lower case' }), /no glyph/,
+    'the font is uppercase-only and must say so')
+  assert.throws(() => renderCard(mark, { tagline: 'A ROOM TO WANDER, ENDLESSLY, AND THEN SOME MORE' }), /does not fit/,
+    'a tagline wider than the card must fail rather than run off the edge')
+  assert.doesNotThrow(() => renderCard(mark, { tagline: "IT'S 21+ NEXT DOOR." }))
+})
+
+test('textWidth agrees with what drawText actually draws', () => {
+  /* The rule the layout is centred with. If it were wrong the card
+     would still render, just off-centre, which is the kind of thing
+     nobody notices until it is next to somebody else's link. */
+  assert.equal(textWidth('', 5), 0)
+  assert.equal(textWidth('A', 5), 5 * 5)
+  assert.equal(textWidth('AB', 5), (5 + 1 + 5) * 5)
+  assert.equal(textWidth('DUNGEON', 11), (7 * 6 - 1) * 11)
+})
+
+/* ============================================ the meta tags */
+
+test('every page names a share card that exists, at the size it claims', () => {
+  const pages = ['index.html', 'disclosure.html', 'privacy.html', 'terms.html']
+  for (const f of pages) {
+    const html = readFileSync(pub(f), 'utf8')
+    const img = /<meta property="og:image" content="([^"]+)"/.exec(html)
+    assert.ok(img, f + ' has no og:image, so it unfurls as a grey rectangle')
+
+    const url = new URL(img[1])
+    assert.ok(existsSync(pub(url.pathname.replace(/^\//, ''))), f + ' names ' + img[1] + ', which is not on disk')
+
+    const w = /<meta property="og:image:width" content="(\d+)"/.exec(html)
+    const h = /<meta property="og:image:height" content="(\d+)"/.exec(html)
+    assert.ok(w && h, f + ' declares no og:image dimensions; some clients skip the card without them')
+    assert.equal(Number(w[1]), CARD.w, f + ' declares the wrong card width')
+    assert.equal(Number(h[1]), CARD.h, f + ' declares the wrong card height')
+
+    assert.match(html, /<meta name="twitter:card" content="summary_large_image"/,
+      f + ' has a large card but does not ask for the large layout')
+    assert.match(html, /<meta property="og:image:alt"/, f + ' has no alt text on its card')
+  }
+})
+
+test('the absolute URLs in the meta tags all name the same site as the sitemap', () => {
+  /* THE DRIFT THAT LANDS ON THE DAY A DOMAIN IS BOUGHT. og:url and
+     og:image cannot be relative -- no unfurler resolves one -- so
+     they hardcode a host, and the sitemap hardcodes it in exactly one
+     other place. Change one and the other keeps pointing at the old
+     deploy: the card goes on loading from a stale domain, and looks
+     fine right up until that deploy is deleted. */
+  for (const f of ['index.html', 'disclosure.html', 'privacy.html', 'terms.html']) {
+    const html = readFileSync(pub(f), 'utf8')
+    const urls = [...html.matchAll(/<meta property="og:(?:url|image)" content="(https?:[^"]+)"/g)].map(m => m[1])
+    assert.ok(urls.length >= 2, f + ' should carry both og:url and og:image')
+    for (const u of urls) {
+      assert.equal(new URL(u).origin, new URL(SITE).origin,
+        f + ' points at ' + new URL(u).origin + ' but tools/sitemap.mjs says ' + SITE)
+    }
   }
 })
