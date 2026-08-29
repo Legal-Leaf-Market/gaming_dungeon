@@ -68,6 +68,9 @@
    *   threads  true only if the build needs SharedArrayBuffer (see above)
    *   weight   rough download, printed BEFORE anyone commits to it
    *   listed   false keeps it off the public wall
+   *   controls what to press, shown under the open cabinet. The wall
+   *            never prints these; a player who has not loaded the game
+   *            has nothing to press yet.
    */
   var GAMES = [
     {
@@ -97,27 +100,52 @@
          permissive licence means vendor it and credit it; no licence means ask
          the author, not embed and hope. */
     },
+    /* THE WORKING TITLES ARE GONE. These two shipped as "Deep Water" and
+       "Long Haul" -- placeholder names from the deployment spec -- and the
+       games have real ones now. Ids renamed to match (they are the folder
+       under public/arcade/ and nothing had been dropped in the old folders,
+       so the rename was free; it stops being free the moment a build lands).
+       Titles, blurbs and controls came over from the integration package's
+       catalog. Still `listed:false`: the permission note at the top of this
+       file is about these two, and a real title is not a sign-off. */
     {
-      id: "deep-water",
-      title: "Deep Water",
+      id: "drowned-signal",
+      title: "Drowned Signal",
       by: "Brayton (Dean)",
-      blurb: "Horror fishing. Something is down there and it is not a fish.",
+      blurb: "Three nights on a haunted lake. Fish by day. Survive the dark.",
       embed: "",
       threads: false,
-      weight: "",
+      weight: "~40MB",
       listed: false,
-      note: "Not installed yet: drop the Godot web export into public/arcade/deep-water/ and set embed.",
+      note: "Not installed yet: drop the Godot web export into public/arcade/drowned-signal/ (see DROP_EXPORT_HERE.txt there) and set embed to \"/arcade/drowned-signal/\".",
+      controls: [
+        "WASD / Arrows — steer",
+        "Shift — turbo (fast, loud, empties the meter)",
+        "E — cast, sell, tie up at the dock",
+        "Space — set the hook",
+        "F — lantern",
+        "Q / R — tune radio",
+        "T — radio on/off",
+        "Esc — pause",
+      ],
     },
     {
-      id: "long-haul",
-      title: "Long Haul",
+      id: "starlane",
+      title: "Starlane",
       by: "Brayton (Dean)",
-      blurb: "Space travel, trade, and a fight you probably should have avoided.",
+      blurb: "Haul freight across a 44-system galaxy and build your company.",
       embed: "",
       threads: false,
-      weight: "",
+      weight: "~40MB",
       listed: false,
-      note: "Not installed yet: drop the Godot web export into public/arcade/long-haul/ and set embed.",
+      note: "Not installed yet: drop the Godot web export into public/arcade/starlane/ (see DROP_EXPORT_HERE.txt there) and set embed to \"/arcade/starlane/\".",
+      /* PLACEHOLDER, SAYS THE CATALOG IT CAME FROM: "confirm final desktop
+         keybinds from the Starlane project" before this game goes listed. */
+      controls: [
+        "WASD / Arrows — fly",
+        "Mouse — menus, map & docking",
+        "Touch — fully supported on mobile",
+      ],
     },
   ];
 

@@ -1,0 +1,36 @@
+Drop the Godot web export of Starlane directly in this folder.
+
+Export from the current Starlane project (Godot 4.7). If the synth-audio-heavy
+scripts lag on web, apply the same web-aware audio pattern used in Drowned
+Signal. In Godot:
+
+  Project > Export > Web
+    - Thread Support: OFF   (recommended: works everywhere, incl. iOS Safari,
+      and needs no COOP/COEP headers - see the trap note at the top of
+      public/js/arcade-games.js before you even think about threads ON)
+    - Progressive Web App: Off
+  Export Project  ->  save as index.html into THIS folder
+    - UNTICK "Export With Debug" in the save dialog (critical for speed)
+
+Expected files after export:
+  index.html, index.js, index.wasm, index.pck,
+  index.audio.worklet.js (+ any other index.* files)
+
+Godot's generated index.html is used AS-IS; it is loaded in an iframe by
+arcade-play.js, so inline scripts are fine here.
+
+Then, in public/js/arcade-games.js, set this game's entry:
+  embed: "/arcade/starlane/"
+and correct `weight` to the real download size. Also confirm the final
+desktop keybinds from the Starlane project and fix the `controls` list -
+what is there now is the catalog's placeholder. Leave `listed: false` until
+Brayton signs off (the permission note in that file is about his games).
+The cabinet is playable at /arcade?all=1 or /arcade?g=starlane before it
+is listed - that is how to QA it.
+
+QA: open the cabinet -> audio starts on first input -> touch controls work
+on a phone (this is the mobile-friendly half of the arcade) -> refresh
+resumes with saved progress (IndexedDB, per-origin, stays in the player's
+browser - nothing server-side is needed).
+
+Delete this txt file after copying the export in.
