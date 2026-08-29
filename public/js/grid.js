@@ -108,9 +108,40 @@
        be read at a glance down a column without becoming decoration,
        and the word underneath is not coloured for the same reason:
        saying it twice in colour turns a shelf into a paint chart. */
+    /* THE SAVE AND THE EXPAND, and both are buttons inside a link.
+
+       The card is an <a> to the maker's shop, so anything else on it
+       has to stop its own click reaching the anchor or a save opens
+       the shop as well. That is handled once in the delegated
+       listener rather than with an onclick per card, because the
+       grid re-renders on every keystroke and inline handlers on
+       1,200 cards is markup nobody needs to ship.
+
+       Neither appears in preview: /collect is an operator reading a
+       capture, and a satchel there would save products that are not
+       published yet. */
+    var tools = '';
+    if (!opts || !opts.preview) {
+      var on = isSaved(it);
+      tools =
+        '<button type="button" class="g-save' + (on ? ' on' : '') + '"' +
+        ' data-save="1" aria-pressed="' + (on ? 'true' : 'false') + '"' +
+        ' title="' + (on ? 'In your satchel' : 'Keep this') + '"' +
+        ' aria-label="' + (on ? 'Remove from satchel' : 'Keep this') + '">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>' +
+        '</button>';
+      if (it.image) {
+        tools += '<button type="button" class="g-zoom" data-zoom="1"' +
+          ' title="See it bigger" aria-label="See the photo full screen">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"' +
+          ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"/></svg></button>';
+      }
+    }
+
     return '<' + tag + ' class="g-card"' + href +
       ' style="--rar:var(--' + rar + ')" data-rarity="' + rar + '">' +
-      '<span class="g-shot">' + img +
+      '<span class="g-shot">' + img + tools +
         (it.oos ? '<span class="g-oos">out of stock</span>' : '') +
       '</span>' +
       '<span class="g-body">' +
@@ -124,16 +155,123 @@
     '</' + tag + '>';
   }
 
+  /* --------------------------------------------------------- searching
+     TOKENISED AND, not a substring test. "hot swap" has to find
+     "Keyboard, Hot-Swap 75%", which a plain indexOf on the raw query
+     never does because of the hyphen. Every word must appear
+     somewhere in the haystack; the order does not matter.
+
+     The haystack is title, shop and brand. Deliberately not the room:
+     the room is a facet, and folding it in here would make typing
+     "play" return a thousand things instead of narrowing anything.
+
+     Cached on the item as _h, because this runs over the whole
+     catalogue on every keystroke and building the same lowercase
+     string 1,200 times per character is the difference between
+     instant and laggy on a phone. */
+  function hay(it) {
+    if (it._h === undefined) {
+      it._h = ((it.title || '') + ' ' + (it.shopName || it.k || '') + ' ' +
+        (it.brand || '')).toLowerCase();
+    }
+    return it._h;
+  }
+
+  function terms(q) {
+    return String(q || '').toLowerCase().split(/\s+/).filter(Boolean);
+  }
+
+  function hits(it, ts) {
+    var h = hay(it);
+    for (var i = 0; i < ts.length; i++) if (h.indexOf(ts[i]) === -1) return false;
+    return true;
+  }
+
   /* ----------------------------------------------------------- facets
      Counted against the pool with the OTHER facet applied but not this
      one. See the header: this is the whole reason a facet count is
-     ever right. */
+     ever right.
+
+     SEARCH AND THE SATCHEL ARE NEVER IGNORED, and that is the point
+     of them living in here rather than in draw(). They are not
+     facets, they are the pool: if a shop chip counted against the
+     unsearched catalogue it would promise 214 things and hand over
+     three. Herbal Leaf learned this one the same way -- every count
+     next to a filter has to be counted against what the visitor can
+     actually already see. */
+  /* A FACET'S NAME IS NOT THE PROPERTY IT READS, and assuming it was
+     is a bug this shelf shipped with.
+
+     The filter tested `it.k` for the shop while the counter counted
+     `it.shop`, which no product row has ever carried: rows come out
+     of api/products.js with `k` for the store key. So `counts()`
+     returned {} for the shop, chipRow saw fewer than two options and
+     returned '' by its own "one option is not a choice" rule, and the
+     entire SHOP FILTER SILENTLY DID NOT EXIST. Nothing errored, the
+     row was simply never there, and the filter that never appeared
+     was the one that matters most on a shelf drawn from fifty shops.
+
+     One map, read by the filter and by the counter, so the two can
+     never disagree again. */
+  var FIELD = { room: 'room', shop: 'k' };
+
   function pool(items, state, ignore) {
+    var ts = terms(state.q);
     return items.filter(function (it) {
       if (ignore !== 'room' && state.room && it.room !== state.room) return false;
       if (ignore !== 'shop' && state.shop && it.k !== state.shop) return false;
+      if (state.saved && !isSaved(it)) return false;
+      if (ts.length && !hits(it, ts)) return false;
       return true;
     });
+  }
+
+  /* ---------------------------------------------------------- the satchel
+     A saved set, in localStorage, on this device only. Every sister
+     site grew one (Herbal's Garden, Nicotia's list) because a
+     catalogue this size is unusable without somewhere to put the
+     three things you are actually deciding between.
+
+     IDENTITY IS THE SHOP KEY PLUS THE URL, not a hash of them. A
+     32-bit hash over a few hundred saves is a small collision risk
+     and the failure it produces is the worst kind: a card the visitor
+     never saved showing up saved, or worse, their save landing on
+     somebody else's product. Rows carry no id of their own, and the
+     url is already unique per product, so the honest key is the pair.
+
+     Capped, and the cap drops the OLDEST. An uncapped list in
+     localStorage eventually throws QuotaExceeded on the write, which
+     in a naive implementation loses the whole set rather than the one
+     item that overflowed. */
+  var SAVE_KEY = 'verda_satchel';
+  var SAVE_CAP = 300;
+  var SAVED = null;
+
+  function loadSaved() {
+    if (SAVED) return SAVED;
+    SAVED = [];
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (raw) SAVED = JSON.parse(raw) || [];
+    } catch (e) { SAVED = []; }
+    if (!Array.isArray(SAVED)) SAVED = [];
+    return SAVED;
+  }
+
+  function saveKeyOf(it) { return (it.k || '') + '|' + (it.url || it.title || ''); }
+  function isSaved(it) { return loadSaved().indexOf(saveKeyOf(it)) !== -1; }
+
+  function toggleSaved(it) {
+    var list = loadSaved(), key = saveKeyOf(it), i = list.indexOf(key);
+    if (i === -1) { list.push(key); if (list.length > SAVE_CAP) list.shift(); }
+    else list.splice(i, 1);
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(list)); } catch (e) {}
+    /* Anything showing a count (the header) hears about it here
+       rather than being poked by every caller. */
+    try {
+      global.dispatchEvent(new CustomEvent('verda:satchel', { detail: list.length }));
+    } catch (e) {}
+    return i === -1;
   }
 
   function counts(items, field) {
@@ -190,15 +328,83 @@
     return out;
   }
 
+  /* The options for one facet, counted against the pool with the
+     OTHER facet applied but not this one, biggest first. Pulled out
+     of mount() so it can be exercised without a DOM: the shop filter
+     was broken for the entire life of this shelf and nothing caught
+     it, because everything about facets lived inside a function that
+     needed a browser to run. */
+  function facetOptions(items, state, field) {
+    var prop = FIELD[field] || field;
+    var c = counts(pool(items, state || {}, field), prop);
+    return Object.keys(c)
+      .sort(function (a, b) { return c[b] - c[a] || a.localeCompare(b) })
+      .map(function (k) { return { value: k, count: c[k] }; });
+  }
+
   /* ------------------------------------------------------------ mount */
   function mount(root, items, opts) {
     opts = opts || {};
-    var state = { room: opts.room || '', shop: '', sort: 'shuffle' };
+    var preview = !!opts.preview;
+    var state = { room: opts.room || '', shop: '', sort: 'shuffle', q: '', saved: false };
     items = items || [];
+
+    /* ---------------------------------------------------------- the URL
+       A FILTERED SHELF IS A PLACE, so it gets an address. Before
+       this, a visitor who searched, narrowed to one shop and sent
+       the link sent the front page; and the browser's Back button
+       walked out of the site instead of undoing the filter, which is
+       the single most common thing anybody does with it.
+
+       replaceState, never pushState. Search runs on every keystroke
+       and pushing there buries the previous page under forty
+       entries, so Back stops working in a different and worse way.
+       The room stays in the PATH (vercel.json rewrites those), so
+       only the shelf's own state is in the query.
+
+       Off in preview: /collect has its own URL meaning and the
+       operator's filters are not a place worth linking to. */
+    function readURL() {
+      if (preview) return;
+      try {
+        var p = new URLSearchParams(location.search);
+        state.q = p.get('q') || '';
+        state.shop = p.get('shop') || '';
+        state.saved = p.get('saved') === '1';
+        if (SORTS.hasOwnProperty(p.get('sort'))) state.sort = p.get('sort');
+      } catch (e) {}
+    }
+    function writeURL() {
+      if (preview || !global.history || !history.replaceState) return;
+      try {
+        var p = new URLSearchParams();
+        if (state.q) p.set('q', state.q);
+        if (state.shop) p.set('shop', state.shop);
+        if (state.saved) p.set('saved', '1');
+        if (state.sort !== 'shuffle') p.set('sort', state.sort);
+        var qs = p.toString();
+        history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+      } catch (e) {}
+    }
+    readURL();
 
     root.innerHTML =
       '<div class="g-bar">' +
-        '<div class="g-facets" id="gFacets"></div>' +
+        '<div class="g-find">' +
+          '<svg class="g-findico" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+          ' stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
+          '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>' +
+          '<input id="gQ" type="search" autocomplete="off" spellcheck="false"' +
+          ' placeholder="Search the shelves" aria-label="Search the shelves"' +
+          ' value="' + esc(state.q) + '"/>' +
+          '<button type="button" id="gQX" class="g-findx" aria-label="Clear the search"' +
+          (state.q ? '' : ' hidden') + '>&times;</button>' +
+        '</div>' +
+        (preview ? '' :
+          '<button type="button" id="gSaved" class="g-chip g-satchel' +
+          (state.saved ? ' on' : '') + '" aria-pressed="' + (state.saved ? 'true' : 'false') + '">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>' +
+          'Satchel<span class="g-n" id="gSavedN"></span></button>') +
         '<label class="g-sort">Sort' +
           '<select id="gSort">' +
             '<option value="shuffle">a wander</option>' +
@@ -208,74 +414,224 @@
           '</select>' +
         '</label>' +
       '</div>' +
+      '<div class="g-facets" id="gFacets"></div>' +
       '<p class="g-count" id="gCount"></p>' +
       '<div class="g-grid" id="gGrid"></div>';
 
     var elFacets = root.querySelector('#gFacets');
     var elGrid = root.querySelector('#gGrid');
     var elCount = root.querySelector('#gCount');
+    var elQ = root.querySelector('#gQ');
+    var elQX = root.querySelector('#gQX');
+    var elSort = root.querySelector('#gSort');
+    var elSaved = root.querySelector('#gSaved');
 
-    root.querySelector('#gSort').onchange = function (e) {
-      state.sort = e.target.value; draw();
-    };
+    elSort.value = state.sort;
+
+    /* ------------------------------------------------------- searching
+       DEBOUNCED, and 120ms is chosen rather than inherited. The work
+       per keystroke is a filter plus a sort plus building up to 240
+       cards of markup over the whole catalogue; under about 100ms a
+       fast typist queues renders they will never see, and over about
+       200ms the shelf visibly lags the caret. */
+    var qt = null;
+    elQ.addEventListener('input', function () {
+      elQX.hidden = !elQ.value;
+      clearTimeout(qt);
+      qt = setTimeout(function () {
+        state.q = elQ.value.trim();
+        shown_ = 0;                  /* a new search starts at the top */
+        draw();
+      }, 120);
+    });
+    /* Enter must not submit anything: there is no form and no server
+       round trip, the shelf is already showing the answer. It flushes
+       the debounce so a fast typist who hits Enter is not waiting. */
+    elQ.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); clearTimeout(qt); state.q = elQ.value.trim(); shown_ = 0; draw(); }
+      if (e.key === 'Escape' && elQ.value) { e.stopPropagation(); clearQ(); }
+    });
+    elQX.addEventListener('click', clearQ);
+    function clearQ() {
+      elQ.value = ''; elQX.hidden = true; state.q = ''; shown_ = 0; draw(); elQ.focus();
+    }
+
+    /* "/" focuses the search from anywhere on the page, the shortcut
+       every catalogue on the web has trained people to expect. Guarded
+       so it does not steal the key from someone typing in a field. */
+    function slashKey(e) {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+      var t = e.target, tag = t && t.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+      e.preventDefault(); elQ.focus(); elQ.select();
+    }
+    document.addEventListener('keydown', slashKey);
+
+    elSort.onchange = function (e) { state.sort = e.target.value; shown_ = 0; draw(); };
+
+    if (elSaved) {
+      elSaved.addEventListener('click', function () {
+        state.saved = !state.saved; shown_ = 0; draw();
+      });
+    }
 
     elFacets.addEventListener('click', function (ev) {
       var b = ev.target.closest ? ev.target.closest('[data-facet]') : null;
       if (!b) return;
       var f = b.getAttribute('data-facet'), v = b.getAttribute('data-value');
       state[f] = (state[f] === v) ? '' : v;
+      shown_ = 0;
       draw();
     });
 
+    /* --------------------------------------------------- card controls
+       ONE DELEGATED LISTENER for every card's buttons, and it is on
+       capture so it beats the anchor. The card is a link to the
+       maker's shop; without preventDefault a save would also open
+       the shop in a new tab, which is the sort of thing that reads
+       as the site being broken rather than as a missed click. */
+    elGrid.addEventListener('click', function (ev) {
+      var t = ev.target.closest ? ev.target : null;
+      if (!t) return;
+      var save = t.closest('[data-save]'), zoom = t.closest('[data-zoom]');
+      if (!save && !zoom) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      var cardEl = (save || zoom).closest('.g-card');
+      var idx = Number(cardEl && cardEl.getAttribute('data-i'));
+      var it = last_[idx];
+      if (!it) return;
+      if (save) {
+        var now = toggleSaved(it);
+        save.classList.toggle('on', now);
+        save.setAttribute('aria-pressed', now ? 'true' : 'false');
+        save.setAttribute('aria-label', now ? 'Remove from satchel' : 'Keep this');
+        if (global.VerdaToast) global.VerdaToast(now ? 'Kept in your satchel' : 'Taken back out');
+        paintSavedCount();
+        /* Only redraw when the satchel is the view being shown, or
+           the card the visitor just un-kept would vanish underneath
+           the pointer everywhere else. */
+        if (state.saved) draw();
+        return;
+      }
+      if (global.VerdaPhoto) global.VerdaPhoto(it.image, it.title);
+    }, true);
+
     function chipRow(field, label, nameOf) {
-      var c = counts(pool(items, state, field), field);
-      var keys = Object.keys(c).sort(function (a, b) { return c[b] - c[a] });
-      if (keys.length < 2) return '';   /* one option is not a choice */
+      var opts = facetOptions(items, state, field);
+      if (opts.length < 2) return '';   /* one option is not a choice */
       return '<div class="g-row"><span class="g-rowlab">' + label + '</span>' +
-        keys.map(function (k) {
-          return '<button type="button" class="g-chip' + (state[field] === k ? ' on' : '') +
-            '" data-facet="' + field + '" data-value="' + esc(k) + '">' +
-            esc(nameOf(k)) + '<span class="g-n">' + c[k] + '</span></button>';
+        opts.map(function (o) {
+          return '<button type="button" class="g-chip' + (state[field] === o.value ? ' on' : '') +
+            '" data-facet="' + field + '" data-value="' + esc(o.value) + '">' +
+            esc(nameOf(o.value)) + '<span class="g-n">' + o.count + '</span></button>';
         }).join('') + '</div>';
     }
 
+    function paintSavedCount() {
+      var n = root.querySelector('#gSavedN');
+      if (!n) return;
+      var c = loadSaved().length;
+      n.textContent = c ? String(c) : '';
+    }
+
+    /* PAGE SIZE, NOT A CAP. The old number was a hard 240 with a note
+       telling the visitor to use the filters, which is the interface
+       asking the person to do its job. Same 240 first paint, and now
+       a button that adds another 240. */
+    var PAGE = 240;
+    var shown_ = 0;
+    var last_ = [];
+
     function draw() {
-      var shown = pool(items, state, null);
+      var list = pool(items, state, null);
       var cmp = SORTS[state.sort];
-      shown = cmp ? shown.slice().sort(cmp) : spread(shown, 7);
+      list = cmp ? list.slice().sort(cmp) : spread(list, 7);
+      last_ = list;
+      if (!shown_) shown_ = PAGE;
 
       elFacets.innerHTML =
         chipRow('room', 'Room', function (k) { return ROOMS[k] || k }) +
         chipRow('shop', 'Shop', function (k) { return shopName(k) });
 
-      elCount.textContent = shown.length
-        ? shown.length + (shown.length === 1 ? ' thing' : ' things') +
-          (state.room || state.shop ? ' · ' : '') +
-          (state.room ? (ROOMS[state.room] || state.room) : '') +
-          (state.room && state.shop ? ' · ' : '') +
-          (state.shop ? shopName(state.shop) : '')
+      var bits = [];
+      if (state.q) bits.push('\u201c' + state.q + '\u201d');
+      if (state.saved) bits.push('your satchel');
+      if (state.room) bits.push(ROOMS[state.room] || state.room);
+      if (state.shop) bits.push(shopName(state.shop));
+      elCount.textContent = list.length
+        ? list.length + (list.length === 1 ? ' thing' : ' things') +
+          (bits.length ? ' \u00b7 ' + bits.join(' \u00b7 ') : '')
         : '';
 
-      /* Cap what is put in the DOM at once. 1,200 cards is a second of
-         layout on a phone and nobody scrolls past two hundred. */
-      var CAP = 240;
-      elGrid.innerHTML = shown.slice(0, CAP).map(function (it) {
-        return card(it, opts);
-      }).join('') || '<p class="g-empty">Nothing on these shelves answers to all of that.</p>';
+      var page = list.slice(0, shown_);
+      elGrid.innerHTML = page.map(function (it, i) {
+        /* The index is on the card so the delegated listener can find
+           the item again without re-deriving identity from the DOM. */
+        return card(it, opts).replace('<span class="g-shot">',
+          '<span class="g-shot" data-shot="' + i + '">')
+          .replace('class="g-card"', 'class="g-card" data-i="' + i + '"');
+      }).join('') || emptyShelf();
 
-      if (shown.length > CAP) {
+      if (list.length > shown_) {
         elGrid.insertAdjacentHTML('beforeend',
-          '<p class="g-more">Showing ' + CAP + ' of ' + shown.length +
-          '. Narrow it down with the filters above.</p>');
+          '<div class="g-more"><button type="button" id="gMore">' +
+          'Show ' + Math.min(PAGE, list.length - shown_) + ' more</button>' +
+          '<span>' + shown_ + ' of ' + list.length + '</span></div>');
+        var more = root.querySelector('#gMore');
+        if (more) more.onclick = function () { shown_ += PAGE; draw(); };
       }
+
+      paintSavedCount();
+      writeURL();
     }
+
+    /* THE EMPTY SHELF SAYS WHY, and offers the way out. "Nothing
+       answers to all of that" was true and useless: it did not say
+       which of the four things was too narrow, and it left the
+       visitor to find the filters again themselves. */
+    function emptyShelf() {
+      if (state.saved && !loadSaved().length) {
+        return '<p class="g-empty"><strong>Your satchel is empty.</strong><br>' +
+          'Press the ribbon on anything worth coming back to and it waits here. ' +
+          'It stays on this device and we never see it.</p>';
+      }
+      var out = '<p class="g-empty"><strong>Nothing here answers to all of that.</strong><br>';
+      if (state.q) out += 'No match for \u201c' + esc(state.q) + '\u201d';
+      if (state.q && (state.room || state.shop || state.saved)) out += ' with the rest of it applied';
+      out += '.<br><button type="button" class="g-reset" id="gReset">Clear it and start again</button></p>';
+      return out;
+    }
+    elGrid.addEventListener('click', function (ev) {
+      if (!ev.target.closest || !ev.target.closest('#gReset')) return;
+      state.q = ''; state.shop = ''; state.saved = false; shown_ = 0;
+      elQ.value = ''; elQX.hidden = true;
+      if (elSaved) { elSaved.classList.remove('on'); elSaved.setAttribute('aria-pressed', 'false'); }
+      draw();
+    });
 
     var shopNames = opts.shopNames || {};
     function shopName(k) { return shopNames[k] || k }
 
     draw();
-    return { draw: draw, state: state };
+    return {
+      draw: draw,
+      state: state,
+      /* Handed back so a caller can tear the keyboard shortcut down
+         if it ever unmounts a grid. Nothing does today; leaving a
+         document listener behind on a remount is how a page ends up
+         with six of them. */
+      destroy: function () { document.removeEventListener('keydown', slashKey); }
+    };
   }
 
-  global.GDGrid = { mount: mount, card: card, money: money, esc: esc, ROOMS: ROOMS, rarityOf: rarityOf, RARITY: RARITY };
+  global.GDGrid = {
+    mount: mount, card: card, money: money, esc: esc,
+    ROOMS: ROOMS, rarityOf: rarityOf, RARITY: RARITY,
+    facetOptions: facetOptions, pool: pool,
+    /* The header shows a satchel count and is not part of a grid, so
+       it needs to be able to ask. */
+    savedCount: function () { return loadSaved().length; },
+    isSaved: isSaved, toggleSaved: toggleSaved
+  };
 })(window);

@@ -821,6 +821,77 @@ one commit.
 
 ---
 
+## 8b. The workflow layer, and the sister sites it came from
+
+**The look was finished before the interface was.** The owner's words after
+the redesign: *"the UI, like, how it looks is great, but the user experience
+needs to be updated."* So the sister sites were read and the patterns each of
+them had grown, and this one had not, were brought over.
+
+The seven live sites could not be browsed from the build container: the agent
+proxy gateway answers **403 to CONNECT** for every one of those hosts. Their
+SOURCE is what the survey read, which is the better artefact anyway when what
+you want is the mechanism rather than the pixels.
+
+| Taken from | What it is |
+|---|---|
+| Herbal Leaf | search wired INTO the facet pool; the photo viewer, with its four fixes |
+| Nicotia | the skeleton; the toast; the retry that shows its working |
+| Legal Leaf | the shelf explaining WHICH filter is too narrow |
+| all of them | URL state, so a filtered shelf is a place you can send |
+
+### The bug the survey found: the shop filter never existed
+
+`pool()` filtered on `it.k` and `counts()` counted `it.shop`. **No product row
+has ever carried a `shop` field** -- `api/products.js` emits `k` for the store
+key. So `counts()` returned `{}`, `chipRow` saw fewer than two options, its own
+"one option is not a choice" rule dropped the row, and the SHOP FILTER WAS
+NEVER ON THE PAGE. Nothing errored. On a shelf drawn from fifty shops that was
+the filter that mattered most.
+
+`FIELD = { room: 'room', shop: 'k' }` is now read by the filter and by the
+counter, so the two cannot disagree again. **A facet's name is not the property
+it reads**, and assuming it is has now cost this repo one silently missing
+feature.
+
+### `test/shelf.test.mjs` runs grid.js instead of reading it
+
+Every previous guard on the client JS asserted on its SOURCE, which is exactly
+why the above could live for the life of the site. Source guards prove a line
+is present; only running the thing proves it works. `facetOptions()` and
+`pool()` are pure, so the file loads grid.js with `new Function` and calls
+them.
+
+**`new Function`, not `node:vm`.** A vm context is a separate realm, so arrays
+built inside it have a different `Array.prototype` and every `deepEqual`
+against a literal fails with "same structure but not reference-equal" -- a
+confusing failure that says nothing about the code under test.
+
+Five mutations were run and all five fail the suite: restoring the shop-facet
+bug, turning search from AND into OR, stopping search feeding the facet counts,
+`pushState` instead of `replaceState`, and hashing the satchel key.
+
+### Rules the layer holds to
+
+- **Search and the satchel are in `pool()`, not in `draw()`.** They are not
+  facets, they are the pool. A shop chip counted against the unsearched
+  catalogue promises 214 things and hands over three.
+- **Search is tokenised AND.** "hot swap" has to find "Hot-Swap", which a plain
+  `indexOf` on the raw query never does. The shop name is in the haystack on
+  purpose (typing a maker's name gives you their shelf); the room is not, or
+  typing one returns a thousand things.
+- **`replaceState`, never `pushState`.** Search runs per keystroke.
+- **The satchel key is `k + '|' + url`, never a hash.** A collision puts a
+  product somebody never saved into their satchel.
+- **Loading beats empty.** Before this, a cold cache showed the words for
+  "there is nothing here" for as long as the fetch took, and every door read
+  "no answer". A visitor cannot tell slow from empty, and empty is the one that
+  makes them leave.
+- **The retry shows its working.** "Attempt 2, retrying in 4s" is something a
+  person will sit through. An unexplained pause is not.
+
+---
+
 ## 9. Kawaii Katz: siblings, no shared code
 
 Decided rather than defaulted. Kawaii Katz is Next.js and this engine is

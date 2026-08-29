@@ -378,11 +378,18 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
    two components on the site with real density, so they get tighter
    type and smaller radii than the doors do.
    ------------------------------------------------------------ */
+/* THE BAR IS THE CONTROLS; THE FACETS ARE THEIR OWN ROW BELOW IT.
+   They used to share one flex line, which put a search field, a
+   satchel, a sort menu and two wrapping rows of chips in the same
+   container: on a laptop the chips shoved the sort off the end, and
+   on a phone the whole thing was a heap. Search and sort are fixed
+   furniture and belong together; the chips are content and change
+   length with every keystroke. */
 .g-bar{
-  display:flex; gap:22px; align-items:flex-end; flex-wrap:wrap;
-  margin:0 0 20px;
+  display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+  margin:0 0 16px;
 }
-.g-facets{ flex:1; min-width:0; display:flex; flex-direction:column; gap:10px }
+.g-facets{ display:flex; flex-direction:column; gap:10px; margin:0 0 18px }
 .g-row{ display:flex; gap:7px; align-items:center; flex-wrap:wrap }
 .g-rowlab{
   font-family:var(--sans); font-weight:600; font-size:10px;
@@ -404,7 +411,8 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
 .g-n{ font-variant-numeric:tabular-nums; font-size:11px; opacity:.6 }
 .g-chip.on .g-n{ opacity:.85 }
 
-.g-sort{ display:flex; flex-direction:column; gap:6px }
+.g-sort{ display:flex; align-items:center; gap:9px; flex:none;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-faint) }
 .g-sort select{
   font-family:var(--sans); font-size:13px; color:var(--text);
   background:var(--surface-2); border:1px solid var(--line);
@@ -493,6 +501,227 @@ a.g-card:active{ transform:translateY(-1px) }
 
 .allshelf{ }
 .hub-sec{ margin-top:var(--gap-section) }
+
+/* ============================================================
+   THE WORKFLOW LAYER
+
+   Everything below arrived in the UX pass, and every piece of it is
+   a pattern one of the sister sites already had and this one did
+   not. They are grouped here rather than filed next to their
+   neighbours so that the whole of what was added is legible in one
+   place, and so a future palette change has one region to check.
+   ============================================================ */
+
+/* ---------------------------------------------------------- search
+   THE SINGLE BIGGEST GAP. Twelve hundred products across ten rooms
+   and no way to type a word: browsing is the thesis of this site,
+   but browsing without a way to jump is a filing cabinet.
+
+   Given the full width of the bar rather than tucked beside the
+   sort, because it is the control most people reach for first and a
+   search box that looks like an afterthought gets used like one. */
+.g-find{
+  position:relative; flex:1; min-width:200px; display:flex; align-items:center;
+}
+.g-findico{
+  position:absolute; left:14px; width:16px; height:16px;
+  color:var(--text-faint); pointer-events:none;
+}
+.g-find input{
+  width:100%; font-family:var(--sans); font-size:14.5px; color:var(--text);
+  padding:11px 38px 11px 40px;
+  border:1px solid var(--line); border-radius:var(--r-pill);
+  background:rgba(255,255,255,.04);
+  transition:border-color var(--fast), background var(--fast), box-shadow var(--fast);
+}
+.g-find input::placeholder{ color:var(--text-faint) }
+.g-find input:focus{
+  outline:none; border-color:rgba(var(--jade-rgb),.44);
+  background:rgba(var(--jade-rgb),.07);
+  box-shadow:0 0 0 3px rgba(var(--jade-rgb),.10);
+}
+/* The browser's own clear button is a different shape on every
+   platform and none of them match this. */
+.g-find input::-webkit-search-cancel-button{ display:none }
+.g-findx{
+  position:absolute; right:8px; width:26px; height:26px; border-radius:50%;
+  border:0; background:transparent; color:var(--text-faint);
+  font-size:18px; line-height:1; cursor:pointer;
+}
+.g-findx:hover{ color:var(--text); background:rgba(255,255,255,.07) }
+.g-findx[hidden]{ display:none }
+
+/* --------------------------------------------------------- satchel */
+.g-satchel{ gap:8px; padding-left:11px }
+.g-satchel svg{ width:13px; height:13px; fill:currentColor }
+.g-satchel .g-n:empty{ display:none }
+
+/* --------------------------------------------- the card's own tools
+   Hidden until the card is approached, on a pointer. They are
+   secondary to the product and a shelf with two buttons burned into
+   every tile reads as an admin panel.
+
+   ALWAYS VISIBLE ON TOUCH, because there is no hover to reveal them
+   with and a control you cannot discover is a control you do not
+   have. The media query is the honest test for it. */
+.g-shot{ position:relative }
+.g-save,.g-zoom{
+  position:absolute; z-index:3; width:32px; height:32px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:9px; padding:0; cursor:pointer;
+  border:1px solid var(--line-2);
+  background:rgba(4,8,14,.62);
+  -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+  color:var(--text-dim);
+  /* FAINT, NOT ABSENT. Hiding these until hover is tidier and it
+     also means nobody discovers them: a control that appears only
+     once you are already on top of it teaches nothing, and the
+     satchel is the feature most worth teaching. Quiet enough not to
+     compete with the product, present enough to be found. */
+  opacity:.32; transition:opacity var(--fast), color var(--fast),
+    border-color var(--fast), background var(--fast);
+}
+.g-save{ right:8px; top:8px }
+.g-zoom{ right:8px; bottom:8px }
+.g-save svg{ width:15px; height:15px; fill:currentColor }
+.g-zoom svg{ width:15px; height:15px }
+.g-card:hover .g-save,.g-card:hover .g-zoom,
+.g-card:focus-within .g-save,.g-card:focus-within .g-zoom{ opacity:1 }
+.g-save:focus-visible,.g-zoom:focus-visible{ opacity:1 }
+.g-save:hover,.g-zoom:hover{ color:var(--text); border-color:var(--line-3) }
+/* Kept is a state, so it stays lit whether or not anyone is near it. */
+.g-save.on{ opacity:1; color:var(--lantern); border-color:rgba(255,184,107,.5);
+  background:rgba(255,184,107,.14) }
+@media (hover:none){
+  .g-save,.g-zoom{ opacity:.85; background:rgba(4,8,14,.7) }
+}
+
+/* ------------------------------------------------------- show more */
+.g-more{
+  grid-column:1/-1; display:flex; flex-direction:column; align-items:center;
+  gap:9px; padding:30px 16px 8px;
+}
+.g-more button{
+  font-family:var(--sans); font-weight:600; font-size:13px; letter-spacing:.02em;
+  color:var(--text); cursor:pointer;
+  padding:12px 26px; border-radius:var(--r-pill);
+  border:1px solid var(--line-2); background:rgba(255,255,255,.04);
+  transition:border-color var(--fast), background var(--fast), transform var(--fast);
+}
+.g-more button:hover{ border-color:rgba(var(--jade-rgb),.44);
+  background:rgba(var(--jade-rgb),.10); color:var(--jade-lit); transform:translateY(-1px) }
+.g-more span{ font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text-faint) }
+
+.g-reset{
+  margin-top:14px; font-family:var(--sans); font-weight:600; font-size:12.5px;
+  color:var(--jade-lit); cursor:pointer; padding:9px 18px;
+  border-radius:var(--r-pill); border:1px solid rgba(var(--jade-rgb),.4);
+  background:rgba(var(--jade-rgb),.10);
+}
+.g-reset:hover{ background:rgba(var(--jade-rgb),.17) }
+
+/* --------------------------------------------------- the skeleton
+   The real card's shape and the real grid's gaps, so nothing moves
+   when the products arrive. The stagger is per-plate and small: a
+   shimmer that sweeps in unison reads as one object pulsing, and a
+   staggered one reads as many things loading, which is what is
+   happening. */
+.skel{
+  display:grid; gap:var(--gap);
+  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+}
+.sk{
+  aspect-ratio:1/1.42; border-radius:var(--r);
+  border:1px solid var(--line);
+  background:linear-gradient(100deg,
+    rgba(255,255,255,.03) 30%, rgba(255,255,255,.075) 50%, rgba(255,255,255,.03) 70%);
+  background-size:280% 100%;
+  animation:skShine 1.5s ease-in-out infinite;
+  animation-delay:calc(var(--i,0) * 90ms);
+}
+@keyframes skShine{ from{ background-position:180% 0 } to{ background-position:-80% 0 } }
+@media (prefers-reduced-motion:reduce){
+  .sk{ animation:none; background:rgba(255,255,255,.04) }
+}
+
+/* A door whose count is still being worked out. Quiet on purpose:
+   ten pulsing cards is a slot machine. */
+.door.waiting .count{ color:var(--text-faint); animation:doorPulse 1.7s ease-in-out infinite }
+@keyframes doorPulse{ 0%,100%{ opacity:.45 } 50%{ opacity:.9 } }
+@media (prefers-reduced-motion:reduce){ .door.waiting .count{ animation:none } }
+
+/* ----------------------------------------------- the waiting state */
+.state{
+  border:1px solid var(--line); border-radius:var(--r);
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+  padding:30px 28px; display:flex; flex-direction:column; gap:9px; max-width:62ch;
+}
+.state b{ font-family:var(--sans); font-weight:600; font-size:16px; color:var(--text) }
+.state span{ color:var(--text-dim); font-size:14.5px; line-height:1.6 }
+.state small{
+  margin-top:5px; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--jade); font-variant-numeric:tabular-nums;
+}
+
+/* ------------------------------------------------------------ toast
+   Bottom centre, above the thumb on a phone and out of the way of
+   the shelf on a desktop. It never blocks a press: pointer-events
+   are off, so a mis-timed tap goes to the card underneath rather
+   than to a message that is about to disappear anyway. */
+#toast{
+  position:fixed; left:50%; bottom:26px; z-index:900;
+  transform:translate(-50%,14px); opacity:0; pointer-events:none;
+  font-family:var(--sans); font-size:13.5px; color:var(--text);
+  padding:12px 20px; border-radius:var(--r-pill);
+  border:1px solid var(--line-2); background:rgba(10,16,26,.94);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  box-shadow:var(--lift-2);
+  transition:opacity var(--fast), transform var(--fast);
+}
+#toast.on{ opacity:1; transform:translate(-50%,0) }
+
+/* ----------------------------------------------- the photo viewer */
+#vPhoto{
+  position:fixed; inset:0; z-index:1000; display:none;
+  align-items:center; justify-content:center;
+  padding:calc(56px + env(safe-area-inset-top)) 14px calc(60px + env(safe-area-inset-bottom));
+  background:rgba(4,7,13,.95);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  touch-action:pinch-zoom; overscroll-behavior:contain;
+}
+#vPhoto.on{ display:flex }
+/* width and height at 100% so a small derivative still fills a phone;
+   object-fit then letterboxes it, which is the behaviour the
+   hit-test in ui.js exists to correct for. */
+#vPhoto img{
+  width:100%; height:100%; max-width:none; max-height:none;
+  object-fit:contain; border-radius:10px; background:var(--void);
+  box-shadow:0 24px 80px rgba(0,0,0,.6);
+  transition:transform .18s var(--ease); transform-origin:center center;
+  cursor:zoom-in;
+}
+#vPhoto img.zoomed{ cursor:zoom-out; transform:scale(2.2) }
+#vPhotoX{
+  position:absolute; top:calc(14px + env(safe-area-inset-top)); right:14px; z-index:2;
+  width:42px; height:42px; border-radius:50%; cursor:pointer;
+  font-size:22px; line-height:1; color:var(--text);
+  border:1px solid var(--line-2); background:rgba(10,16,26,.8);
+}
+#vPhotoX:hover{ background:rgba(24,34,48,.9); border-color:var(--line-3) }
+#vPhotoCap{
+  position:absolute; left:0; right:0; bottom:calc(16px + env(safe-area-inset-bottom));
+  text-align:center; padding:0 20px;
+  font-size:13.5px; color:var(--text-dim); pointer-events:none;
+}
+
+/* Announced but not shown: the skeleton is decoration to a screen
+   reader, so the fact that something is loading has to be said in
+   words somewhere. */
+.sr-only{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
 
 /* ------------------------------------------------------------
    DOORS OUT

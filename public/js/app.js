@@ -76,7 +76,11 @@
     });
   };
 
-  var state = { items: [], stores: [], shopNames: {}, reached: false };
+  /* `loading` and `tries` are the two the redesign added, and they
+     exist so the interface can tell "coming" from "empty" and say so.
+     `nextIn` is only set while a retry is pending. */
+  var state = { items: [], stores: [], shopNames: {}, reached: false,
+                loading: true, tries: 0, nextIn: 0 };
 
   /* ---------------------------------------------------------- routing
      The path decides the room. One document, one source of truth for
@@ -105,7 +109,14 @@
          and never replaces it, because the one thing a shop can do
          that is genuinely dishonest is make an empty shelf sound
          like a full one. */
-      var label = !state.reached ? 'no answer'
+      /* FIVE STATES NOW, and the new one is the one every visitor
+         actually sees. The map renders before the fetch lands, and
+         with only four states that first paint labelled all ten
+         doors "no answer" -- the site telling you it is broken for
+         as long as the request takes, then quietly correcting
+         itself. A door that is being counted says so. */
+      var label = state.loading ? 'counting\u2026'
+                : !state.reached ? 'no answer'
                 : published === 0 ? 'shelves bare'
                 : n === 0 ? 'nothing here'
                 : n + (n === 1 ? ' thing' : ' things');
@@ -124,7 +135,8 @@
          app.css. Set from the render index rather than by an
          :nth-child rule so the arcade door below, which is appended
          separately, keeps the same sequence. */
-      return '<a class="door slot" href="' + r.path + '" style="--band:' + esc(r.band) +
+      return '<a class="door slot' + (state.loading ? ' waiting' : '') +
+        '" href="' + r.path + '" style="--band:' + esc(r.band) +
         ';--i:' + i + '">' +
         '<span class="n">' + (i + 1) + '</span>' +
         '<svg class="door-ico" viewBox="0 0 64 64" aria-hidden="true">' +
@@ -176,11 +188,57 @@
     mountGrid(room.key);
   }
 
+  /* ------------------------------------------------------- waiting
+     A SHELF THAT IS COMING SHOULD LOOK LIKE A SHELF, not like an
+     empty one. Nicotia grew this and the reason is measurable: the
+     catalogue is a multi-store scrape behind a cache, so a cold
+     request is seconds rather than milliseconds, and for those
+     seconds the old page showed the words for "there is nothing
+     here". A visitor cannot tell slow from empty, and empty is the
+     one that makes them leave.
+
+     Grey plates in the real card's shape, not a spinner. A spinner
+     says "wait"; a skeleton says "this is a shelf, and it is nearly
+     drawn", and it holds the layout so nothing jumps when the
+     products land. */
+  function skeleton(n) {
+    var h = '';
+    for (var i = 0; i < (n || 12); i++) {
+      h += '<div class="sk" style="--i:' + i + '"></div>';
+    }
+    return '<div class="skel" aria-hidden="true">' + h + '</div>' +
+      '<p class="sr-only" role="status">Loading the shelves.</p>';
+  }
+
+  /* THE FAILURE SAYS WHAT FAILED AND WHAT IS BEING DONE ABOUT IT.
+     `waiting` is the retry showing its working: an unexplained delay
+     is indistinguishable from a hang, and somebody watching "attempt
+     2, retrying in 4s" will wait through it where they would not
+     wait through nothing. Lifted straight from Nicotia. */
+  function waiting(tries, secs) {
+    return '<div class="state">' +
+      '<b>Still fetching the catalogue</b>' +
+      '<span>Nobody has opened the quarter in a while, so the shelves are being ' +
+      'read fresh from every shop. It is slow the first time and instant for ' +
+      'everybody after you.</span>' +
+      '<small>Attempt ' + (tries + 1) + ', retrying in ' + secs + 's</small>' +
+      '</div>';
+  }
+
   function mountGrid(roomKey) {
     var mine = state.items.filter(function (it) {
       return !roomKey || it.room === roomKey;
     });
     var grid = $('#grid'), empty = $('#roomEmpty');
+
+    /* Loading beats empty. Without this the room view shows its
+       "nothing here yet" copy for the whole first second of every
+       cold visit, which is the site calling itself empty. */
+    if (state.loading && !mine.length) {
+      empty.hidden = true;
+      grid.innerHTML = state.tries ? waiting(state.tries, state.nextIn || 0) : skeleton(12);
+      return;
+    }
 
     if (!mine.length) {
       grid.innerHTML = '';
@@ -267,38 +325,103 @@
        promise of content with nothing under it, which is the one
        thing worse than the empty map it sits below. The heading and
        the grid are one claim, so they appear and disappear together. */
+    /* WHILE IT IS COMING, THE SHELF IS SHOWN AND IS DRAWING ITSELF.
+       Hiding it until the fetch lands meant the front page was a
+       hero and ten doors reading "no answer", and then a whole
+       section appeared under the fold that nobody scrolled back up
+       to find. A skeleton holds the place. */
+    if (state.loading && !state.items.length) {
+      shelf.hidden = false; all.hidden = false;
+      all.innerHTML = state.tries ? waiting(state.tries, state.nextIn || 0) : skeleton(12);
+      return;
+    }
     if (!state.items.length) { shelf.hidden = true; return; }
     shelf.hidden = false;
     all.hidden = false;
     window.GDGrid.mount(all, state.items, { shopNames: state.shopNames });
   }
 
-  fetch('/api/products')
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (j) {
-      if (!j) return;
-      state.reached = true;
-      state.items = (j.items || []).map(function (it) {
-        /* `dept` is what the ported engine still calls it in places.
-           Read both rather than depending on which half of the port
-           produced this row; when the nicotine-shaped leftovers come
-           out of products.js this can drop to `room`. */
-        it.room = it.room || it.dept || '';
-        return it;
+  /* ============================================================
+     LOADING, WITH THE RETRY SHOWING ITS WORKING
+
+     One fetch and a silent catch was the whole of this before. Two
+     things were wrong with it and both are visible to a visitor:
+
+       A COLD CACHE IS SLOW, NOT BROKEN. The catalogue behind
+       /api/products is a multi-store read; when nobody has warmed it
+       the first request takes seconds. A single attempt that times
+       out left the site saying "no answer" forever, on a shop that
+       was working perfectly.
+
+       A NETWORK BLIP IS NOT A VERDICT. A phone changing cell towers
+       drops one request. Retrying twice costs a few seconds in the
+       rare bad case and saves the entire visit.
+
+     Three attempts, 2s then 6s, and the wait is SHOWN rather than
+     hidden: "attempt 2, retrying in 4s" is something a person will
+     sit through, and an unexplained pause is not. Nicotia's shape,
+     and its reasoning, ported.
+     ============================================================ */
+  var BACKOFF = [2, 6];        /* seconds before attempt 2 and 3 */
+
+  function load() {
+    fetch('/api/products', { headers: { accept: 'application/json' } })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (j) {
+        if (!j) throw new Error('empty response');
+        state.reached = true;
+        state.loading = false;
+        state.items = (j.items || []).map(function (it) {
+          /* `dept` is what the ported engine still calls it in
+             places. Read both rather than depending on which half of
+             the port produced this row; when the nicotine-shaped
+             leftovers come out of products.js this can drop to
+             `room`. */
+          it.room = it.room || it.dept || '';
+          return it;
+        });
+        state.stores = j.stores || [];
+        state.shopNames = {};
+        for (var s2 = 0; s2 < state.stores.length; s2++) {
+          state.shopNames[state.stores[s2].key] = state.stores[s2].name;
+        }
+        /* A card wants a display name, not a slug. Denormalised once
+           here rather than looked up per card on every redraw. */
+        for (var n = 0; n < state.items.length; n++) {
+          state.items[n].shopName = state.shopNames[state.items[n].k] || state.items[n].k;
+        }
+        boot();
+      })
+      .catch(function () {
+        var wait = BACKOFF[state.tries];
+        if (wait === undefined) {
+          /* Out of attempts. `reached` stays false and emptyWords()
+             says the road is out, which is the true thing. */
+          state.loading = false;
+          boot();
+          return;
+        }
+        state.tries++;
+        state.nextIn = wait;
+        boot();                       /* repaint with the countdown */
+        var left = wait;
+        var tick = setInterval(function () {
+          left--;
+          state.nextIn = left > 0 ? left : 0;
+          /* Only the number changes, so only the number is rewritten.
+             Re-running boot() every second would rebuild the map and
+             throw away a search the visitor had already typed. */
+          var small = document.querySelector('.state small');
+          if (small) small.textContent = 'Attempt ' + (state.tries + 1) +
+            ', retrying in ' + state.nextIn + 's';
+          if (left <= 0) { clearInterval(tick); load(); }
+        }, 1000);
       });
-      state.stores = j.stores || [];
-      state.shopNames = {};
-      for (var s2 = 0; s2 < state.stores.length; s2++) {
-        state.shopNames[state.stores[s2].key] = state.stores[s2].name;
-      }
-      /* A card wants a display name, not a slug. Denormalised once
-         here rather than looked up per card on every redraw. */
-      for (var n = 0; n < state.items.length; n++) {
-        state.items[n].shopName = state.shopNames[state.items[n].k] || state.items[n].k;
-      }
-    })
-    .catch(function () { /* state.reached stays false; the words differ */ })
-    .then(boot);
+  }
+  load();
 
   /* Progressive enhancement: the map renders before the fetch lands so
      the page is never blank, then re-renders with real counts. */

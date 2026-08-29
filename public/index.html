@@ -481,6 +481,11 @@
 
 </div><!-- /.ground -->
 
+<!-- ui.js before grid.js: grid.js checks for VerdaToast and
+     VerdaPhoto at CALL time, not at load time, so the order is not
+     strictly required -- but loading the chrome first means the very
+     first save on a slow connection still gets its confirmation. -->
+<script src="/js/ui.js"></script>
 <script src="/js/grid.js"></script>
 <script src="/js/app.js"></script>
 <script src="/js/city.js" defer></script>
