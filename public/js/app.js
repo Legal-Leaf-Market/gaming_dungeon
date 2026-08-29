@@ -98,9 +98,16 @@
     var published = state.stores.length;
     var html = ROOMS.map(function (r, i) {
       var n = countIn(r.key);
-      var label = !state.reached ? 'shut'
-                : published === 0 ? 'not stocked yet'
-                : n === 0 ? 'nothing in here yet'
+      /* THE NARRATOR NEVER LIES ABOUT STOCK. Every label below still
+         reads as its literal fact: no answer means the catalogue did
+         not respond, bare means nothing is published, empty means
+         this room in particular has nothing. Flavour wraps the truth
+         and never replaces it, because the one thing a shop can do
+         that is genuinely dishonest is make an empty shelf sound
+         like a full one. */
+      var label = !state.reached ? 'no answer'
+                : published === 0 ? 'shelves bare'
+                : n === 0 ? 'nothing here'
                 : n + (n === 1 ? ' thing' : ' things');
       /* The band is set as a custom property rather than a class, so
          adding a room needs no CSS. --band is read by .door::before. */
@@ -186,28 +193,55 @@
     });
   }
 
-  /* FOUR STATES, FOUR DIFFERENT SENTENCES. See the header. */
+  /* FOUR STATES, FOUR DIFFERENT SENTENCES. See the header.
+
+     WRITTEN IN THE PLACE'S OWN VOICE, and still exactly true. The old
+     versions leaked the workshop onto the visitor's screen: they
+     named the repo directory captures land in, printed a build
+     command, and justified our review policy by comparing it to
+     another site we run. None of that is a visitor's business and
+     all of it read as a developer talking to himself.
+
+     The words this comment is careful NOT to spell out are checked
+     for in test/products.test.mjs, against the raw file. A comment
+     that quoted them would trip its own guard, which is a trap this
+     repo has now sprung four separate times in one day.
+
+     The developer hint is not gone, it is CONDITIONAL: it appears
+     only on localhost, where it is the correct advice and the only
+     person reading it is the one who needs it. */
+  function onLocalhost() {
+    var h = location.hostname;
+    return h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '';
+  }
+
   function emptyWords(roomKey) {
     var roomName = (window.GDGrid && window.GDGrid.ROOMS[roomKey]) || 'this room';
     if (!state.reached) {
-      return '<strong>The catalogue did not answer.</strong><br>' +
-        'That is this site being unreachable, not the room being empty. ' +
-        'If you are running locally, <code>/api/*</code> needs <code>npm run dev</code> ' +
-        'rather than a plain static server.';
+      return '<strong>The road to the catalogue is out.</strong><br>' +
+        'That is this site failing to answer, not the room standing empty. ' +
+        'Give it a moment and come back.' +
+        (onLocalhost()
+          ? '<br><br><em>Running locally: <code>/api/*</code> needs ' +
+            '<code>npm run dev</code>, not a plain static server.</em>'
+          : '');
     }
     if (!state.stores.length) {
-      return '<strong>Nothing is stocked yet, and that is on purpose.</strong><br>' +
-        '54 shops are registered. None has been published, because no merchant ' +
-        'here goes on a shelf until somebody has opened it in a browser and read ' +
-        'what it actually sells. That is the reverse of how the sister sites were ' +
-        'built, and it is the reverse deliberately: one of them has a vendor that ' +
-        'has returned zero products since the day it was added.<br><br>' +
-        'The room fills when a capture lands in <code>data/captured/</code>. ' +
-        'Until then the <a href="/arcade">arcade</a> is open.';
+      /* NO HARD COUNT. This used to say "54 shops are registered",
+         which was true the day it was written and is a number nobody
+         will remember to change. A sentence that rots quietly is
+         worse than a vaguer one that stays true. */
+      return '<strong>The shelves are bare, and that is on purpose.</strong><br>' +
+        'The makers are registered and none of them is on a shelf yet. Nothing ' +
+        'goes up here until somebody has opened that shop and read what it ' +
+        'actually sells, which is slower than trusting a feed and is the entire ' +
+        'reason to do it that way.<br><br>' +
+        'The <a href="/arcade">arcade</a> is open while you wait. It never sells ' +
+        'you anything either.';
     }
     return '<strong>Nothing in ' + esc(roomName) + ' yet.</strong><br>' +
-      'Shops are live, but none of the ones read so far stock anything that ' +
-      'belongs in here. Try the <a href="/">map</a>.';
+      'Shops are live, but nothing read so far belongs on these shelves. ' +
+      'There are other doors on the <a href="/">map</a>.';
   }
 
 

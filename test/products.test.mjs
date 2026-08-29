@@ -294,3 +294,77 @@ test('row() decodes the title before anything reads it', () => {
   assert.ok(/title:\s*decodeEntities\(o\.title\)/.test(body),
     'row() must decode o.title, not leave it to the card')
 })
+
+/* ============================================================
+   THE NARRATOR NEVER LIES, AND NEVER TALKS SHOP
+
+   The room copy is written in the place's voice now, and two things
+   about it are load-bearing rather than stylistic.
+
+   It must stay TRUE. An empty shelf described in flavour is still an
+   empty shelf, and the one genuinely dishonest thing a storefront can
+   do is make "we have nothing" sound like "we have something".
+
+   And it must stay ABOUT THE SHOP. The previous copy told visitors
+   about `data/captured/`, told them to run `npm run dev`, and
+   explained our capture policy by comparing it to a sister site. That
+   is the workshop leaking onto the shop floor.
+   ============================================================ */
+import { readFileSync as readApp } from 'node:fs'
+
+/* RAW, NOT COMMENT-STRIPPED, and that is a deliberate reversal of
+   what the guards above this do.
+
+   The stripper used everywhere else in this file is naive: it treats
+   any "/*" as a comment opener, and emptyWords() contains the literal
+   string "/api/*", which ends in exactly those two characters. So the
+   stripper opened a comment inside a string and swallowed the entire
+   function, leaving these tests asserting against nothing and passing
+   for the wrong reason.
+
+   The fix is not a cleverer stripper, it is not needing one: the
+   comment beside this copy is written so that it does not itself
+   contain the words being searched for. */
+const appSrc = readApp(new URL('../public/js/app.js', import.meta.url), 'utf8')
+
+/* emptyWords() and the map labels, which is all the copy that
+   describes stock. */
+const copy = appSrc.slice(appSrc.indexOf('function emptyWords'),
+  appSrc.indexOf('function boot'))
+
+test('no repo path reaches a visitor', () => {
+  for (const leak of ['data/captured', '_stores.js', 'reviewedBy', 'sister site']) {
+    assert.ok(!copy.includes(leak),
+      'room copy mentions ' + leak + ', which is a thing only we care about')
+  }
+})
+
+test('the dev hint is gated on localhost, not printed to everyone', () => {
+  /* It is genuinely useful advice and genuinely nobody's business on
+     a live site, so it is conditional rather than deleted. */
+  assert.ok(copy.includes('npm run dev'), 'the local-dev hint should still exist')
+  const idx = copy.indexOf('npm run dev')
+  const guard = copy.lastIndexOf('onLocalhost()', idx)
+  assert.ok(guard !== -1 && idx - guard < 400,
+    'npm run dev is no longer inside the onLocalhost branch, so every visitor sees it')
+})
+
+test('an empty room never claims to have anything', () => {
+  /* The three empty states are the ones a visitor hits most while the
+     catalogue is still being reviewed, so they are the ones where
+     flavour is most tempting and most costly. */
+  assert.ok(/shelves are bare|Nothing in/.test(copy),
+    'the empty states no longer say the shelves are empty in plain words')
+  for (const overclaim of ['in stock', 'browse our', 'thousands of', 'best prices']) {
+    assert.ok(!copy.toLowerCase().includes(overclaim),
+      'room copy claims "' + overclaim + '" on shelves that may be empty')
+  }
+})
+
+test('the map label for an empty room still reads as empty', () => {
+  const labels = appSrc.slice(appSrc.indexOf('var label ='), appSrc.indexOf('var label =') + 400)
+  assert.ok(/no answer/.test(labels), 'the unreachable state must say so')
+  assert.ok(/bare|nothing/.test(labels), 'an empty room must be labelled empty')
+  assert.ok(!/open|ready|stocked\b/.test(labels.replace(/shelves bare/, '')),
+    'a label suggests a stocked room where the count may be zero')
+})

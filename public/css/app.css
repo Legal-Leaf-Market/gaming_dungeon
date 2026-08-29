@@ -212,3 +212,8 @@ a.g-card:active{transform:translateY(0);box-shadow:none}
   .g-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   .g-bar{gap:10px}
 }
+
+/* The one line that explains the realm bands. Sits under THE MAP
+   heading, sized down from the hero lede so it reads as a caption on
+   the map rather than as a second introduction. */
+.map-lore{max-width:64ch;margin:0 0 16px;font-size:15px;line-height:1.6;color:var(--text-dim)}

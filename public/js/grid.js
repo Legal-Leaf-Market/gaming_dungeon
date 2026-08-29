@@ -261,7 +261,7 @@
       var CAP = 240;
       elGrid.innerHTML = shown.slice(0, CAP).map(function (it) {
         return card(it, opts);
-      }).join('') || '<p class="g-empty">Nothing matches that combination.</p>';
+      }).join('') || '<p class="g-empty">Nothing on these shelves answers to all of that.</p>';
 
       if (shown.length > CAP) {
         elGrid.insertAdjacentHTML('beforeend',

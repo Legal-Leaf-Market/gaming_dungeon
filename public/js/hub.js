@@ -24,7 +24,7 @@
   }
 
   fetch('/api/roblox').then(function (r) { return r.json(); }).then(function (j) {
-    if (!j || !j.ok) { el.innerHTML = '<p class="empty">The hub is not answering.</p>'; return; }
+    if (!j || !j.ok) { el.innerHTML = '<p class="empty">The arcade is not answering. That is us, not you.</p>'; return; }
 
     if (!j.cabinets.length) {
       /* THE EMPTY STATE SAYS WHICH EMPTY IT IS. "No cabinet has a
