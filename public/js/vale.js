@@ -22,9 +22,11 @@
   var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (still) return
 
-  /* Flora.luau's own greens, plus the blossom pink, which is what is
-     actually falling in the vale in spring. */
-  var HUES = ['#7ea85c', '#688e4e', '#8fae63', '#f0b8cd', '#d8c48a']
+  /* PETALS, NOT LEAVES. The vale is cherry now and the thing in the
+     air is blossom, so the greens are gone and what falls is the
+     three canopy pinks plus one near-white. A green leaf against a
+     wall of pink read as debris. */
+  var HUES = ['#dd91b4', '#f0c1d6', '#b8688f', '#f6e7ee']
 
   /* Away from the middle. The shop's own content lives in the centre
      column and a leaf crossing a product photo is litter, not
@@ -37,7 +39,10 @@
     return (Math.random() * 100).toFixed(1)
   }
 
-  var count = window.innerWidth < 700 ? 12 : 26
+    /* MORE OF THEM, AND SMALLER. Petals fall thickly or they read as
+     a bug on the screen; twenty-six chunky leaves looked sparse and
+     deliberate at once, which is the worst of both. */
+  var count = window.innerWidth < 700 ? 18 : 42
   var frag = document.createDocumentFragment()
   for (var i = 0; i < count; i++) {
     var leaf = document.createElement('i')
@@ -45,7 +50,7 @@
     var dur = 22 + Math.random() * 22
     leaf.style.cssText = [
       '--l:' + column() + '%',
-      '--sz:' + (9 + Math.random() * 11).toFixed(0) + 'px',
+      '--sz:' + (6 + Math.random() * 8).toFixed(0) + 'px',
       '--drift:' + ((Math.random() < 0.5 ? -1 : 1) * (50 + Math.random() * 90)).toFixed(0) + 'px',
       '--spin:' + ((Math.random() < 0.5 ? -1 : 1) * (180 + Math.random() * 300)).toFixed(0) + 'deg',
       '--op:' + (0.22 + Math.random() * 0.26).toFixed(2),

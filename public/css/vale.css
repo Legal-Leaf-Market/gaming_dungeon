@@ -77,8 +77,17 @@
 /* Heights are in vh so the skyline keeps its place in the window at
    any size: the peak should sit high on a laptop and high on a
    phone, and a fixed pixel height puts it at the ankles of one. */
-.vale .far   { height: 96vh; min-height: 420px; background-image: url(../assets/vale-far.svg) }
-.vale .mid   { height: 82vh; min-height: 360px; background-image: url(../assets/vale-mid.svg) }
+/* A HALF PIXEL OF BLUR ON THE FAR RIDGE, a quarter on the mid.
+
+   Distance softens edges, and a vector silhouette has none of that:
+   it is exactly as crisp at 1600 studs as the bamboo at twenty,
+   which is the single strongest tell that a drawn landscape is
+   drawn. Sub-pixel amounts, so nothing looks out of focus; it just
+   stops the far rim cutting the sky like a knife. */
+.vale .far   { height: 96vh; min-height: 420px; background-image: url(../assets/vale-far.svg);
+               filter: blur(.7px) }
+.vale .mid   { height: 82vh; min-height: 360px; background-image: url(../assets/vale-mid.svg);
+               filter: blur(.35px) }
 .vale .village {
   /* Sits on the mid ridge's shoulder, in front of the wash so the
      roofs stay dark. The village is the thing that makes this the
@@ -128,12 +137,20 @@
      ground. Everything below the village line is the meadow you are
      standing in, and the shop's cards sit on it the way a game's
      HUD sits on the world. */
+  /* SEVEN STOPS, NOT FOUR. The four-stop version banded visibly
+     across the middle of the window: a two-stop ramp between colours
+     this close in value shows its own edges, and on a background
+     that fills the whole viewport an edge is the first thing the eye
+     finds. Extra stops cost nothing and are the cheapest smoothing
+     there is. */
   background: linear-gradient(180deg,
     transparent 0%,
-    transparent 52%,
-    color-mix(in srgb, var(--vale-sky-haze) 55%, transparent) 66%,
-    color-mix(in srgb, var(--vale-grass) 62%, var(--vale-sky-haze)) 80%,
-    var(--vale-grass) 92%,
+    transparent 48%,
+    color-mix(in srgb, var(--vale-sky-haze) 28%, transparent) 58%,
+    color-mix(in srgb, var(--vale-sky-haze) 62%, transparent) 67%,
+    color-mix(in srgb, var(--vale-grass) 34%, var(--vale-sky-haze)) 76%,
+    color-mix(in srgb, var(--vale-grass) 72%, var(--vale-sky-haze)) 85%,
+    var(--vale-grass) 93%,
     var(--vale-grass) 100%);
 }
 
@@ -217,7 +234,10 @@
   bottom: auto;
   width: var(--sz, 13px);
   height: calc(var(--sz, 13px) * .58);
-  border-radius: 0 100% 0 100%;
+  /* A PETAL, not a leaf: rounded at three corners and notched at the
+     tip, which is the cherry blossom's own shape and the reason this
+     is not just a smaller version of the old leaf. */
+  border-radius: 60% 60% 60% 12%;
   background: var(--hue, #7ea85c);
   opacity: var(--op, .3);
   animation: valeFall linear infinite;

@@ -647,54 +647,174 @@ function village() {
      light is. The passes overlap heavily on purpose; the gaps
      between blobs are what made the old ones read as smoke.
      --------------------------------------------------------- */
+  /* ---------------------------------------------------------
+     A CHERRY TREE IS NOT A PINK CLOUD
+
+     Two versions of this were wrong in the same direction. The first
+     scattered six ellipses round a stick and read as smoke. The
+     second used forty overlapping ellipses with a soft halo and read
+     as candyfloss, which is worse, because it was confidently wrong:
+     a smooth mass with a fading edge is a CLOUD, and no amount of
+     tuning the pink was going to turn it into a tree.
+
+     What actually makes foliage read as foliage is the opposite of
+     smooth. It is thousands of small marks with visible gaps between
+     them, clumped rather than evenly spread, with dark branch
+     structure showing THROUGH the gaps. The gaps are the whole
+     thing. A canopy you cannot see sky through is a balloon.
+
+     So this draws:
+
+       BRANCHES first, a forked trunk into limbs into twigs, and the
+       twigs run out INTO the canopy rather than stopping at its
+       edge, because that is what the eye follows.
+
+       CLUSTERS second. Blossom does not distribute evenly, it
+       bunches on the twigs, so mark positions are sampled around
+       about two dozen cluster centres rather than across the whole
+       disc. Even distribution is noise; clumping is foliage.
+
+       MARKS last, and they are individual: a five-lobed blossom
+       rosette and a pointed leaf, each defined ONCE in <defs> and
+       placed with <use> at a random rotation and scale. That is what
+       makes the count affordable. Drawn as full paths this file
+       would be a third of a megabyte; as <use> with the fills
+       grouped it is a fraction of that, for about four hundred marks
+       a tree.
+
+     Tone runs with height, not at random: deep rose in the underside
+     where the canopy shades itself, mid pink through the body, near
+     white only on the top left where the light is.
+     --------------------------------------------------------- */
   function cherry(x, groundY, scale) {
-    const trunkH = 84 * scale
+    const trunkH = 88 * scale
     const top = groundY - trunkH
-    const bw = 9 * scale
+    const bw = 9.5 * scale
+    const bark = at(GAME.bark, 80)
+    const barkLit = at([88, 68, 58], 80)
 
     /* trunk, flaring at the foot */
-    parts.push('<path d="M' + n2(x - bw * 1.5) + ' ' + n2(groundY) +
-      ' Q' + n2(x - bw * 0.8) + ' ' + n2(groundY - trunkH * 0.5) +
-      ' ' + n2(x - bw * 0.45) + ' ' + n2(top) +
-      ' L' + n2(x + bw * 0.45) + ' ' + n2(top) +
-      ' Q' + n2(x + bw * 0.8) + ' ' + n2(groundY - trunkH * 0.5) +
-      ' ' + n2(x + bw * 1.5) + ' ' + n2(groundY) +
-      ' Z" fill="' + at(GAME.bark, 80) + '"/>')
+    parts.push('<path d="M' + n2(x - bw * 1.6) + ' ' + n2(groundY) +
+      ' Q' + n2(x - bw * 0.85) + ' ' + n2(groundY - trunkH * 0.5) +
+      ' ' + n2(x - bw * 0.42) + ' ' + n2(top) +
+      ' L' + n2(x + bw * 0.42) + ' ' + n2(top) +
+      ' Q' + n2(x + bw * 0.85) + ' ' + n2(groundY - trunkH * 0.5) +
+      ' ' + n2(x + bw * 1.6) + ' ' + n2(groundY) +
+      ' Z" fill="' + bark + '"/>')
 
-    /* limbs into the canopy */
-    const limbs = 3 + Math.floor(rng() * 2)
+    /* THE ARMATURE. Limbs from the fork, twigs from the limbs, and
+       the twigs reach past where the blossom will sit so the canopy
+       has something to hang on. */
+    const twigTips = []
+    const limbs = 4 + Math.floor(rng() * 2)
     for (let i = 0; i < limbs; i++) {
-      const spread = (i / (limbs - 1) - 0.5) * 2      /* -1 .. 1 */
-      const lx = x + spread * 46 * scale
-      const ly = top - 34 * scale + Math.abs(spread) * 12 * scale
-      const t = 3.6 * scale
-      parts.push('<path d="M' + n2(x - t) + ' ' + n2(top + 4) +
-        ' Q' + n2(x + spread * 16 * scale) + ' ' + n2(top - 14 * scale) +
+      const spread = (i / (limbs - 1) - 0.5) * 2
+      const lx = x + spread * 62 * scale + r(-8, 8) * scale
+      const ly = top - r(30, 52) * scale + Math.abs(spread) * 10 * scale
+      const t = 4.2 * scale
+      parts.push('<path d="M' + n2(x - t) + ' ' + n2(top + 5) +
+        ' Q' + n2(x + spread * 22 * scale) + ' ' + n2(top - 20 * scale) +
         ' ' + n2(lx) + ' ' + n2(ly) +
-        ' L' + n2(lx + t * 1.3) + ' ' + n2(ly + t) +
-        ' Q' + n2(x + spread * 16 * scale + t) + ' ' + n2(top - 12 * scale) +
-        ' ' + n2(x + t) + ' ' + n2(top + 4) +
-        ' Z" fill="' + at(GAME.bark, 80) + '"/>')
-    }
+        ' L' + n2(lx + t * 1.2) + ' ' + n2(ly + t * 0.9) +
+        ' Q' + n2(x + spread * 22 * scale + t) + ' ' + n2(top - 18 * scale) +
+        ' ' + n2(x + t) + ' ' + n2(top + 5) +
+        ' Z" fill="' + bark + '"/>')
 
-    /* THE CANOPY: wider than tall, three passes back to front */
-    const cw = 96 * scale          /* half-width  */
-    const ch = 50 * scale          /* half-height */
-    const cy = top - 40 * scale
-    const pass = (colour, count, dy, sx, sy) => {
-      for (let i = 0; i < count; i++) {
-        const a = rng() * Math.PI * 2
-        const rad = Math.sqrt(rng())
-        parts.push('<ellipse cx="' + n2(x + Math.cos(a) * rad * cw * sx) +
-          '" cy="' + n2(cy + dy + Math.sin(a) * rad * ch * sy) +
-          '" rx="' + n2((22 + rng() * 16) * scale) +
-          '" ry="' + n2((15 + rng() * 11) * scale) +
-          '" fill="' + colour + '"/>')
+      const twigs = 2 + Math.floor(rng() * 3)
+      for (let k = 0; k < twigs; k++) {
+        const tx = lx + r(-46, 46) * scale
+        const ty = ly - r(6, 44) * scale
+        parts.push('<path d="M' + n2(lx) + ' ' + n2(ly) +
+          ' Q' + n2((lx + tx) / 2 + r(-10, 10) * scale) + ' ' + n2((ly + ty) / 2) +
+          ' ' + n2(tx) + ' ' + n2(ty) + '" fill="none" stroke="' + barkLit +
+          '" stroke-width="' + n2(1.9 * scale) + '" stroke-linecap="round"/>')
+        twigTips.push([tx, ty])
       }
     }
-    pass(at(GAME.blossomDeep, 80), 11, 8 * scale, 1, 1)
-    pass(at(GAME.blossom, 80), 13, -2 * scale, 0.94, 0.9)
-    pass(at(GAME.blossomPale, 80), 6, -16 * scale, 0.6, 0.5)
+
+    /* CLUSTER CENTRES, biased onto the twig tips so the blossom
+       grows where the wood is. */
+    const cw = 118 * scale, ch = 58 * scale
+    const cy = top - 48 * scale
+    const centres = []
+    for (let i = 0; i < 26; i++) {
+      if (twigTips.length && rng() < 0.6) {
+        const tip = twigTips[Math.floor(rng() * twigTips.length)]
+        centres.push([tip[0] + r(-18, 18) * scale, tip[1] + r(-14, 14) * scale])
+      } else {
+        const a = rng() * Math.PI * 2, rad = Math.sqrt(rng())
+        centres.push([x + Math.cos(a) * rad * cw, cy + Math.sin(a) * rad * ch])
+      }
+    }
+
+    /* THE MARKS.
+
+       FOUR HUNDRED <use> ELEMENTS A TREE IS AFFORDABLE ONLY IF EACH
+       ONE IS SHORT. The first working version wrote a full transform
+       on every mark, `translate(123.4 456.7) rotate(215) scale(0.62)`,
+       and the file came out at 369KB, which is not a background, it
+       is a download. Three changes got it to a fifth of that with
+       the same number of marks on screen:
+
+         The whole mark layer sits in ONE group carrying the tree's
+         position and scale, so marks are written in local
+         coordinates and integers, and per-mark scale disappears.
+
+         Blossom uses <use x= y=> with no transform at all. A
+         five-lobed rosette is near enough rotationally symmetric
+         that rotating it buys nothing, and three pre-sized rosettes
+         in <defs> cover the size variation that rotation was
+         standing in for.
+
+         Opacity is quantised to two values, so there are a handful
+         of fill groups rather than one per mark.
+
+       Leaves keep a rotation, because a leaf is a pointed thing and
+       a field of them all lying the same way is instantly wrong.
+       They are one mark in six, so the cost is small. */
+    const buckets = new Map()
+    const put = (colour, mark, mx, my, rot, op) => {
+      const key = colour + '|' + op
+      if (!buckets.has(key)) buckets.set(key, [])
+      buckets.get(key).push(rot === null
+        ? '<use href="#' + mark + '" x="' + Math.round(mx) + '" y="' + Math.round(my) + '"/>'
+        : '<use href="#' + mark + '" transform="translate(' + Math.round(mx) + ' ' +
+          Math.round(my) + ') rotate(' + Math.round(rot) + ')"/>')
+    }
+
+    const deep = at(GAME.blossomDeep, 80)
+    const mid = at(GAME.blossom, 80)
+    const lit = at(GAME.blossomPale, 78)
+    const leafGreen = at([96, 128, 74], 80)
+    const SIZES = ['b1', 'b2', 'b3']
+
+    for (const [ccx, ccy] of centres) {
+      const n = 12 + Math.floor(rng() * 8)
+      for (let i = 0; i < n; i++) {
+        const a = rng() * Math.PI * 2
+        const rad = Math.sqrt(rng()) * (17 + rng() * 13) * scale
+        /* local coordinates: the group below carries x and scale */
+        const mx = (ccx + Math.cos(a) * rad - x) / scale
+        const my = (ccy + Math.sin(a) * rad * 0.82 - groundY) / scale
+        /* tone by height in the canopy, with noise so the boundary
+           between tones is not a horizon line */
+        const h = ((ccy + Math.sin(a) * rad * 0.82) - (cy - ch)) / (ch * 2) + r(-0.16, 0.16)
+        if (rng() < 0.16) {
+          put(leafGreen, 'lf', mx, my, rng() * 360, rng() < 0.5 ? '.9' : '1')
+        } else {
+          const colour = h > 0.66 ? deep : h < 0.3 ? lit : mid
+          put(colour, SIZES[Math.floor(rng() * 3)], mx, my, null, rng() < 0.5 ? '.85' : '1')
+        }
+      }
+    }
+
+    const groups = []
+    for (const [key, uses] of buckets) {
+      const [colour, op] = key.split('|')
+      groups.push('<g fill="' + colour + '" opacity="' + op + '">' + uses.join('') + '</g>')
+    }
+    parts.push('<g transform="translate(' + n2(x) + ' ' + n2(groundY) + ') scale(' +
+      (Math.round(scale * 100) / 100) + ')">' + groups.join('') + '</g>')
   }
 
   function pine(x, groundY, scale) {
@@ -716,6 +836,24 @@ function village() {
      frame, so the ratio is the design decision, not a detail. Pines
      stay as the dark note that keeps a wall of pink from turning
      into candyfloss. */
+  /* A BACK LINE FIRST, hazed hard and drawn small, running behind
+     the houses. Depth in a flat drawing is almost entirely this:
+     something the same shape, paler and smaller, behind. Without it
+     the village sits on the grass like a sticker. */
+  for (let i = 0; i < 22; i++) {
+    const bx = r(-20, PLATE_W + 20)
+    const by = GROUND - r(30, 58)
+    const bs = r(0.3, 0.48)
+    const pale = at(rng() < 0.55 ? GAME.blossom : GAME.pine, 620)
+    for (let k = 0; k < 9; k++) {
+      const a = rng() * Math.PI * 2, rad = Math.sqrt(rng())
+      parts.push('<ellipse cx="' + n2(bx + Math.cos(a) * rad * 78 * bs) +
+        '" cy="' + n2(by + Math.sin(a) * rad * 34 * bs) +
+        '" rx="' + n2(r(16, 27) * bs) + '" ry="' + n2(r(11, 19) * bs) +
+        '" fill="' + pale + '" opacity="0.8"/>')
+    }
+  }
+
   const stands = []
   for (let i = 0; i < 13; i++) stands.push({ x: r(30, PLATE_W - 30), cherry: rng() < 0.75 })
   /* far to near, so a nearer tree overlaps a further one */
@@ -726,9 +864,27 @@ function village() {
     else pine(t.x, GROUND + r(2, 14), scale)
   }
 
+  /* Defined once, placed hundreds of times. `bl` is a five-lobed
+     blossom rosette with a gap at its centre; `lf` is a pointed
+     leaf. Both are drawn around the origin so <use>'s rotate() spins
+     them about their own middle rather than about the corner. */
+  const DEFS = '<defs>' +
+    /* Three sizes of rosette, pre-scaled, so a <use> needs only x
+       and y. The centre gap is deliberate: a solid disc reads as a
+       dot and five lobes around a hole read as a flower even at
+       four pixels. */
+    '<path id="b1" d="M0 -3.4 Q2.2 -3.2 2.7 -1 Q4.5 .2 3.3 2.1 Q2.2 4 0 3.4' +
+    ' Q-2.2 4 -3.3 2.1 Q-4.5 .2 -2.7 -1 Q-2.2 -3.2 0 -3.4 Z"/>' +
+    '<path id="b2" d="M0 -4.8 Q3 -4.5 3.8 -1.5 Q6.4 .3 4.6 3 Q3.1 5.6 0 4.8' +
+    ' Q-3.1 5.6 -4.6 3 Q-6.4 .3 -3.8 -1.5 Q-3 -4.5 0 -4.8 Z"/>' +
+    '<path id="b3" d="M0 -6.4 Q4 -6 5.1 -2 Q8.5 .4 6.1 4 Q4.1 7.5 0 6.4' +
+    ' Q-4.1 7.5 -6.1 4 Q-8.5 .4 -5.1 -2 Q-4 -6 0 -6.4 Z"/>' +
+    '<path id="lf" d="M-7 0 Q0 -3.6 7 0 Q0 3.6 -7 0 Z"/>' +
+    '</defs>'
+
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + PLATE_W + ' ' + PLATE_H +
     '" preserveAspectRatio="none" width="' + PLATE_W + '" height="' + PLATE_H + '">' +
-    parts.join('') + '</svg>\n'
+    DEFS + parts.join('') + '</svg>\n'
 }
 
 writeFileSync(join(out, 'vale-village.svg'), village())
