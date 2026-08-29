@@ -1,15 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Verda Store">
-  <!-- A coin door: the hinged front panel of a cabinet, and the way in.
-       Redrawn 2026-08-29 in Heavenpillar's ink-and-paper palette (paper
-       plate, ink border, gold slots) instead of the old violet-on-black.
-       Still only axis-aligned rects on a 32px grid with integer
-       coordinates: tools/branding.mjs draws rects and THROWS on anything
-       else, so a curve added here fails the build rather than quietly
-       vanishing from every icon. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Verda Cultivation">
+  <!-- A cherry blossom: five petals and a gold centre, on the paper
+       plate the whole site is printed on.
+
+       It replaces a coin door, which was the right mark for a shop
+       called Gaming Dungeon and the wrong one for a cherry grove.
+
+       THE PETALS ARE ROTATED ELLIPSES, and until this commit
+       tools/branding.mjs could only draw <rect>: it parsed rects and
+       THREW on everything else, deliberately, so that a curve added
+       here failed the build instead of quietly vanishing from every
+       icon. It draws <ellipse>, <circle> and rotate() now, and still
+       throws on <path> and the rest.
+
+       Kept to shapes a browser and the rasteriser agree on, because
+       this file is BOTH the source for the generated icons and the
+       favicon served directly to browsers. The two must render the
+       same thing or the tab and the app icon disagree.
+
+       Five petals at 72 degrees from -90, each ellipse rotated so its
+       long axis points outward from the centre. Readable at 16px:
+       the petals are fat and the gaps between them reach the middle,
+       which is what stops a small flower turning into a dot. -->
   <rect width="32" height="32" rx="5" fill="#f6f3e9"/>
   <rect x="2" y="2" width="28" height="28" rx="4" fill="none" stroke="#1b1815" stroke-width="2"/>
-  <rect x="7" y="6" width="18" height="20" rx="2" fill="none" stroke="#1b1815" stroke-width="2"/>
-  <rect x="11" y="10" width="10" height="6" fill="#1b1815" opacity=".82"/>
-  <rect x="14" y="19" width="4" height="1.6" fill="#a8822a"/>
-  <rect x="14" y="22" width="4" height="1.6" fill="#a8822a" opacity=".55"/>
+  <ellipse cx="16.00" cy="11.40" rx="3.15" ry="5" fill="#d2789f"/>
+  <ellipse cx="20.37" cy="14.58" rx="3.15" ry="5" fill="#d2789f" transform="rotate(72 20.37 14.58)"/>
+  <ellipse cx="18.70" cy="19.72" rx="3.15" ry="5" fill="#d2789f" transform="rotate(144 18.70 19.72)"/>
+  <ellipse cx="13.30" cy="19.72" rx="3.15" ry="5" fill="#d2789f" transform="rotate(216 13.30 19.72)"/>
+  <ellipse cx="11.63" cy="14.58" rx="3.15" ry="5" fill="#d2789f" transform="rotate(288 11.63 14.58)"/>
+  <circle cx="16" cy="16" r="2.1" fill="#a8822a"/>
 </svg>

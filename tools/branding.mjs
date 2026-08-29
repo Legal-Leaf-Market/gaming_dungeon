@@ -59,14 +59,36 @@ function colour(v) {
    "inside the outer rect and outside the inner one" -- an SVG stroke
    straddles the path, so it grows the box by half the stroke width on
    each side and shrinks the corner radius by the same. */
-export function parseMark(svg) {
+export function parseMark(rawSvg) {
+  /* COMMENTS STRIPPED BEFORE ANYTHING READS THIS.
+
+     The refusal scan below tests for the literal text "<path", and
+     mark.svg's own comment explains which elements are refused by
+     naming them, so the file failed the build by DOCUMENTING itself.
+     Same trap as the source guards in test/: a check that cannot tell
+     "the thing is here" from "here is why the thing is not allowed"
+     punishes the documentation, and the documentation is the more
+     valuable half.
+
+     Stripping also means a commented-out shape stays commented out,
+     which is what a reader expects and what the previous version got
+     wrong in the other direction. */
+  const svg = String(rawSvg).replace(/<!--[\s\S]*?-->/g, '')
+
   const vb = /viewBox\s*=\s*"([^"]+)"/.exec(svg)
   if (!vb) throw new Error('branding: mark.svg has no viewBox')
   const [, , w, h] = vb[1].trim().split(/[\s,]+/).map(Number)
 
-  /* Anything that draws and is not a <rect> is a shape this renderer
-     cannot see. Refuse rather than skip. */
-  for (const el of ['path', 'circle', 'ellipse', 'polygon', 'polyline', 'line', 'text', 'image', 'use']) {
+  /* Anything that draws and this renderer cannot see is refused
+     rather than skipped: a shape that silently vanishes from every
+     icon is far worse than a build that stops.
+
+     <ellipse> and <circle> ARE drawn now, with an optional
+     rotate() transform, which is what a five-petal blossom needs.
+     The mark is also served straight to browsers as the favicon, so
+     it has to stay real SVG that a browser renders identically; a
+     rotate transform is, a made-up attribute would not be. */
+  for (const el of ['path', 'polygon', 'polyline', 'line', 'text', 'image', 'use']) {
     if (new RegExp('<' + el + '[\\s>]').test(svg)) {
       throw new Error('branding: mark.svg contains <' + el + '>, which this renderer does not draw. ' +
         'Either keep the mark to <rect>s or teach tools/branding.mjs the new element.')
@@ -94,13 +116,63 @@ export function parseMark(svg) {
       })
     }
   }
-  if (!shapes.length) throw new Error('branding: no drawable rects found in mark.svg')
+  /* ---- ellipses and circles -------------------------------- */
+  for (const m of svg.matchAll(/<(ellipse|circle)\b[^>]*>/g)) {
+    const a = attrs(m[0])
+    const cx = Number(a.cx || 0), cy = Number(a.cy || 0)
+    const rx = Number(a.rx !== undefined ? a.rx : a.r)
+    const ry = Number(a.ry !== undefined ? a.ry : a.r)
+    if (!(rx > 0) || !(ry > 0)) continue
+    const alpha = a.opacity === undefined ? 1 : Number(a.opacity)
+    const fill = a.fill === undefined ? '#000000' : a.fill
+
+    /* rotate(deg) or rotate(deg cx cy). Stored as radians and applied
+       by rotating the SAMPLE POINT backwards, which is how you rotate
+       a shape you are hit-testing rather than drawing. */
+    let rot = 0, rcx = cx, rcy = cy
+    const t = /rotate\(\s*(-?[\d.]+)(?:[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+))?\s*\)/.exec(a.transform || '')
+    if (t) {
+      rot = (Number(t[1]) * Math.PI) / 180
+      if (t[2] !== undefined) { rcx = Number(t[2]); rcy = Number(t[3]) }
+    }
+
+    if (fill && fill !== 'none') {
+      shapes.push({ kind: 'ell', cx, cy, rx, ry, rot, rcx, rcy, rgb: colour(fill), alpha })
+    }
+    if (a.stroke && a.stroke !== 'none') {
+      const sw = Number(a['stroke-width'] || 1)
+      shapes.push({
+        kind: 'ellring', rot, rcx, rcy, rgb: colour(a.stroke), alpha,
+        outer: { cx, cy, rx: rx + sw / 2, ry: ry + sw / 2 },
+        inner: { cx, cy, rx: rx - sw / 2, ry: ry - sw / 2 },
+      })
+    }
+  }
+
+  if (!shapes.length) throw new Error('branding: no drawable shapes found in mark.svg')
   return { w, h, shapes }
 }
 
 /* ============================================================
    2. DRAW IT
    ============================================================ */
+
+function insideEll(px, py, e) {
+  if (!(e.rx > 0) || !(e.ry > 0)) return false
+  const dx = (px - e.cx) / e.rx
+  const dy = (py - e.cy) / e.ry
+  return dx * dx + dy * dy <= 1
+}
+
+/* Rotate the sample point INTO the shape's own frame, by the negative
+   of the shape's rotation. Rotating the ellipse instead would mean
+   solving a general conic; this is two multiplies. */
+function unrotate(px, py, s) {
+  if (!s.rot) return [px, py]
+  const c = Math.cos(-s.rot), sn = Math.sin(-s.rot)
+  const dx = px - s.rcx, dy = py - s.rcy
+  return [s.rcx + dx * c - dy * sn, s.rcy + dx * sn + dy * c]
+}
 
 function insideRR(px, py, b) {
   if (b.w <= 0 || b.h <= 0) return false
@@ -138,9 +210,15 @@ export function rasterize(mark, size, opts = {}) {
           if (bg) { r = bg[0]; g = bg[1]; b = bg[2]; a = 1 }
 
           for (const s of mark.shapes) {
-            const hit = s.kind === 'fill'
-              ? insideRR(ux, uy, s)
-              : (insideRR(ux, uy, s.outer) && !insideRR(ux, uy, s.inner))
+            let hit
+            if (s.kind === 'fill') hit = insideRR(ux, uy, s)
+            else if (s.kind === 'ring') hit = insideRR(ux, uy, s.outer) && !insideRR(ux, uy, s.inner)
+            else {
+              const [rx2, ry2] = unrotate(ux, uy, s)
+              hit = s.kind === 'ell'
+                ? insideEll(rx2, ry2, s)
+                : (insideEll(rx2, ry2, s.outer) && !insideEll(rx2, ry2, s.inner))
+            }
             if (!hit) continue
             const sa = s.alpha
             /* source-over */
