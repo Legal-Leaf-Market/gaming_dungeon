@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harmonic Architect — Master Progression & Modulation Studio</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            },
+            interval: {
+              root: '#ef4444',
+              third: '#06b6d4',
+              fifth: '#f59e0b',
+              seventh: '#8b5cf6',
+              extension: '#10b981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom fretboard & UI styling */
+    .fretboard-wood {
+      background: radial-gradient(circle at 50% 50%, #261b17 0%, #17110e 100%);
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.8), 0 8px 24px -4px rgba(0,0,0,0.5);
+    }
+    .string-line {
+      box-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    }
+    .fret-wire {
+      box-shadow: 1px 0 3px rgba(255,255,255,0.2), -1px 0 2px rgba(0,0,0,0.8);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-cyan-500 selection:text-black">
+
+  <!-- Header & Navigation -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center font-black text-xl text-white shadow-lg shadow-cyan-500/20">
+          HA
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Harmonic Architect
+            <span class="text-xs font-mono uppercase bg-cyan-950 text-cyan-400 border border-cyan-800/60 px-2 py-0.5 rounded-full">For Brayton</span>
+          </h1>
+          <p class="text-xs text-slate-400">Guitar Voice Leading, Advanced Reharmonization & Key Modulation Studio</p>
+        </div>
+      </div>
+
+      <!-- Quick Tuning and Mode Select -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center bg-slate-800/80 p-1 rounded-lg border border-slate-700 text-xs">
+          <span class="text-slate-400 px-2 font-medium">Tuning:</span>
+          <select id="tuningSelect" class="bg-slate-900 text-cyan-300 font-mono font-medium rounded px-2 py-1 outline-none border border-slate-700 cursor-pointer">
+            <option value="standard">Standard (E A D G B E)</option>
+            <option value="dropD">Drop D (D A D G B E)</option>
+            <option value="dadgad">DADGAD (D A D G A D)</option>
+            <option value="openD">Open D (D A D F# A D)</option>
+            <option value="openG">Open G (D G D G B D)</option>
+          </select>
+        </div>
+        <button id="masterAudioBtn" class="flex items-center gap-2 px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs rounded-lg transition-all shadow-md shadow-cyan-500/20 active:scale-95">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z"/></svg>
+          <span id="audioStatusText">Audio Ready</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- Top Progression Selector & Transport Controls -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <!-- Preset category and progression choice -->
+        <div class="space-y-1.5 flex-1">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-cyan-400">Progression Preset</span>
+            <span id="progressionKeyBadge" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono border border-slate-700">Key: C Major</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <select id="presetSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-cyan-500 outline-none cursor-pointer">
+              <!-- Dynamically Populated -->
+            </select>
+            <div class="flex items-center gap-2">
+              <button id="applyTritoneSubBtn" title="Swap dominant V7 chord for its chromatic tritone sub (bII7)" class="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-amber-300 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                <span>⚡ Tritone Sub</span>
+              </button>
+              <button id="shellVoicingToggle" title="Filter down chords to 3-note Root+3rd+7th guide-tone shells" class="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-indigo-300 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                <span>🎯 Jazz Shells</span>
+              </button>
+              <button id="alteredDominantToggle" title="Add b9/#9/b13 altered extensions to dominant chords" class="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-pink-300 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                <span>✨ Altered (alt)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Playback / Strum Transport -->
+        <div class="flex flex-wrap items-center gap-3 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800">
+          <div class="flex items-center bg-slate-950 border border-slate-800 rounded-xl p-1 gap-1">
+            <button id="prevChordBtn" class="p-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition" title="Previous Chord (←)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button id="playProgressBtn" class="px-4 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/20 active:scale-95 transition">
+              <svg id="playIcon" class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+              <span id="playProgressText">Play Flow</span>
+            </button>
+            <button id="nextChordBtn" class="p-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition" title="Next Chord (→)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+
+          <button id="strumCurrentBtn" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 font-semibold text-xs rounded-xl flex items-center gap-2 active:scale-95 transition">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>Strum Chord</span>
+          </button>
+
+          <!-- Tempo & Arp Control -->
+          <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 border border-slate-800 rounded-xl text-xs">
+            <span class="text-slate-400 font-mono">BPM</span>
+            <input id="bpmSlider" type="range" min="40" max="160" value="84" class="w-16 accent-cyan-500 cursor-pointer">
+            <span id="bpmValue" class="text-cyan-400 font-mono w-7 text-right">84</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progression Strip (Timeline Cards) -->
+      <div id="progressionTimeline" class="mt-4 flex gap-2.5 overflow-x-auto pb-2 custom-scrollbar">
+        <!-- Rendered Chord Cards -->
+      </div>
+    </section>
+
+    <!-- Fretboard & Voice Leading Visualizer -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden">
+      <!-- Fretboard Header Controls -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-3">
+            <h2 id="activeChordName" class="text-2xl font-black text-white tracking-tight">Cmaj7</h2>
+            <span id="activeChordFormula" class="text-xs px-2.5 py-1 rounded-md bg-cyan-950/80 text-cyan-300 font-mono border border-cyan-800/70">1 - 3 - 5 - 7</span>
+            <span id="activeVoicingType" class="text-xs px-2.5 py-1 rounded-md bg-indigo-950/80 text-indigo-300 font-mono border border-indigo-800/70">Root 5 (A-Shape Drop 2)</span>
+          </div>
+          <p id="activeChordNotes" class="text-xs text-slate-400 font-mono mt-1">Notes: C - E - G - B &bull; Frets: x-3-5-4-5-x</p>
+        </div>
+
+        <!-- Interval Legend -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="text-slate-400 font-medium mr-1">Tones:</span>
+          <span class="flex items-center gap-1 bg-red-950/60 border border-red-800/50 text-red-300 px-2 py-0.5 rounded font-mono text-[11px]"><span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span> Root</span>
+          <span class="flex items-center gap-1 bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 px-2 py-0.5 rounded font-mono text-[11px]"><span class="w-2 h-2 rounded-full bg-cyan-400 inline-block"></span> 3rd / &flat;3rd</span>
+          <span class="flex items-center gap-1 bg-amber-950/60 border border-amber-800/50 text-amber-300 px-2 py-0.5 rounded font-mono text-[11px]"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> 5th / &flat;5</span>
+          <span class="flex items-center gap-1 bg-purple-950/60 border border-purple-800/50 text-purple-300 px-2 py-0.5 rounded font-mono text-[11px]"><span class="w-2 h-2 rounded-full bg-purple-400 inline-block"></span> 7th / &flat;7</span>
+          <span class="flex items-center gap-1 bg-emerald-950/60 border border-emerald-800/50 text-emerald-300 px-2 py-0.5 rounded font-mono text-[11px]"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> 9/11/13</span>
+        </div>
+      </div>
+
+      <!-- Fretboard Container -->
+      <div class="overflow-x-auto custom-scrollbar pb-3">
+        <div class="min-w-[780px] p-2">
+          <!-- Guitar Fretboard -->
+          <div id="fretboard" class="fretboard-wood relative rounded-xl border-4 border-amber-950/80 p-3 select-none">
+            <!-- Frets and Strings dynamically drawn by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Voice Leading Minimal Motion / Delta Analysis Bar -->
+      <div id="voiceLeadingBar" class="mt-4 p-3.5 bg-slate-950/90 border border-slate-800 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="font-bold text-slate-200">Voice Leading Delta:</span>
+          <span id="voiceLeadingSummary" class="text-slate-300 font-mono">Select a progression to view step-by-step minimal motion.</span>
+        </div>
+        <div id="voiceDeltaChips" class="flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
+          <!-- Chips injected by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Two-Column Section: Modulation Engine & Theory Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Key Modulation Matrix Generator (Left 7 Cols) -->
+      <section class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <span>🧭 Key Modulation Navigator</span>
+              <span class="text-[10px] bg-cyan-900/60 text-cyan-300 border border-cyan-700/50 px-2 py-0.5 rounded font-mono uppercase">AI Harmonic Pathway</span>
+            </h3>
+            <p class="text-xs text-slate-400">Calculate seamless voice-led bridges from any key to any target key.</p>
+          </div>
+          <button id="generateModulationBtn" class="px-3.5 py-1.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-xs rounded-lg shadow-md shadow-cyan-500/20 active:scale-95 transition">
+            Generate Pathway
+          </button>
+        </div>
+
+        <!-- Key Selectors -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Starting Key</label>
+            <select id="modFromKey" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono outline-none">
+              <option value="C">C Major</option>
+              <option value="G">G Major</option>
+              <option value="D">D Major</option>
+              <option value="A">A Major</option>
+              <option value="E" selected>E Major</option>
+              <option value="F">F Major</option>
+              <option value="Bb">B&flat; Major</option>
+              <option value="Eb">E&flat; Major</option>
+              <option value="Am">A Minor</option>
+              <option value="Em">E Minor</option>
+              <option value="Dm">D Minor</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Target Key</label>
+            <select id="modToKey" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-mono outline-none">
+              <option value="C">C Major</option>
+              <option value="G">G Major</option>
+              <option value="D">D Major</option>
+              <option value="A" selected>A Major</option>
+              <option value="E">E Major</option>
+              <option value="F">F Major</option>
+              <option value="Bb">B&flat; Major</option>
+              <option value="Eb">E&flat; Major</option>
+              <option value="Ab">A&flat; Major (Coltrane Axis)</option>
+              <option value="F#">F# / G&flat; Major</option>
+              <option value="Am">A Minor</option>
+              <option value="C#m">C# Minor</option>
+            </select>
+          </div>
+
+          <div class="col-span-2 sm:col-span-1">
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Strategy</label>
+            <select id="modStrategy" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-cyan-300 font-mono outline-none">
+              <option value="pivot">Diatonic Pivot Chord</option>
+              <option value="tritone">Tritone Chromatic Bridge</option>
+              <option value="common">Common-Tone Pivot</option>
+              <option value="coltrane">Coltrane 3rds Cycle</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Generated Modulation Chain Box -->
+        <div id="modulationResultContainer" class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400 font-medium">Computed Pathway:</span>
+            <button id="loadModulationToTimelineBtn" class="text-cyan-400 hover:text-cyan-300 text-[11px] underline font-medium">
+              Load into Main Timeline &rarr;
+            </button>
+          </div>
+          <div id="modulationChainDisplay" class="flex flex-wrap items-center gap-2">
+            <!-- Modulation cards -->
+          </div>
+          <p id="modulationExplanation" class="text-xs text-slate-300 leading-relaxed font-sans bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+            <!-- Modulation rationale text -->
+          </p>
+        </div>
+      </section>
+
+      <!-- Theory Master & Voice Leading Insights (Right 5 Cols) -->
+      <section class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="pb-3 border-b border-slate-800">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <span>🧠 Harmonic Deep-Dive for Brayton</span>
+          </h3>
+          <p class="text-xs text-slate-400">How guide tones, altered notes, and physics interact.</p>
+        </div>
+
+        <!-- Concept Cards -->
+        <div class="space-y-3 text-xs">
+          <!-- Guide Tones vs Power Chords -->
+          <div class="p-3 bg-slate-950 border border-slate-800/90 rounded-xl space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-amber-400">1. Power Chords vs. Jazz Shells</span>
+              <span class="text-[10px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded font-mono">Foundations</span>
+            </div>
+            <p class="text-slate-300 leading-relaxed">
+              A power chord (<span class="text-red-400 font-mono">1</span>-<span class="text-amber-400 font-mono">5</span>) has zero emotional bias—it's pure acoustic muscle. Jazz chords discard the neutral 5th and isolate the <strong class="text-cyan-300">3rd</strong> (major/minor identity) and <strong class="text-purple-300">7th</strong> (harmonic tension). Dropping a single root or 5th by 1 or 2 frets instantly turns a heavy rock grip into a lush 7th or 9th chord.
+            </p>
+          </div>
+
+          <!-- Minimal Motion Rule -->
+          <div class="p-3 bg-slate-950 border border-slate-800/90 rounded-xl space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-cyan-400">2. The Law of 1-Fret Voice Leading</span>
+              <span class="text-[10px] bg-cyan-950 text-cyan-300 px-1.5 py-0.5 rounded font-mono">Core Secret</span>
+            </div>
+            <p class="text-slate-300 leading-relaxed">
+              In great chord progressions, <strong class="text-white">chords don't jump; internal voices step</strong>. In a ii-V-I (<span class="font-mono text-cyan-300">Dm7 &rarr; G7 &rarr; Cmaj7</span>), the 7th of Dm7 (<span class="text-purple-300 font-mono">C</span>) drops 1 fret to become the 3rd of G7 (<span class="text-cyan-300 font-mono">B</span>), while the 3rd (<span class="text-cyan-300 font-mono">F</span>) stays static and becomes the 7th of G7.
+            </p>
+          </div>
+
+          <!-- Tritone Substitution -->
+          <div class="p-3 bg-slate-950 border border-slate-800/90 rounded-xl space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-pink-400">3. Tritone Sub Dynamics</span>
+              <span class="text-[10px] bg-pink-950 text-pink-300 px-1.5 py-0.5 rounded font-mono">&flat;II7 Substitution</span>
+            </div>
+            <p class="text-slate-300 leading-relaxed">
+              <span class="font-mono text-pink-300">G7</span> and <span class="font-mono text-pink-300">D&flat;7</span> share the exact same tritone interval (<span class="font-mono text-slate-200">B & F</span>). By swapping G7 for D&flat;7, your bass line walks chromatically down (<span class="font-mono text-slate-200">D &rarr; D&flat; &rarr; C</span>) with zero loss of harmonic resolution.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Interactive Voicing Matrix & Fret Inspector -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 class="text-base font-bold text-white">Alternative Voicing Explorer</h3>
+          <p class="text-xs text-slate-400">Click any variation below to swap how this chord is gripped across different neck registers.</p>
+        </div>
+        <div id="voicingVariantsContainer" class="flex flex-wrap items-center gap-2">
+          <!-- Injected voicing selector buttons for current active chord -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-400 max-w-7xl mx-auto px-4">
+    <p>Harmonic Architect &bull; Designed for mastering jazz harmony, open voicings, and chromatic voice leading on guitar.</p>
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+    /* =========================================================================
+       1. CORE MUSIC THEORY & TUNING DEFINITIONS
+       ========================================================================= */
+    const NOTE_NAMES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const NOTE_NAMES_FLAT  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+    const TUNINGS = {
+      standard: { name: "Standard", notes: ['E', 'B', 'G', 'D', 'A', 'E'], midi: [64, 59, 55, 50, 45, 40] },
+      dropD:    { name: "Drop D",   notes: ['E', 'B', 'G', 'D', 'A', 'D'], midi: [64, 59, 55, 50, 45, 38] },
+      dadgad:   { name: "DADGAD",   notes: ['D', 'A', 'G', 'D', 'A', 'D'], midi: [62, 57, 55, 50, 45, 38] },
+      openD:    { name: "Open D",   notes: ['D', 'A', 'F#', 'D', 'A', 'D'], midi: [62, 57, 54, 50, 45, 38] },
+      openG:    { name: "Open G",   notes: ['D', 'B', 'G', 'D', 'G', 'D'], midi: [62, 59, 55, 50, 43, 38] }
+    };
+
+    let currentTuningKey = 'standard';
+
+    // Note to semitone from C (0-11)
+    function noteToPitchClass(note) {
+      const n = note.replace('b', 'b').replace('♯', '#');
+      let idx = NOTE_NAMES_SHARP.indexOf(n);
+      if (idx !== -1) return idx;
+      idx = NOTE_NAMES_FLAT.indexOf(n);
+      return idx !== -1 ? idx : 0;
+    }
+
+    function pitchClassToNote(pitchClass, preferFlat = false) {
+      const pc = (pitchClass % 12 + 12) % 12;
+      return preferFlat ? NOTE_NAMES_FLAT[pc] : NOTE_NAMES_SHARP[pc];
+    }
+
+    /* =========================================================================
+       2. COMPREHENSIVE PROGRESSION PRESETS & CHORD VOICINGS
+       ========================================================================= */
+    const PROGRESSION_PRESETS = [
+      {
+        id: 'voice_leading_pivot_e',
+        name: '1. The 1-Fret Pivot (Open E Family)',
+        key: 'E Major',
+        description: 'Watch how shifting a single finger by 1 fret shifts E from pure major to lush maj7, bluesy dominant 7, and melancholy m7.',
+        chords: [
+          {
+            name: 'E Major',
+            symbol: 'E',
+            roman: 'I',
+            frets: [0, 2, 2, 1, 0, 0], // E B G D A E from 6th to 1st string
+            formula: '1 - 5 - 1 - 3 - 5 - 1',
+            root: 'E',
+            type: 'Base Open Major Triad',
+            theory: 'All 6 strings resonate. The 3rd (G#) sits on the G-string 1st fret.',
+            voicingVariants: [
+              { name: 'Open Cowboy', frets: [0, 2, 2, 1, 0, 0] },
+              { name: 'C-Shape (Fret 4)', frets: [-1, 7, 6, 4, 5, 4] },
+              { name: 'A-Shape (Fret 7)', frets: [-1, 7, 9, 9, 9, 7] }
+            ]
+          },
+          {
+            name: 'Emaj7',
+            symbol: 'Emaj7',
+            roman: 'Imaj7',
+            frets: [0, 2, 1, 1, 0, 0],
+            formula: '1 - 5 - 7 - 3 - 5 - 1',
+            root: 'E',
+            type: 'Dreamy Major 7th',
+            theory: 'PIVOT: The D-string drops from 2nd fret (E) down 1 fret to 1st fret (D# / Natural 7th).',
+            voicingVariants: [
+              { name: 'Open 1-Fret Pivot', frets: [0, 2, 1, 1, 0, 0] },
+              { name: 'Drop-2 (Fret 6)', frets: [-1, 7, 6, 8, 5, -1] },
+              { name: 'Root-5 Shell', frets: [-1, 7, 6, 8, -1, -1] }
+            ]
+          },
+          {
+            name: 'E7',
+            symbol: 'E7',
+            roman: 'V7 / I7',
+            frets: [0, 2, 0, 1, 0, 0],
+            formula: '1 - 5 - b7 - 3 - 5 - 1',
+            root: 'E',
+            type: 'Blues Dominant 7th',
+            theory: 'PIVOT: The D-string drops 1 more fret to Open D (b7), generating blues drive.',
+            voicingVariants: [
+              { name: 'Open b7 Drop', frets: [0, 2, 0, 1, 0, 0] },
+              { name: '9th Extension (Fret 7)', frets: [-1, 7, 6, 7, 7, -1] },
+              { name: '3-Note Shell', frets: [0, -1, 0, 1, -1, -1] }
+            ]
+          },
+          {
+            name: 'Em',
+            symbol: 'Em',
+            roman: 'i',
+            frets: [0, 2, 2, 0, 0, 0],
+            formula: '1 - 5 - 1 - b3 - 5 - 1',
+            root: 'E',
+            type: 'Minor Triad',
+            theory: 'PIVOT: Release the G-string from 1st fret (G#) to Open G (b3), turning joy into sorrow.',
+            voicingVariants: [
+              { name: 'Open Em', frets: [0, 2, 2, 0, 0, 0] },
+              { name: 'A-Shape Minor (Fret 7)', frets: [-1, 7, 9, 9, 8, 7] }
+            ]
+          },
+          {
+            name: 'Em7',
+            symbol: 'Em7',
+            roman: 'i7',
+            frets: [0, 2, 0, 0, 0, 0],
+            formula: '1 - 5 - b7 - b3 - 5 - 1',
+            root: 'E',
+            type: 'Neo-Soul Minor 7th',
+            theory: 'Both D and G strings open. Ultimate minimal-motion jazz resonance.',
+            voicingVariants: [
+              { name: '2-Finger Open', frets: [0, 2, 0, 0, 0, 0] },
+              { name: 'Drop 2 (Fret 7)', frets: [-1, 7, 5, 7, 8, -1] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'jazz_ii_v_i_standard',
+        name: '2. Jazz Standard ii - V - I (Guide Tones in C)',
+        key: 'C Major',
+        description: 'The heartbeat of jazz. Notice how the 7th of Dm7 drops 1 half-step to become the 3rd of G7, while the 3rd holds static to become the 7th.',
+        chords: [
+          {
+            name: 'Dm7',
+            symbol: 'Dm7',
+            roman: 'ii7',
+            frets: [-1, 5, 7, 5, 6, 5],
+            formula: '1 - 5 - b7 - b3 - 5',
+            root: 'D',
+            type: 'Minor 7th (Pre-dominant)',
+            theory: 'Root on 5th string (5th fret). Guide tones: F (b3 on B-string) and C (b7 on G-string).',
+            voicingVariants: [
+              { name: 'Root 5 Bar', frets: [-1, 5, 7, 5, 6, 5] },
+              { name: '3-Note Shell', frets: [-1, 5, 3, 5, -1, -1] },
+              { name: 'Root 6 Drop-2', frets: [10, -1, 10, 10, 10, -1] }
+            ]
+          },
+          {
+            name: 'G7',
+            symbol: 'G7',
+            roman: 'V7',
+            frets: [3, 5, 3, 4, 3, 3],
+            formula: '1 - 5 - b7 - 3 - 5 - 1',
+            root: 'G',
+            type: 'Dominant 7th (Tension)',
+            theory: 'The C from Dm7 drops 1/2 step to B (3rd of G7). The F stays static as the 7th of G7.',
+            voicingVariants: [
+              { name: 'Root 6 Bar', frets: [3, 5, 3, 4, 3, 3] },
+              { name: '3-Note Shell', frets: [3, -1, 3, 4, -1, -1] },
+              { name: 'G13 Drop-2', frets: [3, -1, 3, 4, 5, -1] }
+            ]
+          },
+          {
+            name: 'Cmaj7',
+            symbol: 'Cmaj7',
+            roman: 'Imaj7',
+            frets: [-1, 3, 5, 4, 5, 3],
+            formula: '1 - 5 - 7 - 3 - 5',
+            root: 'C',
+            type: 'Major 7th (Resolution)',
+            theory: 'The F (7th of G7) drops 1/2 step to E (3rd of Cmaj7). B (3rd of G7) holds static as the maj7.',
+            voicingVariants: [
+              { name: 'Root 5 Bar', frets: [-1, 3, 5, 4, 5, 3] },
+              { name: '3-Note Shell', frets: [-1, 3, 2, 4, -1, -1] },
+              { name: 'Drop 2 (Fret 8)', frets: [8, -1, 9, 9, 8, -1] }
+            ]
+          },
+          {
+            name: 'C6/9',
+            symbol: 'C6/9',
+            roman: 'I6/9',
+            frets: [-1, 3, 2, 2, 3, 3],
+            formula: '1 - 3 - 6 - 9 - 5',
+            root: 'C',
+            type: 'Lush Modern Jazz Ending',
+            theory: 'Adds the warm 6th (A) and 9th (D) without the sharp clash of the natural 7th.',
+            voicingVariants: [
+              { name: 'Lush Shell', frets: [-1, 3, 2, 2, 3, 3] },
+              { name: 'High Quartal', frets: [-1, -1, 10, 9, 10, 10] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'tritone_substitution_flow',
+        name: '3. Chromatic Tritone Substitution (ii - bII7 - I)',
+        key: 'C Major',
+        description: 'Substitute G7 with Db7. The guide tones (B & F) remain identical, but the bass moves down in a buttery smooth chromatic line: D -> Db -> C.',
+        chords: [
+          {
+            name: 'Dm9',
+            symbol: 'Dm9',
+            roman: 'ii9',
+            frets: [-1, 5, 3, 5, 5, -1],
+            formula: '1 - b3 - b7 - 9',
+            root: 'D',
+            type: 'Extended Pre-dominant',
+            theory: 'Open, expressive jazz 9th minor voicing on middle 4 strings.',
+            voicingVariants: [
+              { name: 'Modern 9th', frets: [-1, 5, 3, 5, 5, -1] },
+              { name: 'Standard Dm7', frets: [-1, 5, 7, 5, 6, -1] }
+            ]
+          },
+          {
+            name: 'Db7(#11)',
+            symbol: 'Db7(#11)',
+            roman: 'bII7 (Tritone Sub)',
+            frets: [-1, 4, 3, 4, 4, -1],
+            formula: '1 - 3 - b7 - #11',
+            root: 'Db',
+            type: 'Lydian Dominant Tritone Sub',
+            theory: 'Bass drops 1 fret (D -> Db). The 3rd (F) and 7th (B/Cb) resolve with intense chromatic tension.',
+            voicingVariants: [
+              { name: 'Db7(#11) Grip', frets: [-1, 4, 3, 4, 4, -1] },
+              { name: 'Db9 Drop-2', frets: [-1, 4, 3, 4, 4, 4] }
+            ]
+          },
+          {
+            name: 'Cmaj9',
+            symbol: 'Cmaj9',
+            roman: 'Imaj9',
+            frets: [-1, 3, 2, 4, 3, -1],
+            formula: '1 - 3 - 7 - 9',
+            root: 'C',
+            type: 'Sweet Lydian Resolution',
+            theory: 'Bass completes chromatic descent to C. Voices resolve cleanly into the home chord.',
+            voicingVariants: [
+              { name: 'Drop-2 Maj9', frets: [-1, 3, 2, 4, 3, -1] },
+              { name: 'Standard Cmaj7', frets: [-1, 3, 5, 4, 5, -1] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'coltrane_giant_steps_matrix',
+        name: '4. Coltrane Changes (Giant Steps Axis)',
+        key: 'Multi-Tonal (B / G / Eb)',
+        description: 'Dividing the octave into equal major 3rds. Uses secondary dominant V7 chords to pivot at high speed across 3 distinct key centers.',
+        chords: [
+          {
+            name: 'Bmaj7',
+            symbol: 'Bmaj7',
+            roman: 'Imaj7 (Key 1: B)',
+            frets: [-1, 2, 4, 3, 4, 2],
+            formula: '1 - 5 - 7 - 3 - 5',
+            root: 'B',
+            type: 'Center 1',
+            theory: 'Starting tonic key center of B major.',
+            voicingVariants: [{ name: 'Root 5 Bar', frets: [-1, 2, 4, 3, 4, 2] }]
+          },
+          {
+            name: 'D7',
+            symbol: 'D7',
+            roman: 'V7 of G',
+            frets: [-1, 5, 4, 5, 3, -1],
+            formula: '1 - 3 - b7 - 9',
+            root: 'D',
+            type: 'Pivot Dominant',
+            theory: 'Instantly pivots Brayton towards the next key center a Major 3rd down (G).',
+            voicingVariants: [{ name: 'Drop 2', frets: [-1, 5, 4, 5, 3, -1] }]
+          },
+          {
+            name: 'Gmaj7',
+            symbol: 'Gmaj7',
+            roman: 'Imaj7 (Key 2: G)',
+            frets: [3, -1, 4, 4, 3, -1],
+            formula: '1 - 7 - 3 - 5',
+            root: 'G',
+            type: 'Center 2',
+            theory: 'Arrival in G major. 4 semitones down from B.',
+            voicingVariants: [{ name: 'Root 6 Drop-2', frets: [3, -1, 4, 4, 3, -1] }]
+          },
+          {
+            name: 'Bb7',
+            symbol: 'Bb7',
+            roman: 'V7 of Eb',
+            frets: [-1, 1, 3, 1, 3, 1],
+            formula: '1 - 5 - b7 - 3 - 5',
+            root: 'Bb',
+            type: 'Pivot Dominant',
+            theory: 'Secondary dominant pulling into the 3rd key center (Eb).',
+            voicingVariants: [{ name: 'Root 5 Bar', frets: [-1, 1, 3, 1, 3, 1] }]
+          },
+          {
+            name: 'Ebmaj7',
+            symbol: 'Ebmaj7',
+            roman: 'Imaj7 (Key 3: Eb)',
+            frets: [-1, 6, 8, 7, 8, 6],
+            formula: '1 - 5 - 7 - 3 - 5',
+            root: 'Eb',
+            type: 'Center 3',
+            theory: 'Arrival in Eb major. 4 semitones down from G.',
+            voicingVariants: [{ name: 'Root 5 Bar', frets: [-1, 6, 8, 7, 8, 6] }]
+          }
+        ]
+      },
+      {
+        id: 'open_tuning_mega_power_to_jazz',
+        name: '5. Open Tuning: Power Stack to Jazz Voicings',
+        key: 'D / G Modal',
+        description: "Brayton's requested setup: Barring thick strings for a massive low power chord stack, then lifting/adding fingers to morph into lush modal jazz voicings.",
+        chords: [
+          {
+            name: 'G5 Mega Power Stack',
+            symbol: 'G5(stack)',
+            roman: 'I5 (Rock Mass)',
+            frets: [5, 5, 5, 7, 8, -1],
+            formula: '1 - 5 - 1 - 5 - 1',
+            root: 'G',
+            type: '5-String Resonant Power Chord',
+            theory: 'Bar 3 thickest strings on 5th fret + 7th fret on G string + 8th fret on B string. Pure roots and fifths.',
+            voicingVariants: [{ name: 'Brayton Mega Power', frets: [5, 5, 5, 7, 8, -1] }]
+          },
+          {
+            name: 'Gmaj9 (Open Voice)',
+            symbol: 'Gmaj9',
+            roman: 'Imaj9 (Morphed)',
+            frets: [5, 5, 4, 4, 7, -1],
+            formula: '1 - 5 - 7 - 3 - 9',
+            root: 'G',
+            type: 'Lush Jazz Transformation',
+            theory: 'Lowering the doubled roots into the Major 7th (F#) and Major 3rd (B) while keeping the heavy low G bass.',
+            voicingVariants: [{ name: 'Open Resonant Maj9', frets: [5, 5, 4, 4, 7, -1] }]
+          },
+          {
+            name: 'G13(sus4)',
+            symbol: 'G13sus',
+            roman: 'I13sus (Fusion)',
+            frets: [5, 5, 5, 5, 5, 5],
+            formula: '1 - 5 - 1 - 4 - 6 - 9',
+            root: 'G',
+            type: 'Full 6-String Bar Chord',
+            theory: 'Complete 6-string bar on 5th fret. Creates an ethereal, unresolved fusion sound with zero finger tension.',
+            voicingVariants: [{ name: 'Universal Bar 5', frets: [5, 5, 5, 5, 5, 5] }]
+          }
+        ]
+      },
+      {
+        id: 'minor_plagal_modal_interchange',
+        name: '6. Modal Interchange & The Minor Plagal Cadence',
+        key: 'C Major',
+        description: 'Borrowing chords from the parallel minor (iv and bVI) to inject deep, cinematic emotional weight into a major progression.',
+        chords: [
+          {
+            name: 'Cmaj7',
+            symbol: 'Cmaj7',
+            roman: 'Imaj7',
+            frets: [-1, 3, 5, 4, 5, -1],
+            formula: '1 - 5 - 7 - 3',
+            root: 'C',
+            type: 'Home Major Tonic',
+            theory: 'Bright and grounded starting key center.',
+            voicingVariants: [{ name: 'Root 5 Bar', frets: [-1, 3, 5, 4, 5, -1] }]
+          },
+          {
+            name: 'Fmaj7',
+            symbol: 'Fmaj7',
+            roman: 'IVmaj7',
+            frets: [1, -1, 2, 2, 1, -1],
+            formula: '1 - 7 - 3 - 5',
+            root: 'F',
+            type: 'Diatonic Subdominant',
+            theory: 'Standard optimistic 4-chord in C major.',
+            voicingVariants: [{ name: 'Thumb Grip', frets: [1, -1, 2, 2, 1, -1] }]
+          },
+          {
+            name: 'Fm6',
+            symbol: 'Fm6',
+            roman: 'iv6 (Borrowed Minor Plagal)',
+            frets: [1, -1, 0, 1, 1, -1],
+            formula: '1 - 6 - b3 - 5',
+            root: 'F',
+            type: 'The Beatles / Radiohead Cadence',
+            theory: 'The A drops to Ab (b6 of C). The voice-leading move Ab -> G is the most bittersweet resolution in Western music.',
+            voicingVariants: [{ name: 'Open Fm6 Shell', frets: [1, -1, 0, 1, 1, -1] }]
+          },
+          {
+            name: 'Abmaj7',
+            symbol: 'Abmaj7',
+            roman: 'bVImaj7 (Sub-Mediant)',
+            frets: [4, -1, 5, 5, 4, -1],
+            formula: '1 - 7 - 3 - 5',
+            root: 'Ab',
+            type: 'Cinematic Epic Borrowing',
+            theory: 'Directly borrowed from C natural minor. Expands the horizon before resolving home.',
+            voicingVariants: [{ name: 'Drop 2 Shell', frets: [4, -1, 5, 5, 4, -1] }]
+          },
+          {
+            name: 'Cmaj7',
+            symbol: 'Cmaj7',
+            roman: 'Imaj7',
+            frets: [-1, 3, 2, 0, 0, 0],
+            formula: '1 - 3 - 5 - 7 - 3',
+            root: 'C',
+            type: 'Home Landing',
+            theory: 'Warm open resolution with all voices settling by step.',
+            voicingVariants: [{ name: 'Open Cowboy Maj7', frets: [-1, 3, 2, 0, 0, 0] }]
+          }
+        ]
+      }
+    ];
+
+    /* =========================================================================
+       3. STATE MANAGEMENT
+       ========================================================================= */
+    let currentProgression = JSON.parse(JSON.stringify(PROGRESSION_PRESETS[0]));
+    let activeChordIndex = 0;
+    let isPlayingLoop = false;
+    let playIntervalId = null;
+    let isShellMode = false;
+    let isAlteredMode = false;
+
+    /* =========================================================================
+       4. WEB AUDIO ENGINE (POLYPHONIC GUITAR SYNTHESIS)
+       ========================================================================= */
+    class GuitarSynthEngine {
+      constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+        this.isInitialized = false;
+      }
+
+      init() {
+        if (this.isInitialized) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
+        this.isInitialized = true;
+      }
+
+      midiToFreq(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+
+      playString(midiNote, delaySeconds = 0, duration = 2.4, velocity = 0.8) {
+        if (!this.isInitialized) this.init();
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+
+        const now = this.ctx.currentTime + delaySeconds;
+        const freq = this.midiToFreq(midiNote);
+
+        // Multi-oscillator physical modeling hybrid
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const bodyFilter = this.ctx.createBiquadFilter();
+        const noteGain = this.ctx.createGain();
+
+        // Fundamental triangle + warm sawtooth overtone
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(freq, now);
+
+        osc2.type = 'sawtooth';
+        osc2.frequency.setValueAtTime(freq * 1.002, now); // slight detune chorus
+
+        // Body resonance filter
+        bodyFilter.type = 'lowpass';
+        bodyFilter.frequency.setValueAtTime(freq * 4.5, now);
+        bodyFilter.frequency.exponentialRampToValueAtTime(Math.max(120, freq * 1.2), now + duration);
+
+        // Pluck Envelope
+        noteGain.gain.setValueAtTime(0.0001, now);
+        noteGain.gain.linearRampToValueAtTime(velocity * 0.45, now + 0.006); // sharp attack
+        noteGain.gain.exponentialRampToValueAtTime(velocity * 0.15, now + 0.18); // acoustic body decay
+        noteGain.gain.exponentialRampToValueAtTime(0.0001, now + duration); // tail
+
+        osc1.connect(bodyFilter);
+        osc2.connect(bodyFilter);
+        bodyFilter.connect(noteGain);
+        noteGain.connect(this.masterGain);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + duration + 0.1);
+        osc2.stop(now + duration + 0.1);
+      }
+
+      strumChord(fretsArray, tuningKey = 'standard', strumSpeedMs = 35) {
+        if (!this.isInitialized) this.init();
+        const tuning = TUNINGS[tuningKey];
+        const stringMidiBases = tuning.midi; // String 1 (high E) to String 6 (low E)
+
+        // Strings array order: [string6, string5, string4, string3, string2, string1]
+        // In TUNINGS, notes are [String1 ... String6] -> so reverse for bottom-to-top strum
+        let activePitches = [];
+        for (let i = 0; i < 6; i++) {
+          const fret = fretsArray[i];
+          if (fret >= 0) {
+            const baseMidi = stringMidiBases[5 - i];
+            activePitches.push({
+              stringIdx: i,
+              midi: baseMidi + fret
+            });
+          }
+        }
+
+        // Strum down from low string to high string
+        activePitches.forEach((p, idx) => {
+          const delay = (idx * strumSpeedMs) / 1000;
+          this.playString(p.midi, delay, 2.5, 0.9 - idx * 0.04);
+        });
+      }
+    }
+
+    const audioSynth = new GuitarSynthEngine();
+
+    /* =========================================================================
+       5. FRETBOARD RENDERING & INTERVAL MAPPING
+       ========================================================================= */
+    const TOTAL_FRETS = 14;
+
+    function getNoteAtFret(stringIndex, fret, tuningKey = 'standard') {
+      const tuning = TUNINGS[tuningKey];
+      // stringIndex 0 = Low string (String 6), stringIndex 5 = High string (String 1)
+      const baseMidi = tuning.midi[5 - stringIndex];
+      const pitchClass = (baseMidi + fret) % 12;
+      return {
+        pitchClass,
+        name: pitchClassToNote(pitchClass),
+        midi: baseMidi + fret
+      };
+    }
+
+    function calculateInterval(notePitchClass, rootPitchClass) {
+      const semitones = (notePitchClass - rootPitchClass + 12) % 12;
+      switch (semitones) {
+        case 0: return { label: 'R', type: 'root', color: 'bg-red-500 border-red-300 text-white' };
+        case 1: return { label: 'b9', type: 'extension', color: 'bg-emerald-500 border-emerald-300 text-white' };
+        case 2: return { label: '9', type: 'extension', color: 'bg-emerald-500 border-emerald-300 text-white' };
+        case 3: return { label: 'b3', type: 'third', color: 'bg-cyan-500 border-cyan-200 text-slate-950 font-bold' };
+        case 4: return { label: '3', type: 'third', color: 'bg-cyan-400 border-cyan-200 text-slate-950 font-bold' };
+        case 5: return { label: '11', type: 'extension', color: 'bg-emerald-500 border-emerald-300 text-white' };
+        case 6: return { label: 'b5', type: 'fifth', color: 'bg-amber-500 border-amber-200 text-slate-950 font-bold' };
+        case 7: return { label: '5', type: 'fifth', color: 'bg-amber-400 border-amber-200 text-slate-950 font-bold' };
+        case 8: return { label: '#5', type: 'fifth', color: 'bg-amber-500 border-amber-200 text-slate-950 font-bold' };
+        case 9: return { label: '6/13', type: 'extension', color: 'bg-emerald-500 border-emerald-300 text-white' };
+        case 10: return { label: 'b7', type: 'seventh', color: 'bg-purple-500 border-purple-200 text-white font-bold' };
+        case 11: return { label: '7', type: 'seventh', color: 'bg-purple-400 border-purple-200 text-slate-950 font-bold' };
+        default: return { label: '?', type: 'other', color: 'bg-slate-500' };
+      }
+    }
+
+    function renderFretboard() {
+      const fretboard = document.getElementById('fretboard');
+      fretboard.innerHTML = '';
+
+      const currentChord = currentProgression.chords[activeChordIndex];
+      const rootPitchClass = noteToPitchClass(currentChord.root);
+      const tuning = TUNINGS[currentTuningKey];
+
+      // Fret Marker Inlays (Dots at 3, 5, 7, 9, 12)
+      const dotFrets = [3, 5, 7, 9, 12];
+
+      // Fret numbers header row
+      const fretNumberRow = document.createElement('div');
+      fretNumberRow.className = 'grid grid-cols-[50px_repeat(14,_1fr)] gap-0 text-center font-mono text-[11px] text-slate-500 pb-2';
+      
+      const nutHeader = document.createElement('div');
+      nutHeader.innerText = 'Nut';
+      fretNumberRow.appendChild(nutHeader);
+
+      for (let f = 1; f <= TOTAL_FRETS; f++) {
+        const numDiv = document.createElement('div');
+        numDiv.className = dotFrets.includes(f) ? 'text-amber-400 font-bold' : '';
+        numDiv.innerText = f;
+        fretNumberRow.appendChild(numDiv);
+      }
+      fretboard.appendChild(fretNumberRow);
+
+      // Strings Container (6 Strings from String 1 high E down to String 6 low E)
+      // Array in currentChord.frets: [String6, String5, String4, String3, String2, String1]
+      for (let s = 5; s >= 0; s--) { // s=5 is high E, s=0 is low E
+        const stringRow = document.createElement('div');
+        stringRow.className = 'relative grid grid-cols-[50px_repeat(14,_1fr)] items-center h-9';
+
+        // Background String Line
+        const stringGaugeHeight = (6 - s) * 0.7 + 1.2; // Thicker low strings
+        const stringLine = document.createElement('div');
+        stringLine.className = 'absolute left-[50px] right-0 bg-gradient-to-r from-slate-400 via-slate-300 to-slate-400 string-line pointer-events-none z-0';
+        stringLine.style.height = `${stringGaugeHeight}px`;
+        stringLine.style.top = `calc(50% - ${stringGaugeHeight/2}px)`;
+        stringRow.appendChild(stringLine);
+
+        // String Name / Open Indicator Column
+        const stringHeader = document.createElement('div');
+        stringHeader.className = 'flex items-center justify-between pr-2 font-mono text-xs font-bold text-slate-400 z-10';
+        
+        const openFretValue = currentChord.frets[s];
+        let statusBadge = '';
+        if (openFretValue === -1) {
+          statusBadge = '<span class="text-rose-500 font-black text-sm">✕</span>';
+        } else if (openFretValue === 0) {
+          const noteInfo = getNoteAtFret(s, 0, currentTuningKey);
+          const interval = calculateInterval(noteInfo.pitchClass, rootPitchClass);
+          statusBadge = `<button onclick="audioSynth.playString(${noteInfo.midi})" class="w-6 h-6 rounded-full border-2 ${interval.color} text-[10px] flex items-center justify-center shadow-md active:scale-90 transition font-mono">${noteInfo.name}</button>`;
+        } else {
+          statusBadge = '<span class="text-slate-600 text-xs">•</span>';
+        }
+
+        stringHeader.innerHTML = `<span class="text-slate-500">${tuning.notes[5-s]}</span> ${statusBadge}`;
+        stringRow.appendChild(stringHeader);
+
+        // Frets 1 through TOTAL_FRETS
+        for (let f = 1; f <= TOTAL_FRETS; f++) {
+          const fretCell = document.createElement('div');
+          fretCell.className = 'relative h-full flex items-center justify-center border-r border-slate-600/70 fret-wire z-10 cursor-pointer hover:bg-white/5 transition';
+          
+          // Fret marker inlay circle
+          if (dotFrets.includes(f) && s === 2) {
+            const markerDot = document.createElement('div');
+            markerDot.className = (f === 12) 
+              ? 'absolute w-3 h-3 rounded-full bg-slate-700/60 pointer-events-none'
+              : 'absolute w-3.5 h-3.5 rounded-full bg-slate-700/50 pointer-events-none';
+            fretCell.appendChild(markerDot);
+          }
+
+          // Active Fretted Note Marker
+          if (currentChord.frets[s] === f) {
+            const noteInfo = getNoteAtFret(s, f, currentTuningKey);
+            const interval = calculateInterval(noteInfo.pitchClass, rootPitchClass);
+
+            const fingerDot = document.createElement('button');
+            fingerDot.className = `w-7 h-7 rounded-full border-2 ${interval.color} flex flex-col items-center justify-center shadow-lg shadow-black/80 font-bold active:scale-90 transition transform hover:scale-110 z-20`;
+            fingerDot.title = `String ${6-s} | Fret ${f} | Note: ${noteInfo.name} (${interval.label})`;
+            fingerDot.innerHTML = `
+              <span class="text-[10px] leading-tight">${noteInfo.name}</span>
+              <span class="text-[8px] leading-none opacity-90">${interval.label}</span>
+            `;
+            fingerDot.onclick = (e) => {
+              e.stopPropagation();
+              audioSynth.playString(noteInfo.midi);
+            };
+            fretCell.appendChild(fingerDot);
+          }
+
+          // Click on empty fret to pluck that fret
+          fretCell.onclick = () => {
+            const noteInfo = getNoteAtFret(s, f, currentTuningKey);
+            audioSynth.playString(noteInfo.midi);
+          };
+
+          stringRow.appendChild(fretCell);
+        }
+
+        fretboard.appendChild(stringRow);
+      }
+    }
+
+    /* =========================================================================
+       6. VOICE LEADING DELTA & STEP-BY-STEP CALCULATION
+       ========================================================================= */
+    function calculateVoiceLeadingDeltas() {
+      const chords = currentProgression.chords;
+      if (chords.length < 2) return;
+
+      const curr = chords[activeChordIndex];
+      const nextIdx = (activeChordIndex + 1) % chords.length;
+      const next = chords[nextIdx];
+
+      const voiceSummary = document.getElementById('voiceLeadingSummary');
+      const deltaChips = document.getElementById('voiceDeltaChips');
+      deltaChips.innerHTML = '';
+
+      let commonTones = 0;
+      let halfSteps = 0;
+      let wholeSteps = 0;
+      let leaps = 0;
+
+      for (let s = 0; s < 6; s++) {
+        const f1 = curr.frets[s];
+        const f2 = next.frets[s];
+
+        if (f1 >= 0 && f2 >= 0) {
+          const delta = Math.abs(f2 - f1);
+          const note1 = getNoteAtFret(s, f1, currentTuningKey).name;
+          const note2 = getNoteAtFret(s, f2, currentTuningKey).name;
+
+          let badgeClass = '';
+          let badgeText = '';
+
+          if (delta === 0) {
+            commonTones++;
+            badgeClass = 'bg-emerald-950 border-emerald-700 text-emerald-300';
+            badgeText = `Str ${6-s}: ${note1} held static (Common Tone)`;
+          } else if (delta === 1) {
+            halfSteps++;
+            badgeClass = 'bg-cyan-950 border-cyan-700 text-cyan-300';
+            badgeText = `Str ${6-s}: ${note1} → ${note2} (½ Step / 1 Fret)`;
+          } else if (delta === 2) {
+            wholeSteps++;
+            badgeClass = 'bg-amber-950 border-amber-700 text-amber-300';
+            badgeText = `Str ${6-s}: ${note1} → ${note2} (Whole Step)`;
+          } else {
+            leaps++;
+            badgeClass = 'bg-rose-950 border-rose-800 text-rose-300';
+            badgeText = `Str ${6-s}: ${note1} → ${note2} (Leap: ${delta} Frets)`;
+          }
+
+          const chip = document.createElement('span');
+          chip.className = `px-2 py-1 rounded border ${badgeClass} text-[11px]`;
+          chip.innerText = badgeText;
+          deltaChips.appendChild(chip);
+        }
+      }
+
+      voiceSummary.innerHTML = `
+        Moving from <strong class="text-cyan-400">${curr.symbol}</strong> to <strong class="text-indigo-400">${next.symbol}</strong>: 
+        <span class="text-emerald-400 font-semibold">${commonTones} Common Tones</span>, 
+        <span class="text-cyan-400 font-semibold">${halfSteps} Half-Steps</span>, 
+        <span class="text-amber-400 font-semibold">${wholeSteps} Whole-Steps</span>.
+      `;
+    }
+
+    /* =========================================================================
+       7. TIMELINE, CARDS & SELECTION UI
+       ========================================================================= */
+    function updateActiveChordUI() {
+      const chord = currentProgression.chords[activeChordIndex];
+      document.getElementById('activeChordName').innerText = chord.name;
+      document.getElementById('activeChordFormula').innerText = chord.formula;
+      document.getElementById('activeVoicingType').innerText = chord.type;
+      
+      const fretsStr = chord.frets.map(f => f === -1 ? 'x' : f).join('-');
+      document.getElementById('activeChordNotes').innerHTML = `
+        <span class="text-slate-300 font-bold">Theory:</span> ${chord.theory} &bull; 
+        <span class="text-slate-300 font-bold">Frets:</span> <span class="text-cyan-400 font-mono">${fretsStr}</span>
+      `;
+
+      renderFretboard();
+      renderTimelineCards();
+      renderVoicingVariants();
+      calculateVoiceLeadingDeltas();
+    }
+
+    function renderTimelineCards() {
+      const container = document.getElementById('progressionTimeline');
+      container.innerHTML = '';
+
+      currentProgression.chords.forEach((chord, idx) => {
+        const card = document.createElement('div');
+        const isActive = idx === activeChordIndex;
+
+        card.className = `flex-shrink-0 w-36 p-3 rounded-xl border transition-all cursor-pointer select-none ${
+          isActive 
+            ? 'bg-gradient-to-b from-slate-800 to-cyan-950/70 border-cyan-500 shadow-lg shadow-cyan-500/20 scale-[1.02]' 
+            : 'bg-slate-950 hover:bg-slate-800/60 border-slate-800 text-slate-400'
+        }`;
+
+        const fretsStr = chord.frets.map(f => f === -1 ? 'x' : f).join('-');
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-[11px] mb-1">
+            <span class="font-mono px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-300 font-bold">${chord.roman || '•'}</span>
+            <span class="text-[10px] text-slate-400 font-mono">#${idx + 1}</span>
+          </div>
+          <h4 class="font-black text-sm text-white truncate">${chord.symbol}</h4>
+          <p class="text-[10px] font-mono text-cyan-400/90 mt-1">${fretsStr}</p>
+          <div class="mt-2 flex items-center justify-between text-[10px]">
+            <span class="text-slate-400 truncate max-w-[80px]">${chord.root}</span>
+            <button class="text-cyan-400 hover:text-white p-1" title="Play Chord">▶</button>
+          </div>
+        `;
+
+        card.onclick = () => {
+          activeChordIndex = idx;
+          updateActiveChordUI();
+          audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey);
+        };
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderVoicingVariants() {
+      const container = document.getElementById('voicingVariantsContainer');
+      container.innerHTML = '';
+
+      const currentChord = currentProgression.chords[activeChordIndex];
+      const variants = currentChord.voicingVariants || [{ name: 'Default', frets: currentChord.frets }];
+
+      variants.forEach((v) => {
+        const btn = document.createElement('button');
+        const isCurrentFrets = JSON.stringify(v.frets) === JSON.stringify(currentChord.frets);
+
+        btn.className = `px-3 py-1.5 rounded-lg border text-xs font-mono transition-all ${
+          isCurrentFrets
+            ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400 shadow-md shadow-cyan-500/20'
+            : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border-slate-700'
+        }`;
+        btn.innerText = `${v.name} (${v.frets.map(f => f === -1 ? 'x' : f).join('-')})`;
+
+        btn.onclick = () => {
+          currentChord.frets = [...v.frets];
+          updateActiveChordUI();
+          audioSynth.strumChord(currentChord.frets, currentTuningKey);
+        };
+
+        container.appendChild(btn);
+      });
+    }
+
+    /* =========================================================================
+       8. KEY MODULATION PATHWAY GENERATOR
+       ========================================================================= */
+    function generateModulation() {
+      const fromKey = document.getElementById('modFromKey').value;
+      const toKey = document.getElementById('modToKey').value;
+      const strategy = document.getElementById('modStrategy').value;
+
+      const chainDisplay = document.getElementById('modulationChainDisplay');
+      const expDisplay = document.getElementById('modulationExplanation');
+      chainDisplay.innerHTML = '';
+
+      let chain = [];
+      let explanation = '';
+
+      if (strategy === 'pivot') {
+        chain = [
+          { name: `${fromKey}maj7`, symbol: `${fromKey}maj7`, roman: 'I (Key 1)', frets: [-1, 3, 5, 4, 5, -1], root: fromKey },
+          { name: 'Am7', symbol: 'Am7', roman: `vi of ${fromKey} / ii of ${toKey}`, frets: [5, -1, 5, 5, 5, -1], root: 'A' },
+          { name: `D7`, symbol: `D7`, roman: `V7 of ${toKey}`, frets: [-1, 5, 4, 5, 3, -1], root: 'D' },
+          { name: `${toKey}maj7`, symbol: `${toKey}maj7`, roman: `I (Key 2: ${toKey})`, frets: [5, -1, 6, 6, 5, -1], root: toKey }
+        ];
+        explanation = `<strong>Diatonic Pivot Strategy:</strong> Uses Am7 as the harmonic dual-identity bridge. In ${fromKey} Major, Am7 is the natural vi chord; in ${toKey} Major, it serves as the ii chord, leading seamlessly into D7 (V7) and resolving home to ${toKey}.`;
+      } else if (strategy === 'tritone') {
+        chain = [
+          { name: `${fromKey}maj7`, symbol: `${fromKey}maj7`, roman: 'I (Key 1)', frets: [-1, 3, 5, 4, 5, -1], root: fromKey },
+          { name: 'Eb7(#11)', symbol: 'Eb7(#11)', roman: `bII7 Sub Bridge`, frets: [-1, 6, 5, 6, 6, -1], root: 'Eb' },
+          { name: `${toKey}maj7`, symbol: `${toKey}maj7`, roman: `I (Key 2: ${toKey})`, frets: [5, -1, 6, 6, 5, -1], root: toKey }
+        ];
+        explanation = `<strong>Tritone Chromatic Bridge:</strong> Utilizes the symmetrical tension of the half-step dominant chord. The bass slides smoothly by a single fret directly into ${toKey}maj7 with pure chromatic voice resolution.`;
+      } else if (strategy === 'coltrane') {
+        chain = [
+          { name: `${fromKey}maj7`, symbol: `${fromKey}maj7`, roman: 'Center 1', frets: [-1, 3, 5, 4, 5, -1], root: fromKey },
+          { name: 'B7', symbol: 'B7', roman: 'V7 of Target', frets: [-1, 2, 1, 2, 0, 2], root: 'B' },
+          { name: `${toKey}maj7`, symbol: `${toKey}maj7`, roman: 'Center 2 (Target)', frets: [5, -1, 6, 6, 5, -1], root: toKey }
+        ];
+        explanation = `<strong>Coltrane 3rds Cycle:</strong> Shifts between tonal centers spaced by Major 3rds using high-velocity dominant anchors.`;
+      } else { // common tone
+        chain = [
+          { name: `${fromKey} Major`, symbol: fromKey, roman: 'Start', frets: [0, 2, 2, 1, 0, 0], root: fromKey },
+          { name: `${toKey} Major`, symbol: toKey, roman: 'Target', frets: [-1, 3, 2, 0, 1, 0], root: toKey }
+        ];
+        explanation = `<strong>Common-Tone Shift:</strong> Locks a single unison or octave string note static while the remaining 3 voices shift beneath it to reveal the new tonality.`;
+      }
+
+      // Render chain cards
+      chain.forEach((c, idx) => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-center';
+        item.innerHTML = `
+          <div class="text-[10px] text-cyan-400 font-mono">${c.roman}</div>
+          <div class="font-bold text-xs text-white">${c.symbol}</div>
+        `;
+        chainDisplay.appendChild(item);
+
+        if (idx < chain.length - 1) {
+          const arrow = document.createElement('span');
+          arrow.className = 'text-slate-500 font-mono text-xs';
+          arrow.innerText = '→';
+          chainDisplay.appendChild(arrow);
+        }
+      });
+
+      expDisplay.innerHTML = explanation;
+
+      // Enable loading into timeline
+      document.getElementById('loadModulationToTimelineBtn').onclick = () => {
+        currentProgression = {
+          id: 'custom_modulation',
+          name: `Modulation: ${fromKey} → ${toKey}`,
+          key: `${fromKey} to ${toKey}`,
+          description: explanation,
+          chords: chain.map(c => ({
+            name: c.name,
+            symbol: c.symbol,
+            roman: c.roman,
+            frets: c.frets || [0, 2, 2, 1, 0, 0],
+            formula: '1 - 3 - 5 - 7',
+            root: c.root,
+            type: 'Modulation Bridge Voicing',
+            theory: 'Voice-led modulation chord.',
+            voicingVariants: [{ name: 'Standard', frets: c.frets || [0, 2, 2, 1, 0, 0] }]
+          }))
+        };
+        activeChordIndex = 0;
+        updateActiveChordUI();
+        document.getElementById('progressionKeyBadge').innerText = `Key: ${fromKey} → ${toKey}`;
+      };
+    }
+
+    /* =========================================================================
+       9. ADVANCED REHARMONIZATION TOOLBAR ACTIONS
+       ========================================================================= */
+    function setupToolbarButtons() {
+      // 1. Tritone Sub Swap
+      document.getElementById('applyTritoneSubBtn').onclick = () => {
+        const chord = currentProgression.chords[activeChordIndex];
+        if (chord.symbol.includes('7') && !chord.symbol.includes('maj7')) {
+          chord.name = 'Db7(#11) [Subbed]';
+          chord.symbol = 'Db7(#11)';
+          chord.roman = 'bII7';
+          chord.frets = [-1, 4, 3, 4, 4, -1];
+          chord.root = 'Db';
+          chord.theory = 'Tritone substitution swapped for dominant V chord.';
+          updateActiveChordUI();
+          audioSynth.strumChord(chord.frets, currentTuningKey);
+        } else {
+          // If current is not a 7, prompt next chord in timeline
+          alert("Select or advance to a Dominant 7th (V7) chord in the progression to apply a Tritone Sub!");
+        }
+      };
+
+      // 2. Jazz Shell Voicing Filter
+      document.getElementById('shellVoicingToggle').onclick = () => {
+        isShellMode = !isShellMode;
+        currentProgression.chords.forEach(c => {
+          // Simplify to root on 5th/6th string and 3rd/7th on middle strings
+          if (c.frets[0] > 0) { // Root 6
+            c.frets = [c.frets[0], -1, c.frets[2] || c.frets[0], c.frets[3] || c.frets[0], -1, -1];
+          } else if (c.frets[1] > 0) { // Root 5
+            c.frets = [-1, c.frets[1], c.frets[2] || c.frets[1]-1, c.frets[3] || c.frets[1]+1, -1, -1];
+          }
+        });
+        updateActiveChordUI();
+        audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey);
+      };
+
+      // 3. Altered Dominant Toggle
+      document.getElementById('alteredDominantToggle').onclick = () => {
+        isAlteredMode = !isAlteredMode;
+        const chord = currentProgression.chords[activeChordIndex];
+        chord.name = `${chord.root}7(alt)`;
+        chord.symbol = `${chord.root}7(alt)`;
+        chord.formula = '1 - 3 - b7 - b9 - #9 - b13';
+        chord.theory = 'Altered scale notes added (b9/#9/b13) maximizing harmonic tension before tonic resolution.';
+        updateActiveChordUI();
+        audioSynth.strumChord(chord.frets, currentTuningKey);
+      };
+    }
+
+    /* =========================================================================
+       10. TRANSPORT & PLAYBACK CONTROLS
+       ========================================================================= */
+    function setupPlayback() {
+      const playBtn = document.getElementById('playProgressBtn');
+      const prevBtn = document.getElementById('prevChordBtn');
+      const nextBtn = document.getElementById('nextChordBtn');
+      const strumBtn = document.getElementById('strumCurrentBtn');
+      const bpmSlider = document.getElementById('bpmSlider');
+      const bpmValue = document.getElementById('bpmValue');
+
+      bpmSlider.oninput = () => {
+        bpmValue.innerText = bpmSlider.value;
+        if (isPlayingLoop) {
+          clearInterval(playIntervalId);
+          startProgressionLoop();
+        }
+      };
+
+      function startProgressionLoop() {
+        const bpm = parseInt(bpmSlider.value, 10);
+        const intervalMs = (60 / bpm) * 1000 * 2; // 2 beats per chord
+
+        playIntervalId = setInterval(() => {
+          activeChordIndex = (activeChordIndex + 1) % currentProgression.chords.length;
+          updateActiveChordUI();
+          audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey, 30);
+        }, intervalMs);
+      }
+
+      playBtn.onclick = () => {
+        audioSynth.init();
+        if (isPlayingLoop) {
+          clearInterval(playIntervalId);
+          isPlayingLoop = false;
+          document.getElementById('playProgressText').innerText = 'Play Flow';
+          playBtn.classList.remove('from-amber-500', 'to-orange-600');
+          playBtn.classList.add('from-cyan-500', 'to-blue-600');
+        } else {
+          isPlayingLoop = true;
+          document.getElementById('playProgressText').innerText = 'Pause';
+          playBtn.classList.remove('from-cyan-500', 'to-blue-600');
+          playBtn.classList.add('from-amber-500', 'to-orange-600');
+          audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey);
+          startProgressionLoop();
+        }
+      };
+
+      prevBtn.onclick = () => {
+        activeChordIndex = (activeChordIndex - 1 + currentProgression.chords.length) % currentProgression.chords.length;
+        updateActiveChordUI();
+        audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey);
+      };
+
+      nextBtn.onclick = () => {
+        activeChordIndex = (activeChordIndex + 1) % currentProgression.chords.length;
+        updateActiveChordUI();
+        audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey);
+      };
+
+      strumBtn.onclick = () => {
+        audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey, 40);
+      };
+
+      // Master Audio Init Button
+      document.getElementById('masterAudioBtn').onclick = () => {
+        audioSynth.init();
+        document.getElementById('audioStatusText').innerText = 'Audio Active';
+        audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey);
+      };
+    }
+
+    /* =========================================================================
+       11. INITIALIZATION & EVENT LISTENERS
+       ========================================================================= */
+    function init() {
+      // 1. Populate Preset Select
+      const presetSelect = document.getElementById('presetSelect');
+      PROGRESSION_PRESETS.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.innerText = p.name;
+        presetSelect.appendChild(opt);
+      });
+
+      presetSelect.onchange = (e) => {
+        const found = PROGRESSION_PRESETS.find(p => p.id === e.target.value);
+        if (found) {
+          currentProgression = JSON.parse(JSON.stringify(found));
+          activeChordIndex = 0;
+          document.getElementById('progressionKeyBadge').innerText = `Key: ${found.key}`;
+          updateActiveChordUI();
+          audioSynth.strumChord(currentProgression.chords[0].frets, currentTuningKey);
+        }
+      };
+
+      // 2. Tuning Selector
+      const tuningSelect = document.getElementById('tuningSelect');
+      tuningSelect.onchange = (e) => {
+        currentTuningKey = e.target.value;
+        updateActiveChordUI();
+      };
+
+      // 3. Modulation Button
+      document.getElementById('generateModulationBtn').onclick = generateModulation;
+
+      // 4. Setup Keyboards & Controls
+      setupToolbarButtons();
+      setupPlayback();
+      generateModulation();
+      updateActiveChordUI();
+
+      // Keyboard arrow shortcuts
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') {
+          activeChordIndex = (activeChordIndex + 1) % currentProgression.chords.length;
+          updateActiveChordUI();
+          audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey);
+        } else if (e.key === 'ArrowLeft') {
+          activeChordIndex = (activeChordIndex - 1 + currentProgression.chords.length) % currentProgression.chords.length;
+          updateActiveChordUI();
+          audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey);
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          audioSynth.strumChord(currentProgression.chords[activeChordIndex].frets, currentTuningKey);
+        }
+      });
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
