@@ -58,17 +58,36 @@ body::after{
    ridges at the foot, mist above them, the title sitting in the
    clear middle. The ridges are one inline SVG in the markup so their
    shape is editable; everything else is here. */
+/* A WINDOW ONTO THE VALE, NOT A PANEL IN FRONT OF IT. This was an
+   opaque paper card with its own drawn ridges along the bottom, and
+   it was right until .vale arrived behind it: an opaque hero over a
+   landscape hides exactly the part of the landscape a hero is for,
+   and the first screenshot showed the real mountains surviving only
+   in the margins on either side of it.
+
+   So the fill is a veil now, not a sheet. Enough paper behind the
+   text to keep the lede at full contrast, clearing to nothing on the
+   right where there is no copy, so the peak reads through. The
+   border stays: the frame is what says "this is a view".
+
+   The gradient is horizontal for that reason and it is the whole
+   trick. A vertical one would have veiled the sky and cleared the
+   ground, which is the wrong half of the picture. */
 .ink-hero{
   position:relative;overflow:hidden;
   margin:0 0 18px;
   border:var(--stroke) solid var(--ink);border-radius:var(--radius);
   background:
-    linear-gradient(180deg, #fbf9f2 0%, var(--paper) 46%, var(--paper-dim) 100%);
-  /* THE BOTTOM PADDING IS THE RIDGE LINE. The first cut let the
-     mountains run up behind the lede, which put grey ink under grey
-     text and made the one paragraph on the page hard to read. The
-     hero is taller than it needs to be on purpose, and the padding
-     below the copy is the clear band the ridges live in. */
+    linear-gradient(100deg,
+      rgba(251,249,242,.94) 0%,
+      rgba(246,243,233,.86) 38%,
+      rgba(246,243,233,.42) 62%,
+      rgba(246,243,233,.10) 100%);
+  /* THE BOTTOM PADDING IS THE SKYLINE. It was the clear band the
+     hero's own ink ridges lived in; those are gone and the real
+     ridges are behind now, so it is the band the vale shows through.
+     Same number, same reason: keep grey ink out from under grey
+     text. */
   padding:66px 30px 172px;
   min-height:430px;
   display:flex;flex-direction:column;justify-content:flex-start;

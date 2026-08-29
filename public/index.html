@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="/css/tokens.css"/>
 <link rel="stylesheet" href="/css/app.css"/>
 <link rel="stylesheet" href="/css/ink.css"/>
+<link rel="stylesheet" href="/css/vale.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <!-- EB Garamond and Merriweather are the two faces the game uses:
@@ -40,6 +41,38 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:wght@700&display=swap" rel="stylesheet"/>
 </head>
 <body>
+
+<!-- ===========================================================
+     THE AZURE VALE, and it is the game's own landform rather than a
+     picture of one. tools/vale.mjs ports Terrain.heightAt() out of
+     Legal-Leaf-Market/roblox-game, stands a camera in the meadow
+     south-east of the village, looks north at Heavenpillar and
+     traces the horizon it actually sees. The two ridge plates are
+     that trace; the snowcap is on Heavenpillar because Heavenpillar
+     is the only thing in the vale that passes 235 studs, which is
+     where Terrain.build() starts laying snow.
+
+     There is no third ridge. A near band was traced and came back a
+     flat slab, twice, because inside 150 studs the vale floor really
+     is a rolling meadow that varies by four studs. So the foreground
+     is the bamboo grove instead, drawn from Flora.luau's own
+     bambooClump() numbers. Faking relief in the meadow would have
+     been the first invented thing in the scene.
+
+     FIRST IN THE BODY AND ARIA-HIDDEN. It is scenery: it carries no
+     information, so a screen reader should walk straight past it,
+     and it is first so that nothing on the page has to out-stack it.
+     =========================================================== -->
+<div class="vale" aria-hidden="true">
+  <i class="sun"></i>
+  <i class="far"></i>
+  <i class="mist mist-3"></i>
+  <i class="mid"></i>
+  <i class="mist mist-1"></i>
+  <i class="wash"></i>
+  <i class="grove"></i>
+  <i class="mist mist-2"></i>
+</div>
 
 <!-- ===========================================================
      THE DUNGEON IS ONE DOCUMENT.
@@ -97,37 +130,16 @@
          site does not hand out to any shelf. -->
     <span class="seal" aria-hidden="true"><i>True</i><b>Immortal</b></span>
 
-    <span class="ridges" aria-hidden="true">
-      <svg viewBox="0 0 1200 150" preserveAspectRatio="none" role="presentation">
-        <!-- CURVES, NOT A SAWTOOTH. The first version drew these as
-             straight zigzag segments and they read as a graph, not a
-             landscape: even peaks, even spacing, hard vertices. Ink
-             mountains are rounded humps of uneven height with the
-             occasional tall one, so each ridge is quadratic curves
-             with deliberately irregular peaks. -->
-        <g class="ridge-far" fill="var(--ink)" opacity=".12">
-          <path d="M0 150 L0 84 Q 70 42 132 72 Q 196 20 268 66 Q 330 44 392 74
-                   Q 452 30 524 68 Q 596 48 660 78 Q 726 34 800 70 Q 866 52 928 80
-                   Q 996 38 1064 72 Q 1130 56 1200 76 L1200 150 Z"/>
-        </g>
-        <g class="ridge-mid" fill="var(--ink)" opacity=".24">
-          <path d="M0 150 L0 110 Q 84 74 156 104 Q 224 58 300 98 Q 368 80 438 108
-                   Q 510 62 588 102 Q 660 84 730 112 Q 802 70 878 106 Q 948 88 1018 114
-                   Q 1092 78 1200 108 L1200 150 Z"/>
-        </g>
-        <!-- The near ridge never moves. A foreground that drifts
-             reads as a camera fault rather than as distance. -->
-        <g fill="var(--ink)" opacity=".5">
-          <path d="M0 150 L0 132 Q 96 108 178 130 Q 258 100 344 126 Q 424 112 508 134
-                   Q 594 104 682 128 Q 764 114 848 136 Q 934 110 1020 132 Q 1108 118 1200 138
-                   L1200 150 Z"/>
-        </g>
-        <g stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round" opacity=".38">
-          <g class="crane"><path d="M120 30 q9 -8 18 0"/><path d="M138 30 q9 -8 18 0"/></g>
-          <g class="crane b"><path d="M60 52 q7 -6 14 0"/><path d="M74 52 q7 -6 14 0"/></g>
-        </g>
-      </svg>
-    </span>
+    <!-- THE HERO'S OWN RIDGES ARE GONE, and the reason is that the
+         real ones arrived. This block drew three hand-authored ink
+         mountain silhouettes across the foot of the hero; behind it
+         now sits .vale, which is the game's actual terrain traced
+         from Terrain.heightAt(). Two ranges at two scales in the same
+         frame read as a mistake, and of the two the drawn one is the
+         one with nothing behind it. If a hero ever needs its own
+         landform again, generate it from tools/vale.mjs with a
+         different camera rather than drawing it: the file already
+         takes a bearing and a band. -->
   </section>
 
   <!-- The map. Rooms are doors; counts are real or the door says so. -->
@@ -211,5 +223,6 @@
 
 <script src="/js/grid.js"></script>
 <script src="/js/app.js"></script>
+<script src="/js/vale.js" defer></script>
 </body>
 </html>

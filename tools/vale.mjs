@@ -200,10 +200,21 @@ const COLUMNS = 640                    /* one sample column per ~2px of a 1280 w
 /* Distance bands. Each becomes one SVG, drawn near over far, which
    is also the correct occlusion order for nothing extra. */
 const BANDS = [
-  { name: 'far',  from: 400, to: 1600, step: 8 },
-  { name: 'mid',  from: 120, to: 400,  step: 4 },
-  { name: 'near', from: 6,   to: 120,  step: 1.5 },
+  { name: 'far',  from: 520, to: 1600, step: 8 },
+  { name: 'mid',  from: 140, to: 520,  step: 4 },
 ]
+
+/* THERE IS NO THIRD RIDGE, AND THAT IS THE TERRAIN'S ANSWER, NOT A
+   SHORTCUT. A near band was traced first and came back a dead
+   horizontal slab, twice, from two different camera positions. The
+   reason is in heightAt(): inside 150 studs of anywhere in the vale
+   floor there is only the rolling meadow base, which varies by about
+   four studs, and four studs at sixty studs' distance is two degrees.
+   The meadow really is flat. Faking relief there would have been the
+   first invented thing in the file.
+
+   So the foreground is what the vale actually puts in front of you:
+   the bamboo grove. Flora.luau's own bambooClump() numbers, below. */
 
 /* The vertical window, in elevation angle. Everything is measured
    against the horizon (0 rad) so the three plates line up when they
@@ -299,10 +310,15 @@ function caps(pts) {
    because these sit over a sky gradient, and stacked translucency
    would let the sky tint every ridge behind every other ridge.
    ============================================================ */
+/* THESE ARE DARKER THAN THEY LOOK THEY SHOULD BE, on purpose. The
+   plates are read through two veils they are not painted against
+   here: the wash that dissolves their feet into the paper, and the
+   hero's own veil across the top third. Colours picked to look right
+   in isolation came out as ghosts on the page. Judge these on a
+   screenshot of the SITE, never on the SVG on its own. */
 const PLATES = [
-  { band: BANDS[0], fill: '#c9d0da', snow: '#eef2f6', edge: '#b6c0cd' },
-  { band: BANDS[1], fill: '#98a5b3', snow: '#dde5ec', edge: '#8593a3' },
-  { band: BANDS[2], fill: '#5f6d78', snow: '#c8d3db', edge: '#4e5b66' },
+  { band: BANDS[0], fill: '#aebdd0', snow: '#eaf0f6', edge: '#94a6be' },
+  { band: BANDS[1], fill: '#7286a0', snow: '#d3dfea', edge: '#5e7390' },
 ]
 
 function svg(plate) {
@@ -335,3 +351,96 @@ for (const plate of PLATES) {
 console.log('eye at (' + EYE.x + ', ' + EYE.z + ') ' + eyeY.toFixed(1) + ' studs up, ' +
   'bearing ' + ((BEARING * 180) / Math.PI).toFixed(1) + ' deg toward Heavenpillar')
 for (const line of summary) console.log('  ' + line)
+
+/* ============================================================
+   THE GROVE — Flora.luau's bambooClump(), seen edge on
+   ------------------------------------------------------------
+   Their numbers, not ours: culms 34 to 56 studs tall, clumped a few
+   at a time within 5 studs of a point, each topped by two leaf puffs
+   10 to 14 wide and 7 to 10 wide. BAMBOO_GREEN is theirs too. The
+   grove sits at Terrain.GROVE, which is a flattened clearing at
+   height 14, so a stand of it in the foreground is a thing you could
+   actually walk past.
+
+   Rendered from a SEEDED generator so the file is byte-stable: an
+   asset that changes on every build is an asset nobody can review in
+   a diff, and a background nobody reviews is where a stray mark
+   lives forever.
+   ============================================================ */
+const BAMBOO_GREEN = '#7ea85c'
+const BAMBOO_LEAF = '#688e4e'
+const BAMBOO_DARK = '#4d6b3a'
+
+/* mulberry32: 32 bits of state, same sequence every run */
+function seeded(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6d2b79f5) | 0
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function grove() {
+  const rng = seeded(0x9e3779b9)
+  const num = n => (a, b) => a + n() * (b - a)
+  const r = num(rng)
+  const parts = []
+
+  /* Three clumps across the plate, the nearest largest. A clump at
+     the very edge on each side frames the page without crowding the
+     middle, where the shop's own content sits. */
+  const clumps = [
+    { cx: 60, scale: 1.0, n: 7 },
+    { cx: 1215, scale: 0.94, n: 7 },
+    { cx: 300, scale: 0.6, n: 4 },
+    { cx: 985, scale: 0.55, n: 4 },
+  ]
+
+  for (const clump of clumps) {
+    for (let i = 0; i < clump.n; i++) {
+      /* studs converted at the plate's own scale: a 56 stud culm
+         reaching most of the plate's height is what standing beside
+         one looks like */
+      const h = r(34, 56) * 5.6 * clump.scale
+      const x = clump.cx + r(-5, 5) * 7 * clump.scale
+      const lean = r(-0.07, 0.07)
+      const w = r(3.4, 5.2) * clump.scale
+      const topX = x + lean * h
+      const baseY = PLATE_H + 30
+
+      /* the culm, drawn as a tapering quad rather than a line so the
+         lean reads as a bend the way a stalk bends */
+      parts.push('<path d="M' + n2(x - w) + ' ' + n2(baseY) +
+        ' Q' + n2(x - w + lean * h * 0.4) + ' ' + n2(baseY - h * 0.55) +
+        ' ' + n2(topX - w * 0.55) + ' ' + n2(baseY - h) +
+        ' L' + n2(topX + w * 0.55) + ' ' + n2(baseY - h) +
+        ' Q' + n2(x + w + lean * h * 0.4) + ' ' + n2(baseY - h * 0.55) +
+        ' ' + n2(x + w) + ' ' + n2(baseY) + ' Z" fill="' + BAMBOO_GREEN + '"/>')
+
+      /* the nodes: bamboo's own joints, every 9 studs or so */
+      for (let y = baseY - 22; y > baseY - h + 10; y -= r(46, 62)) {
+        const t = (baseY - y) / h
+        parts.push('<rect x="' + n2(x + lean * h * t - w) + '" y="' + n2(y) +
+          '" width="' + n2(w * 2) + '" height="2.6" fill="' + BAMBOO_DARK +
+          '" opacity="0.55"/>')
+      }
+
+      /* two leaf puffs at the top, their sizes */
+      for (const [rx, ry, dy, fill] of [
+        [r(10, 14) * 2.4 * clump.scale, r(6, 8) * 1.9 * clump.scale, 0, BAMBOO_LEAF],
+        [r(7, 10) * 2.4 * clump.scale, r(4, 6) * 1.9 * clump.scale, r(14, 26), BAMBOO_GREEN],
+      ]) {
+        parts.push('<ellipse cx="' + n2(topX + r(-9, 9)) + '" cy="' + n2(baseY - h + dy) +
+          '" rx="' + n2(rx) + '" ry="' + n2(ry) + '" fill="' + fill + '"/>')
+      }
+    }
+  }
+
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + PLATE_W + ' ' + PLATE_H +
+    '" preserveAspectRatio="none" width="' + PLATE_W + '" height="' + PLATE_H + '">' +
+    parts.join('') + '</svg>\n'
+}
+
+writeFileSync(join(out, 'vale-grove.svg'), grove())
+console.log('  vale-grove.svg  ' + String(grove().length).padStart(7) + ' bytes')
