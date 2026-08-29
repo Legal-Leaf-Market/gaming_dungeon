@@ -79,10 +79,19 @@ body::after{
   border:var(--stroke) solid var(--ink);border-radius:var(--radius);
   background:
     linear-gradient(100deg,
-      rgba(251,249,242,.94) 0%,
-      rgba(246,243,233,.86) 38%,
-      rgba(246,243,233,.42) 62%,
-      rgba(246,243,233,.10) 100%);
+      rgba(251,249,242,.95) 0%,
+      rgba(248,245,236,.91) 44%,
+      rgba(246,243,233,.30) 63%,
+      rgba(246,243,233,.04) 84%,
+      rgba(246,243,233,0) 100%);
+  /* THE STOPS ARE THE LEDE'S OWN RIGHT EDGE. The paragraph runs to
+     about 46% of the hero's width, so the veil holds full strength
+     to 44% and then falls off a cliff. An earlier, gentler ramp put
+     roughly half a veil over Heavenpillar and the peak read as a
+     smudge: the ridge colours were derived correctly and something
+     unrelated was sitting on top of them, which is the hardest kind
+     of wrong to see. Anything that dims the right half of this hero
+     is dimming the mountain. */
   /* THE BOTTOM PADDING IS THE SKYLINE. It was the clear band the
      hero's own ink ridges lived in; those are gone and the real
      ridges are behind now, so it is the band the vale shows through.

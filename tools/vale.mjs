@@ -310,15 +310,107 @@ function caps(pts) {
    because these sit over a sky gradient, and stacked translucency
    would let the sky tint every ridge behind every other ridge.
    ============================================================ */
-/* THESE ARE DARKER THAN THEY LOOK THEY SHOULD BE, on purpose. The
-   plates are read through two veils they are not painted against
-   here: the wash that dissolves their feet into the paper, and the
-   hero's own veil across the top third. Colours picked to look right
-   in isolation came out as ghosts on the page. Judge these on a
-   screenshot of the SITE, never on the SVG on its own. */
+/* ============================================================
+   THE COLOURS ARE THE GAME'S LIGHTING RIG, NOT A PALETTE
+   ------------------------------------------------------------
+   The first cut of this file picked ridge colours by eye and got
+   them badly wrong in a way no amount of nudging would have fixed:
+   they were COLD BLUE, and the vale is not cold or blue. Read
+   WorldService.tuneSky() and it says so in its own comment, "late
+   golden afternoon: warm, hazy, readable", and then sets the values
+   that make it one. ClockTime 16.4, a low sun. Atmosphere the colour
+   of old paper. A cream colour grade over the whole frame.
+
+   So none of the numbers below are chosen. The terrain materials
+   give the rock, grass and snow their base colours; the lighting rig
+   gives the haze that eats them with distance and the grade that
+   warms what is left; and the plate colours fall out of the two.
+   Change the game's sky and this background changes with it, which
+   is the entire point of deriving rather than drawing.
+   ============================================================ */
+
+/* WorldService.tuneSky(), verbatim. */
+const SKY = {
+  ambient: [96, 90, 78],
+  outdoorAmbient: [138, 128, 112],
+  atmosphere: [222, 214, 198],   /* what distance fades everything toward */
+  decay: [130, 120, 104],        /* what the light decays to at the horizon */
+  haze: 2.6,
+  density: 0.38,
+  clouds: [235, 230, 220],
+  cloudCover: 0.66,
+  tint: [255, 246, 230],         /* ColorCorrection.TintColor */
+  contrast: 0.05,
+  saturation: 0.05,
+}
+
+/* Roblox's default terrain material colours, which is what
+   Terrain.build() is filling with: it names materials, never
+   colours, so these are the colours the vale actually is. */
+const MATERIAL = {
+  grass: [106, 127, 63],
+  leafyGrass: [115, 132, 74],
+  rock: [102, 92, 59],
+  snow: [195, 199, 218],
+  sand: [143, 126, 95],
+}
+
+const clamp255 = v => Math.max(0, Math.min(255, Math.round(v)))
+const hex = c => '#' + c.map(v => clamp255(v).toString(16).padStart(2, '0')).join('')
+const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t)
+
+/* HOW MUCH OF A THING AT DISTANCE d IS JUST AIR.
+
+   Roblox does not publish the curve it runs Density and Haze
+   through, so this is the standard exponential extinction fitted to
+   the two numbers the rig sets: at the mid band's representative
+   distance it should be about a quarter air, and at the far band's
+   about half. SCALE is the fitted constant and it is the one number
+   in this file that is tuned rather than read.
+
+   IT WAS FITTED TOO STRONG FIRST TIME, at 550, which put the far
+   band three quarters into the atmosphere colour. On its own that is
+   defensible physics; on the page it erased the mountains, because
+   the sky immediately behind a ridge IS the atmosphere colour and a
+   ridge three quarters of the way there has almost nothing left to
+   separate it. The visible check is the only check that matters
+   here: a ridge that cannot be seen is not hazy, it is missing. */
+const HAZE_SCALE = 1150
+const airAt = d => 1 - Math.exp(-d / HAZE_SCALE)
+
+/* The colour grade, applied last because that is where it sits in
+   the pipeline: after everything, over the whole frame. */
+function grade(c) {
+  const lum = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+  let out = c.map(v => lum + (v - lum) * (1 + SKY.saturation))     /* saturation */
+  out = out.map(v => 128 + (v - 128) * (1 + SKY.contrast))          /* contrast   */
+  return out.map((v, i) => (v * SKY.tint[i]) / 255)                 /* tint       */
+}
+
+/* Lit, then hazed, then graded. The lift is the outdoor ambient plus
+   a low sun, which is why everything here reads warmer than the raw
+   material colour: at ClockTime 16.4 the light itself is yellow. */
+function surface(material, distance) {
+  const lit = material.map((v, i) => v * 0.62 + SKY.outdoorAmbient[i] * 0.55)
+  return hex(grade(mix(lit, SKY.atmosphere, airAt(distance))))
+}
+
+/* A ridge's EDGE is the same surface a little less hazed, which is
+   what an edge physically is: the near lip of the ridge, closer to
+   you than the slope behind it. */
 const PLATES = [
-  { band: BANDS[0], fill: '#aebdd0', snow: '#eaf0f6', edge: '#94a6be' },
-  { band: BANDS[1], fill: '#7286a0', snow: '#d3dfea', edge: '#5e7390' },
+  {
+    band: BANDS[0],
+    fill: surface(MATERIAL.rock, 800),
+    snow: surface(MATERIAL.snow, 800),
+    edge: surface(MATERIAL.rock, 560),
+  },
+  {
+    band: BANDS[1],
+    fill: surface(MATERIAL.grass, 300),
+    snow: surface(MATERIAL.snow, 300),
+    edge: surface(MATERIAL.rock, 210),
+  },
 ]
 
 function svg(plate) {
@@ -367,9 +459,15 @@ for (const line of summary) console.log('  ' + line)
    a diff, and a background nobody reviews is where a stray mark
    lives forever.
    ============================================================ */
-const BAMBOO_GREEN = '#7ea85c'
-const BAMBOO_LEAF = '#688e4e'
-const BAMBOO_DARK = '#4d6b3a'
+/* Flora.luau's own BAMBOO_GREEN and its two leaf-puff colours, put
+   through the same lighting the ridges go through. The grove stands
+   twenty studs away, so almost none of it is air: this is the colour
+   grade doing the work, not the haze, and that is correct. Bamboo
+   in a golden afternoon is olive, not the flat spring green the raw
+   Color3 is. */
+const BAMBOO_GREEN = surface([126, 168, 92], 20)
+const BAMBOO_LEAF = surface([104, 146, 78], 24)
+const BAMBOO_DARK = surface([77, 107, 58], 16)
 
 /* mulberry32: 32 bits of state, same sequence every run */
 function seeded(seed) {
@@ -444,3 +542,68 @@ function grove() {
 
 writeFileSync(join(out, 'vale-grove.svg'), grove())
 console.log('  vale-grove.svg  ' + String(grove().length).padStart(7) + ' bytes')
+
+/* ============================================================
+   THE SKY IS DERIVED TOO, and it had to be.
+
+   The ridges were the first thing repainted from the lighting rig
+   and the result was a page of warm golden mountains under a COLD
+   BLUE sky, which looked worse than either mistake on its own: the
+   ridges were right and the sky they stood in was still the invented
+   one. Half a derivation is not a derivation.
+
+   So the sky stops come out of the same rig and land in a generated
+   stylesheet that vale.css imports. GENERATED, meaning do not edit
+   it: run `node tools/vale.mjs`. It is committed rather than built
+   on deploy because this site has no build step at all, and a
+   background that only exists after a command nobody runs is a
+   background that ships missing.
+
+   At ClockTime 16.4 the sun is low and, since the camera faces north
+   at Heavenpillar, it is off to the LEFT. That is why the disc is
+   not centred behind the peak: a sun directly behind the summit at
+   half past four would be the one thing in the scene that could not
+   happen.
+   ============================================================ */
+
+/* Roblox's clear-sky zenith, which the atmosphere and the grade then
+   act on. Everything below it is the rig. */
+/* Deeper than the literal zenith, on purpose. The rig's Brightness
+   is 2.6 with a 0.55 environment diffuse, so the real sky is bright,
+   but the shop is printed on paper and the ridges have to read
+   against it. Holding the top of the sky down is what buys the
+   skyline its silhouette. */
+const ZENITH = [126, 156, 196]
+
+const skyTop = hex(grade(mix(ZENITH, SKY.atmosphere, 0.30)))
+const skyMid = hex(grade(mix(ZENITH, SKY.atmosphere, 0.72)))
+const skyHaze = hex(grade(SKY.atmosphere))
+const cloud = hex(grade(SKY.clouds))
+/* the sun's core is the grade's own tint at full brightness; its
+   glow is the horizon decay colour, which is what a low sun turns
+   the air around it into */
+const sunCore = hex(SKY.tint)
+const sunGlow = hex(grade(mix(SKY.atmosphere, [255, 214, 140], 0.55)))
+const decay = hex(grade(SKY.decay))
+
+const sky = `/* GENERATED by tools/vale.mjs. Do not edit; run the tool.
+   Every value here is computed from WorldService.tuneSky() in
+   Legal-Leaf-Market/roblox-game: the terrain material colours lit by
+   the vale's own outdoor ambient, faded toward the atmosphere colour
+   by distance, then put through the game's colour grade. The sky the
+   shop stands under is the sky the game is lit by.
+
+   ClockTime 16.4, late golden afternoon, in the rig's own words. */
+:root{
+  --vale-sky-top:${skyTop};
+  --vale-sky-mid:${skyMid};
+  --vale-sky-haze:${skyHaze};
+  --vale-cloud:${cloud};
+  --vale-sun-core:${sunCore};
+  --vale-sun-glow:${sunGlow};
+  --vale-decay:${decay};
+}
+`
+writeFileSync(join(out, '..', 'css', 'vale-sky.css'), sky)
+console.log('  css/vale-sky.css   top ' + skyTop + '  mid ' + skyMid +
+  '  haze ' + skyHaze + '  sun ' + sunGlow)

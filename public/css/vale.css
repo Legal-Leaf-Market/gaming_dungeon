@@ -31,14 +31,23 @@
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  /* The sky. Two stops of qi-blue over the paper the whole site is
-     printed on, so the horizon dissolves into the page instead of
-     ending at a line. */
+  /* THE SKY IS THE GAME'S SKY. Every stop is a custom property out
+     of vale-sky.css, which tools/vale.mjs computes from
+     WorldService.tuneSky(): the clear-sky zenith faded toward the
+     vale's atmosphere colour, then put through the game's own colour
+     grade. It is warm because ClockTime is 16.4 and the rig's comment
+     calls it a late golden afternoon.
+
+     This used to be two stops of invented qi-blue, and the tell that
+     it was wrong only appeared once the RIDGES were derived: golden
+     mountains under a cold blue sky read worse than the whole thing
+     being wrong together. */
   background:
     linear-gradient(180deg,
-      #dbe4ef 0%,
-      #e7ecf2 34%,
-      var(--paper) 72%,
+      var(--vale-sky-top) 0%,
+      var(--vale-sky-mid) 34%,
+      var(--vale-sky-haze) 62%,
+      var(--paper) 86%,
       var(--paper) 100%);
 }
 
@@ -116,14 +125,32 @@
    cheaper and the truer of the two.
    ------------------------------------------------------------ */
 .vale .sun {
-  left: auto; right: auto; bottom: auto;
-  top: 9vh; left: 47%;
-  width: 152px; height: 152px;
+  right: auto; bottom: auto;
+  /* LOW, AND TO THE LEFT. ClockTime 16.4 puts the sun well down the
+     western sky, and the camera faces north at Heavenpillar, so west
+     is stage left. It was centred behind the summit at first, which
+     is the one place a half-past-four sun cannot be. */
+  top: 15vh; left: 34%;
+  width: 168px; height: 168px;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%,
-    rgba(255, 251, 236, 1) 0 36%,
-    rgba(255, 238, 198, .62) 54%,
-    rgba(255, 234, 190, 0) 74%);
+    var(--vale-sun-core) 0 30%,
+    color-mix(in srgb, var(--vale-sun-glow) 72%, transparent) 52%,
+    color-mix(in srgb, var(--vale-sun-glow) 0%, transparent) 76%);
+}
+
+/* SUN RAYS. The rig runs a SunRaysEffect at intensity 0.07 and
+   spread 0.7, which is a whisper, and this is the CSS of a whisper:
+   one very soft cone, no spokes. Spokes would be a lens flare, and
+   nothing in an ink painting has a lens. */
+.vale .rays {
+  right: auto; bottom: auto;
+  top: 0; left: 34%;
+  width: 34vw; height: 50vh;
+  transform: translate3d(-50%, 0, 0);
+  background: radial-gradient(60% 52% at 50% 24%,
+    color-mix(in srgb, var(--vale-sun-glow) 15%, transparent) 0%,
+    color-mix(in srgb, var(--vale-sun-glow) 0%, transparent) 72%);
 }
 
 /* ------------------------------------------------------------
@@ -137,8 +164,13 @@
   left: -30%; right: -30%;
   height: 190px;
   background:
-    radial-gradient(closest-side at 30% 50%, rgba(255,255,255,.62), transparent 78%),
-    radial-gradient(closest-side at 68% 46%, rgba(255,255,255,.5), transparent 74%);
+    /* THE CLOUD COLOUR, not white. tuneSky() sets Clouds.Color to a
+       warm off-white at 66% cover; pure white bands over a golden sky
+       read as holes punched in it. */
+    radial-gradient(closest-side at 30% 50%,
+      color-mix(in srgb, var(--vale-cloud) 78%, transparent), transparent 78%),
+    radial-gradient(closest-side at 68% 46%,
+      color-mix(in srgb, var(--vale-cloud) 62%, transparent), transparent 74%);
   filter: blur(2px);
   animation: valeMist var(--dur, 96s) ease-in-out infinite;
   animation-delay: var(--delay, 0s);

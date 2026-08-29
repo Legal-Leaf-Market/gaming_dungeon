@@ -29,6 +29,9 @@
 <link rel="stylesheet" href="/css/tokens.css"/>
 <link rel="stylesheet" href="/css/app.css"/>
 <link rel="stylesheet" href="/css/ink.css"/>
+<!-- GENERATED, and it must load BEFORE vale.css, which consumes
+     its custom properties. Run `node tools/vale.mjs` to rebuild. -->
+<link rel="stylesheet" href="/css/vale-sky.css"/>
 <link rel="stylesheet" href="/css/vale.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -64,6 +67,7 @@
      and it is first so that nothing on the page has to out-stack it.
      =========================================================== -->
 <div class="vale" aria-hidden="true">
+  <i class="rays"></i>
   <i class="sun"></i>
   <i class="far"></i>
   <i class="mist mist-3"></i>
