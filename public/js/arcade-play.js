@@ -81,6 +81,15 @@
       f.setAttribute("loading", "eager");
       stage.appendChild(f);
       stop = function () { f.src = "about:blank"; };
+      /* The controls, under the screen, same slot the built-in prints its
+         own hint into. Only for embeds: the built-in already does this
+         itself, and a cabinet that is not open has nothing to press. */
+      if (g.controls && g.controls.length) {
+        var hint = document.createElement("p");
+        hint.className = "ar-hint";
+        hint.textContent = g.controls.join("  ·  ");
+        stage.appendChild(hint);
+      }
     }
     play.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -93,4 +102,14 @@
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !play.hidden) close(); });
 
   render();
+
+  /* ?g=<id> opens that cabinet on arrival -- the deep link the registry's
+     schema comment has promised since it was written ("the ?g= value").
+     Not a breach of the never-load-until-pressed rule: whoever follows
+     /arcade?g=starlane pressed for that game somewhere else, and browsing
+     visitors without the param still load nothing. `open` already refuses
+     ids that are unknown or not installed, so a stale link degrades to the
+     plain wall rather than to an error. */
+  var deep = /(?:^|[?&])g=([^&]+)/.exec(location.search);
+  if (deep) open(decodeURIComponent(deep[1]));
 })();
