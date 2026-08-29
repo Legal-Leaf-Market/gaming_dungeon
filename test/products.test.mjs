@@ -8,6 +8,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { classify } from '../api/_scene.js'
+import { decodeEntities } from '../api/products.js'
 
 const raw = readFileSync(new URL('../api/products.js', import.meta.url), 'utf8')
 
@@ -234,4 +235,62 @@ test('the classifier blob is built from cleaned text, never raw HTML', () => {
     'row() must build the blob from the cleaned description, not o.desc')
   assert.equal(/const blob = \[o\.title, o\.variant, o\.tags, o\.desc\]/.test(src), false,
     'raw HTML is back in the classifier blob')
+})
+
+/* ============================================================
+   HTML ENTITIES IN TITLES
+
+   Found by POWOXI's WooCommerce feed, which names every MPPT charger
+   "... Trickle Maintainer &#8211; with MPPT Controller". The title is
+   escaped again on its way to the card, so the entity rendered as its
+   own seven characters. Descriptions were already cleaned; titles
+   never had been, and titles are the half a shopper reads.
+   ============================================================ */
+
+test('a numeric entity in a title becomes its character, not its spelling', () => {
+  const t = decodeEntities('POWOXI 50W Solar Battery Charger &#8211; with MPPT Controller')
+  assert.ok(!t.includes('&#'), 'entity survived into the title: ' + t)
+  assert.ok(t.includes('\u2013'), 'the dash was deleted rather than decoded: ' + t)
+})
+
+test('a numeric entity is decoded, never deleted', () => {
+  /* The old scrapers did .replace(/&#\d+;/g, ''), which turns
+     "Maintainer - with" into "Maintainer  with": it edits the
+     merchant's own product name and reads like whitespace tidying in
+     a diff. Deletion and decoding both remove the "&#", so the
+     character has to be asserted for. */
+  assert.equal(decodeEntities('a&#8211;b'), 'a\u2013b')
+  assert.equal(decodeEntities('a&#x2014;b'), 'a\u2014b')
+  assert.equal(decodeEntities('Caf&eacute;'), 'Caf\u00e9')
+  assert.equal(decodeEntities('Bear&rsquo;s'), 'Bear\u2019s')
+})
+
+test('angle brackets are NOT decoded back into markup', () => {
+  /* cleanDesc strips tags FIRST and decodes second, so decoding these
+     would let an escaped script tag reassemble downstream of the only
+     thing that removes tags. Named and numeric both, because a
+     numeric decoder that forgets 60 and 62 is the same hole. */
+  for (const attack of ['&lt;script&gt;x&lt;/script&gt;', '&#60;script&#62;x&#60;/script&#62;']) {
+    const out = decodeEntities(attack)
+    assert.ok(!out.includes('<'), 'reassembled a tag from: ' + attack)
+    assert.ok(!out.includes('>'), 'reassembled a tag from: ' + attack)
+  }
+})
+
+test('an unknown entity leaves no ampersand behind', () => {
+  /* Whatever we cannot name becomes a space. What must never happen
+     is a half-decoded string, because the next pass over it would
+     read the leftover "&" as the start of something. */
+  const out = decodeEntities('a &notarealentity; b &amp; c')
+  assert.ok(!out.includes(';'), out)
+  assert.equal(out.match(/&/g).length, 1, 'only the real ampersand survives: ' + out)
+})
+
+test('row() decodes the title before anything reads it', () => {
+  /* The classifier weighs the title first and search matches on it,
+     so decoding at render time would fix one of the three places. */
+  const rowFn = src.slice(src.indexOf('function row(st, o)'))
+  const body = rowFn.slice(0, rowFn.indexOf('\nfunction '))
+  assert.ok(/title:\s*decodeEntities\(o\.title\)/.test(body),
+    'row() must decode o.title, not leave it to the card')
 })

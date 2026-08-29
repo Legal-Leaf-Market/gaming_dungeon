@@ -1,0 +1,42 @@
+{
+  "key": "powoxi",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the pasted bookmarklet capture with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "bookmarklet capture via the Woo Store API, 32 of 33 products",
+  "recommendation": "DO NOT PUBLISH. `pending` stays true. Read the review.",
+  "platform": "woocommerce",
+  "capture": {
+    "products": 32,
+    "claimedTotal": 33,
+    "partial": true,
+    "priceRange": { "min": 13.99, "max": 189.99, "mean": 65.77 },
+    "unpriced": 0,
+    "withoutImage": 0,
+    "outOfStock": 10
+  },
+  "productTypes": [
+    ["POWOXI Stainless Steel Deer Feeder", 6],
+    ["POWOXI Smart Best Charger", 6],
+    ["POWOXI MPPT Charger", 5],
+    ["(none)", 4],
+    ["POWOXI Bracket Solar Panel", 3],
+    ["POWOXI Portable Solar Panel", 3],
+    ["POWOXI Aluminum Solar Panel", 2],
+    ["POWOXI Magnetic Charger", 2],
+    ["Deer Feeder Solar Panels", 1]
+  ],
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "THIS IS NOT A GAMING MERCHANT AND THE CATALOGUE SAYS SO IN ITS OWN WORDS. Every one of the 32 products is 12V lead-acid battery maintenance: trickle chargers and solar maintainers 'for RV Boat Marine Motorcycle Trailer Truck Tractor', plus seven solar panels sold specifically to power a deer feeder. Nothing here plugs into a desk, a handheld or a console. The room is called Power and the shelf would read as a farm supply store.",
+    "The registry is what made it look plausible. `room:'power'` was assigned from the brand name before anybody read the feed, and the Power room's own blurb is 'Chargers, cables, and the brick you keep losing'. A 30W solar panel on an adjustable rack is not that brick.",
+    "HELD AT pending: true. The reviewed file exists so nobody reads this catalogue a second time, not because it cleared. publishable() needs BOTH a reviewed file and a cleared flag, which is exactly the case this split was built for: understood, and understood to be wrong for the shelf.",
+    "The nearest thing to a crossover is the three 'Portable Foldable Solar Panel Charger Kit for Power Stations and USB Devices' at $189.99, which a handheld owner could plausibly want. All three are out of stock, and three products is not a merchant.",
+    "REGISTRY HAD THE PLATFORM WRONG AGAIN. It said shopify; the capture reached this shop through the Woo Store API. Corrected to woocommerce in the same commit. This is the second time the registry and a capture have disagreed on platform, and the first time cost Custom Gaming Chair a publish that shipped zero products while reading as live. The capture knew both times.",
+    "TWO REAL BUGS FELL OUT OF THIS FEED AND ARE FIXED IN THE SAME COMMIT. Neither is about POWOXI and both would have bitten a merchant we do want.",
+    "BUG 1: the classifier filed a solar charge regulator as a gamepad. battlestation's `\\bcontrollers?\\b` matched 'with MPPT Controller' and 'Solar Charge Controller 12V 8A', and battlestation is tested before power, so three products crossed rooms. Same family as `\\bamp\\b` matching the unit of current. The pattern is now guarded by what precedes it; 'Xbox Controller' still lands.",
+    "BUG 2: HTML entities survived into product titles. Eleven of these titles read '... Trickle Maintainer &#8211; with MPPT Controller', and a title is escaped again on its way to the card, so the entity would have rendered as its own characters in the product name. Descriptions were already cleaned; titles never had been. Worse, the two DOM scrapers deleted `&#nnnn;` outright, which silently edits a merchant's product name and looks like whitespace tidying in a diff. There is one decoder now and row() runs it before the classifier or the card sees a title.",
+    "10 of 32 are out of stock, which is a third of the catalogue and worth knowing if this is ever revisited.",
+    "One short of the sitemap's 33. Immaterial given the recommendation."
+  ]
+}

@@ -323,8 +323,13 @@ export const STORES = [
   /* ==========================================================
      POWER — charging, cables, solar.
      ========================================================== */
+  /* WOOCOMMERCE, not Shopify. The registry said shopify and the
+     capture reached this shop through the Woo Store API; that is the
+     second time the two have disagreed and the first cost Custom
+     Gaming Chair a publish that shipped zero products while reading
+     as live. HELD BACK ON PURPOSE beyond that: see the review file. */
   { key:'powoxi', name:'POWOXI Solar Charger', room:'power', domain:'powoxi.com',
-    platform:'shopify', ref:'tzexwwsr', rate:'8%', cookie:30, tier:1, pending:true },
+    platform:'woocommerce', ref:'tzexwwsr', rate:'8%', cookie:30, tier:1, pending:true },
 
   { key:'ohrija', name:'ohrija charger', room:'power', domain:'ohrija.com',
     platform:'shopify', ref:'auoqghqm', rate:'3%', cookie:30, tier:1, pending:true },

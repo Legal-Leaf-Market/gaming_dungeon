@@ -121,6 +121,67 @@ const NONPRODUCT_TYPE = /^(fee|tax|shipping|insurance)$/i
 
 const NONPRODUCT = /shipping protection|shipping insurance|route protect|\bgift ?cards?\b|\begift\b|free gift|\bautoship\b|subscription plan|expired mystery|mystery box|\bdonation\b|^\s*select \d+ for|\bexcise tax\b|rewards coupon|\d+-off\b/i
 
+/* ============================================================
+   HTML ENTITIES SURVIVE INTO PRODUCT TITLES
+
+   A description gets cleaned. A title never was, and a title is the
+   one string that is escaped AGAIN on its way to the card, so a raw
+   `&#8211;` renders as those seven literal characters rather than the
+   dash the merchant typed. POWOXI's WooCommerce feed names every MPPT
+   charger "... Trickle Maintainer &#8211; with MPPT Controller", so
+   eleven cards would have carried the entity in the product name and
+   nothing would have errored.
+
+   Decoding numerics rather than deleting them. The two DOM scrapers
+   below did `.replace(/&#\d+;/g, '')`, which turns "Maintainer - with"
+   into "Maintainer  with": it silently edits the merchant's own
+   product name and reads, in a diff, exactly like whitespace tidying.
+
+   `<` and `>` are deliberately NOT decoded. cleanDesc() strips tags
+   FIRST and decodes second, so decoding them would let `&lt;script&gt;`
+   reassemble into markup downstream of the only thing that removes
+   markup. A space costs a shopper nothing; the alternative costs
+   whatever the next renderer forgets to escape.
+   ============================================================ */
+const NAMED_ENTITY = {
+  amp: '&', quot: '"', apos: "'", nbsp: ' ',
+  lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”',
+  ndash: '–', mdash: '—', hellip: '…',
+  trade: '™', reg: '®', copy: '©',
+  deg: '°', middot: '·', times: '×', frac12: '½', frac14: '¼', frac34: '¾',
+  sup2: '²', sup3: '³', plusmn: '±', micro: 'µ', bull: '•',
+  euro: '€', pound: '£', yen: '¥', cent: '¢',
+  /* Accented letters reach us through real product names: "Café",
+     "Pokémon", "Nendoroid Doll Ichigo". Without these the letter
+     became a space and the brand was misspelt on the card. */
+  aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú',
+  agrave: 'à', egrave: 'è', ugrave: 'ù',
+  acirc: 'â', ecirc: 'ê', icirc: 'î', ocirc: 'ô', ucirc: 'û',
+  auml: 'ä', euml: 'ë', iuml: 'ï', ouml: 'ö', uuml: 'ü',
+  ntilde: 'ñ', ccedil: 'ç', aring: 'å', oslash: 'ø', szlig: 'ß', aelig: 'æ',
+}
+
+export function decodeEntities(str) {
+  if (!str) return ''
+  return String(str).replace(/&(#\d{1,7}|#x[0-9a-f]{1,6}|[a-z][a-z0-9]{1,31});/gi, (whole, body) => {
+    if (body.charAt(0) === '#') {
+      const hex = body.charAt(1) === 'x' || body.charAt(1) === 'X'
+      const cp = hex ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10)
+      /* control characters, the two angle brackets, and anything
+         outside Unicode all become a space rather than a character */
+      if (!Number.isFinite(cp) || cp < 32 || cp === 60 || cp === 62 || cp > 0x10ffff) return ' '
+      try { return String.fromCodePoint(cp) } catch { return ' ' }
+    }
+    /* An entity we cannot name still has to LEAVE. Left in place it is
+       an "&" with a ";" some distance away, and the next pass over the
+       string reads that as the start of something. The named set below
+       is short on purpose; the width here is the full HTML5 range so
+       that what we do not know collapses rather than lingers. */
+    const key = body.toLowerCase()
+    return Object.prototype.hasOwnProperty.call(NAMED_ENTITY, key) ? NAMED_ENTITY[key] : ' '
+  })
+}
+
 function cleanDesc(html) {
   if (!html) return ''
   let t = String(html)
@@ -128,10 +189,7 @@ function cleanDesc(html) {
     .replace(/<br\s*\/?>/gi, ' ')
     .replace(/<\/(p|div|li|h\d)>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
-    .replace(/&quot;/gi, '"').replace(/&#39;|&rsquo;/gi, "'")
-    .replace(/&[a-z]+;/gi, ' ')
-    .replace(/\s+/g, ' ').trim()
+  t = decodeEntities(t).replace(/\s+/g, ' ').trim()
   if (t.length > 420) {
     t = t.substring(0, 420)
     const cut = t.lastIndexOf('. ')
@@ -268,6 +326,15 @@ function impactFault(st) {
    ============================================================ */
 
 function row(st, o) {
+  /* Decode BEFORE anything reads these. The title is what the card
+     shows, what search matches on and what the classifier weighs
+     first, so an entity left in it is wrong in three places. */
+  o = Object.assign({}, o, {
+    title: decodeEntities(o.title),
+    variant: decodeEntities(o.variant),
+    tags: decodeEntities(o.tags),
+    brand: decodeEntities(o.brand),
+  })
   const desc = cleanDesc(o.desc)
   /* THE CLEANED DESCRIPTION, NOT THE RAW HTML. cleanDesc() was
      computed here and then the blob was built from o.desc anyway, so
@@ -843,8 +910,7 @@ function wooCards(st, html, room, seen) {
     if (seen.has(url)) continue
     seen.add(url)
 
-    const title = m[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&')
-      .replace(/&#\d+;/g, '').replace(/\s+/g, ' ').trim()
+    const title = decodeEntities(m[2].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim()
     if (!title) continue
 
     /* price sits just after the title; a variable product shows a range
@@ -947,8 +1013,7 @@ async function bigCommerceCards(st) {
         const t = card.match(/<h4[^>]*class="[^"]*card-title[^"]*"[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i)
         if (!t) continue
         const link = t[1]
-        const title = t[2].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&')
-          .replace(/&#\d+;/g, '').replace(/\s+/g, ' ').trim()
+        const title = decodeEntities(t[2].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim()
         if (!title || seen.has(link)) continue
         seen.add(link)
 

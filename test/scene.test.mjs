@@ -218,3 +218,32 @@ test('an amp of current is not an amplifier', () => {
   assert.equal(classify(st, 'Schiit Magni Headphone Amp', 'headphone amp', 'Amps'), 'audio')
   assert.equal(classify(st, 'Cambridge Audio AXA35 Amplifier', 'integrated amplifier', ''), 'audio')
 })
+
+test('a charge controller is not a gamepad', () => {
+  /* POWOXI names eleven products "... with MPPT Controller" and one
+     "Solar Charge Controller 12V 8A". battlestation is tested before
+     power, so bare \bcontrollers?\b filed a 12V solar regulator as
+     a thing you hold. Same family as \bamp\b matching the unit of
+     current: a word that means one thing in the shop and another in
+     the wiring diagram. */
+  const solar = { key: 'powoxi', room: 'power' }
+  for (const t of [
+    'POWOXI 30W Solar Battery Charger Adjustable Rack Upgraded 8A MPPT Controller',
+    'POWOXI Solar Charge Controller 12V 8A',
+    'PWM Charge Controller 20A',
+    'Brushless Motor Controller',
+  ]) assert.notEqual(classify(solar, t), 'battlestation', `not a gamepad: ${t}`)
+})
+
+test('the guard does not cost us actual controllers', () => {
+  /* The other half of the same claim, and the reason the pattern was
+     guarded rather than deleted. If this passes while the test above
+     fails, somebody widened it back; if it fails, somebody narrowed
+     \bcontrollers?\b into uselessness. */
+  for (const t of [
+    'Xbox Wireless Controller',
+    'Controllers for Nintendo Switch',
+    'PS5 DualSense Controller - White',
+    'Retro USB Controller 2-Pack',
+  ]) assert.equal(room(t), 'battlestation', `is a gamepad: ${t}`)
+})

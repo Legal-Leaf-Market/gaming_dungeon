@@ -231,7 +231,15 @@ const ROOMS = [
     'mouse (bungee|skates|feet|grip)', 'gaming chair', '\\bergonomic chair\\b',
     'monitor (arm|stand|riser|mount)', 'portable monitor', '\\bmonitors?\\b',
     '\\bprojector', 'ultrawide', 'standing desk', 'desk (pad|shelf|organiser|organizer)',
-    '\\bcontrollers?\\b', '\\bgamepad', 'thumb ?grips', 'controller (charger|stand|skin)',
+    /* THE CONTROLLER GUARD. `\bcontrollers?\b` was written for the thing
+       you hold, and it caught the thing that regulates a current: POWOXI
+       names eleven products "... with MPPT Controller" and one "Solar
+       Charge Controller", and battlestation is tested before power, so a
+       12V solar charge regulator was filed as a gamepad. Same family as
+       \bamp\b matching the unit of current. Guard the word by what comes
+       before it rather than dropping it: "Xbox Controller" still lands. */
+    '(?<!\\b(?:charge|charging|solar|mppt|pwm|voltage|motor|temperature|fan|speed|led|light|lighting)\\s)controllers?\\b',
+    '\\bgamepad', 'thumb ?grips', 'controller (charger|stand|skin)',
     '\\bwebcam', 'capture card', 'stream ?deck', 'ring light', '\\bboom arm\\b',
     '\\brgb (strip|light|panel)\\b', '\\bled strip\\b',
   ].join('|'), 'i')],
