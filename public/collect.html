@@ -153,6 +153,12 @@ ships.</p>
      <button id="pvDraft" style="background:none;color:var(--accent);border:1px solid var(--accent)">Draft the capture file</button>
      <button id="pvProbe" style="background:none;color:var(--gold);border:1px solid var(--gold)">Read the live feed</button>
      <span id="pvMsg" class="build"></span></p>
+  <p><button id="pvAll" style="background:var(--gold);color:#0a0413">Draft every shop that is waiting</button>
+     <span id="pvAllMsg" class="build"></span></p>
+  <p style="font-size:13px;margin:6px 0 0;color:var(--dim)">One request per shop that is captured but
+  not reviewed, in one go, concatenated into the box below. Saves typing four keys when four shops are
+  waiting. The files still have to be saved and committed by hand, and <code>reviewedBy</code> is still
+  blank in every one of them.</p>
   <p style="font-size:13px;margin:8px 0 0;color:var(--dim)"><strong>Read the live feed</strong> skips
   the walk entirely: the server reads the shop&rsquo;s own <code>products.json</code> and drafts the
   same file. 53 of the 54 merchants here are Shopify, and Shopify publishes that endpoint so that
@@ -363,6 +369,54 @@ the first one only. Live from <code>/api/capture?worklist</code>.</p>
         document.getElementById('pvDraftJson').value = JSON.stringify(d.file, null, 2);
         document.getElementById('pvDraftBox').hidden = false;
       }).catch(function () { msg.textContent = 'The read failed.'; });
+  };
+
+  /* ---- draft everything that is waiting ------------------------------
+     Exactly the button above, run over every shop in the middle state,
+     because typing four keys one at a time to answer "why is nothing
+     on my site" is friction at precisely the wrong moment. It calls
+     the same endpoint the same number of times -- no new API, no
+     bulk mode that could grow its own rules -- and it still writes
+     nothing. */
+  document.getElementById('pvAll').onclick = function () {
+    var msg = document.getElementById('pvAllMsg');
+    var token = document.getElementById('pvToken').value.trim();
+    if (!token) { msg.textContent = 'Passcode first (the box above).'; return; }
+    msg.textContent = 'finding what is waiting…';
+
+    fetch('/api/capture?worklist').then(function (r) { return r.json(); }).then(function (j) {
+      var keys = (j.rows || []).filter(function (r) { return r.captured && !r.reviewed; })
+        .map(function (r) { return r.key; });
+      if (!keys.length) { msg.textContent = 'Nothing is waiting: every capture has been reviewed.'; return; }
+      msg.textContent = 'drafting ' + keys.length + '…';
+
+      /* One at a time rather than all at once. These are the operator's
+         own API and their own database, but a burst of parallel
+         requests against a cold Neon branch is how you turn "slow" into
+         "half of them failed". */
+      var out = [];
+      function next(i) {
+        if (i >= keys.length) {
+          document.getElementById('pvPath').textContent = keys.length + ' files (paths are in each block)';
+          document.getElementById('pvDraftJson').value = out.join('\n\n');
+          document.getElementById('pvDraftBox').hidden = false;
+          msg.textContent = 'drafted ' + out.length + ' of ' + keys.length + '. Copy the box below.';
+          return;
+        }
+        fetch('/api/capture?draft=' + encodeURIComponent(keys[i]), {
+          headers: { 'x-gd-admin-token': token }
+        }).then(function (r) { return r.json().then(function (b) { return { ok: r.ok, j: b }; }); })
+          .then(function (o) {
+            if (o.ok) out.push('/* ' + o.j.path + ' */\n' + JSON.stringify(o.j.file, null, 2));
+            else out.push('/* ' + keys[i] + ' FAILED: ' + (o.j.error || 'unknown') + ' */');
+            next(i + 1);
+          }).catch(function () {
+            out.push('/* ' + keys[i] + ' FAILED: request error */');
+            next(i + 1);
+          });
+      }
+      next(0);
+    }).catch(function () { msg.textContent = 'Could not read the worklist.'; });
   };
 
   document.getElementById('pvCopyDraft').onclick = function () {
