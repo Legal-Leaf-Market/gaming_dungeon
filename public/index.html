@@ -28,6 +28,7 @@
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="stylesheet" href="/css/tokens.css"/>
 <link rel="stylesheet" href="/css/app.css"/>
+<link rel="stylesheet" href="/css/ink.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <!-- EB Garamond and Merriweather are the two faces the game uses:
@@ -62,14 +63,71 @@
 </header>
 
 <main>
-  <section class="hero">
-    <h1>A room to wander.</h1>
-    <p class="lede">
-      Not a search box with a price table. Nobody walks into a used game shop
-      with a part number &mdash; they walk the crates. So this is crates:
-      independent shops, sorted into rooms, and an arcade in the corner that
-      is not selling you anything.
-    </p>
+  <!-- ===========================================================
+       THE HERO. A painted band, not a headline on a page: three ink
+       ridges at the foot, mist drifting above them, the title in the
+       clear middle, and a red seal in the corner the way a xianxia
+       page signs itself.
+
+       The ridges are inline SVG rather than an image file for two
+       reasons that both matter: they inherit --ink so they follow the
+       palette with no second place to update, and a 4KB path beats a
+       raster that has to load before the top of the page stops
+       looking wrong.
+
+       Everything in here is decoration and carries no information, so
+       it is aria-hidden and every animation is behind
+       prefers-reduced-motion. A visitor who asked for stillness gets a
+       complete page, not one with the good bits missing.
+       =========================================================== -->
+  <section class="ink-hero">
+    <span class="wash" aria-hidden="true"></span>
+
+    <div class="hero-body">
+      <h1>A room to wander.</h1>
+      <p class="lede">
+        Not a search box with a price table. Nobody walks into a used game shop
+        with a part number &mdash; they walk the crates. So this is crates:
+        independent shops, sorted into rooms, and an arcade in the corner that
+        is not selling you anything.
+      </p>
+    </div>
+
+    <!-- The seal: the twelfth realm's name, which is the one this
+         site does not hand out to any shelf. -->
+    <span class="seal" aria-hidden="true"><i>True</i><b>Immortal</b></span>
+
+    <span class="ridges" aria-hidden="true">
+      <svg viewBox="0 0 1200 150" preserveAspectRatio="none" role="presentation">
+        <!-- CURVES, NOT A SAWTOOTH. The first version drew these as
+             straight zigzag segments and they read as a graph, not a
+             landscape: even peaks, even spacing, hard vertices. Ink
+             mountains are rounded humps of uneven height with the
+             occasional tall one, so each ridge is quadratic curves
+             with deliberately irregular peaks. -->
+        <g class="ridge-far" fill="var(--ink)" opacity=".12">
+          <path d="M0 150 L0 84 Q 70 42 132 72 Q 196 20 268 66 Q 330 44 392 74
+                   Q 452 30 524 68 Q 596 48 660 78 Q 726 34 800 70 Q 866 52 928 80
+                   Q 996 38 1064 72 Q 1130 56 1200 76 L1200 150 Z"/>
+        </g>
+        <g class="ridge-mid" fill="var(--ink)" opacity=".24">
+          <path d="M0 150 L0 110 Q 84 74 156 104 Q 224 58 300 98 Q 368 80 438 108
+                   Q 510 62 588 102 Q 660 84 730 112 Q 802 70 878 106 Q 948 88 1018 114
+                   Q 1092 78 1200 108 L1200 150 Z"/>
+        </g>
+        <!-- The near ridge never moves. A foreground that drifts
+             reads as a camera fault rather than as distance. -->
+        <g fill="var(--ink)" opacity=".5">
+          <path d="M0 150 L0 132 Q 96 108 178 130 Q 258 100 344 126 Q 424 112 508 134
+                   Q 594 104 682 128 Q 764 114 848 136 Q 934 110 1020 132 Q 1108 118 1200 138
+                   L1200 150 Z"/>
+        </g>
+        <g stroke="var(--ink)" stroke-width="2" fill="none" stroke-linecap="round" opacity=".38">
+          <g class="crane"><path d="M120 30 q9 -8 18 0"/><path d="M138 30 q9 -8 18 0"/></g>
+          <g class="crane b"><path d="M60 52 q7 -6 14 0"/><path d="M74 52 q7 -6 14 0"/></g>
+        </g>
+      </svg>
+    </span>
   </section>
 
   <!-- The map. Rooms are doors; counts are real or the door says so. -->

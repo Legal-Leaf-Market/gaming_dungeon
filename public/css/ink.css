@@ -1,0 +1,218 @@
+/* ============================================================
+   ink.css — the hand-drawn layer: brush, wash, seal, drift.
+   ------------------------------------------------------------
+   tokens.css and app.css port the game's INTERFACE. This file is the
+   game's HAND: the parts a xianxia page reads as painted rather than
+   laid out. Everything here is drawn in CSS and inline SVG. There is
+   not one raster texture, because a paper texture is a 400KB JPEG
+   that has to load before the page stops looking wrong, and a
+   gradient does not.
+
+   MOTION IS OPTIONAL, ALWAYS. Every animation below sits behind
+   `prefers-reduced-motion: no-preference`, so a visitor who has asked
+   their system for stillness gets a page that is complete and static
+   rather than a page with the good bits missing. Drifting mist is
+   decoration; nothing here carries information.
+
+   THE STROKE RULE STILL HOLDS (see tokens.css): strokes go on the
+   border of a box, never on the glyphs of text.
+   ============================================================ */
+
+/* ---- 1. the ground: paper with tooth, and mist that drifts ----
+   Two layers doing different jobs. The fibre is a pair of fine
+   repeating gradients, near-invisible on their own, which stop a
+   large flat area of #f6f3e9 reading as "unstyled white". The mist is
+   three slow radial washes that move; they are the only thing on the
+   page that is never still. */
+body{
+  position:relative;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;z-index:-2;pointer-events:none;
+  /* paper fibre: 2px cross-hatch at ~3% ink */
+  background-image:
+    repeating-linear-gradient(0deg, rgba(27,24,21,.028) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(27,24,21,.022) 0 1px, transparent 1px 4px);
+}
+body::after{
+  content:'';
+  position:fixed;inset:-20% -20% -20% -20%;z-index:-1;pointer-events:none;
+  background-image:
+    radial-gradient(38rem 22rem at 18% 12%, rgba(27,24,21,.055), transparent 62%),
+    radial-gradient(30rem 18rem at 76% 26%, rgba(59,125,216,.05), transparent 60%),
+    radial-gradient(44rem 24rem at 52% 88%, rgba(168,130,42,.05), transparent 64%);
+  filter:blur(2px);
+}
+@media (prefers-reduced-motion: no-preference){
+  body::after{animation:drift 68s ease-in-out infinite alternate}
+}
+@keyframes drift{
+  0%   {transform:translate3d(0,0,0) scale(1)}
+  50%  {transform:translate3d(-2.5%,1.5%,0) scale(1.06)}
+  100% {transform:translate3d(2%,-1%,0) scale(1.02)}
+}
+
+/* ---- 2. the hero ----------------------------------------------
+   A painted band rather than a headline on a page: layered ink
+   ridges at the foot, mist above them, the title sitting in the
+   clear middle. The ridges are one inline SVG in the markup so their
+   shape is editable; everything else is here. */
+.ink-hero{
+  position:relative;overflow:hidden;
+  margin:0 0 18px;
+  border:var(--stroke) solid var(--ink);border-radius:var(--radius);
+  background:
+    linear-gradient(180deg, #fbf9f2 0%, var(--paper) 46%, var(--paper-dim) 100%);
+  /* THE BOTTOM PADDING IS THE RIDGE LINE. The first cut let the
+     mountains run up behind the lede, which put grey ink under grey
+     text and made the one paragraph on the page hard to read. The
+     hero is taller than it needs to be on purpose, and the padding
+     below the copy is the clear band the ridges live in. */
+  padding:66px 30px 172px;
+  min-height:430px;
+  display:flex;flex-direction:column;justify-content:flex-start;
+}
+.ink-hero .wash{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(26rem 15rem at 22% 24%, rgba(27,24,21,.07), transparent 62%),
+    radial-gradient(20rem 12rem at 80% 16%, rgba(168,130,42,.10), transparent 60%);
+}
+@media (prefers-reduced-motion: no-preference){
+  .ink-hero .wash{animation:breathe 34s ease-in-out infinite alternate}
+}
+@keyframes breathe{
+  from{transform:translate3d(0,0,0) scale(1);opacity:.85}
+  to  {transform:translate3d(3%,-2%,0) scale(1.1);opacity:1}
+}
+
+/* The ridges: three stacked mountain silhouettes in ink at three
+   opacities, the far one palest. Positioned absolute at the foot so
+   the hero's own text never has to flow around them. */
+.ink-hero .ridges{
+  position:absolute;left:0;right:0;bottom:0;height:150px;
+  pointer-events:none;
+}
+.ink-hero .ridges svg{width:100%;height:100%;display:block}
+@media (prefers-reduced-motion: no-preference){
+  .ink-hero .ridge-far{animation:sway 46s ease-in-out infinite alternate}
+  .ink-hero .ridge-mid{animation:sway 34s ease-in-out infinite alternate-reverse}
+}
+@keyframes sway{
+  from{transform:translateX(0)}
+  to  {transform:translateX(-2.5%)}
+}
+
+/* Cranes: two strokes each, drifting across the band. Pure
+   decoration and aria-hidden in the markup. */
+@media (prefers-reduced-motion: no-preference){
+  .ink-hero .crane{animation:cross 52s linear infinite}
+  .ink-hero .crane.b{animation-duration:71s;animation-delay:-24s}
+}
+@keyframes cross{
+  from{transform:translateX(-10%) translateY(0)}
+  50% {transform:translateX(50%) translateY(-14px)}
+  to  {transform:translateX(115%) translateY(4px)}
+}
+
+.ink-hero .hero-body{position:relative;z-index:2;max-width:60ch}
+.ink-hero h1{
+  font-family:var(--display);font-weight:600;
+  font-size:clamp(34px,5.6vw,58px);line-height:1.06;
+  margin:0 0 14px;color:var(--ink);letter-spacing:-.015em;
+}
+.ink-hero .lede{font-size:clamp(16px,1.5vw,20px);max-width:52ch}
+
+/* The seal. A red chop, as a xianxia page signs itself. Rotated a
+   degree and a half because a perfectly square stamp reads as a
+   button, and this is not one. */
+/* The chop. Sized to its longest word rather than to a round number:
+   the first version was a 74px square with "TRUE IMMORTAL" in it at
+   15px and the text ran straight out of the box on both sides. */
+.seal{
+  position:absolute;right:26px;top:26px;z-index:3;
+  width:92px;height:92px;transform:rotate(-1.5deg);
+  border:2.5px solid var(--health);border-radius:5px;
+  background:rgba(194,59,46,.05);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  font-family:var(--bold);font-weight:700;
+  letter-spacing:.06em;color:var(--health);text-transform:uppercase;
+  padding:8px 6px;overflow:hidden;
+}
+.seal i{font-style:normal;font-size:11px;opacity:.8}
+.seal b{font-size:12px;line-height:1.05}
+@media (max-width:620px){ .seal{display:none} }
+
+/* ---- 3. brush rules and hand-drawn edges ----------------------
+   A section header's rule is a brush stroke that thins to nothing,
+   not a 1px line. Same element as before, so no markup changes. */
+.sec::after{
+  height:2px;
+  background:linear-gradient(90deg,
+    rgba(27,24,21,.55) 0%, rgba(27,24,21,.28) 38%, rgba(27,24,21,.06) 78%, transparent 100%);
+  border-radius:2px;
+}
+
+/* A wet-ink corner: one heavier stroke where two borders meet, which
+   is what a brush actually leaves. Cheap, and it is most of why the
+   panels stop reading as CSS boxes. */
+.door,.g-card,.sis,.panel{position:relative}
+.door::after,.sis::after{
+  content:'';position:absolute;left:-1px;bottom:-1px;
+  width:26px;height:2.5px;background:var(--ink);opacity:.5;
+  border-radius:2px;pointer-events:none;
+}
+
+/* ---- 4. the realm band, painted ------------------------------
+   The band was a flat 7px fill. A brush loads at the start of a
+   stroke and runs dry at the end, so it fades out to the right and
+   carries a darker head on the left. */
+.door::before{
+  height:8px;
+  background:
+    linear-gradient(90deg, var(--band, var(--realm-1)) 0%, var(--band, var(--realm-1)) 58%,
+      color-mix(in srgb, var(--band, var(--realm-1)) 45%, transparent) 88%, transparent 100%);
+  box-shadow:inset 0 -1px 0 rgba(27,24,21,.22);
+}
+
+/* ---- 5. the shelf, as ink ------------------------------------ */
+.g-shot{background:linear-gradient(160deg,#f0ece0,var(--paper-dim))}
+.g-noimg{font-family:var(--display);font-style:italic}
+.g-price{letter-spacing:.01em}
+
+/* Rarity gets a brush head too: the left edge darkens at the top,
+   the way a downstroke does. */
+.g-card{border-left-width:6px}
+.g-card::after{
+  content:'';position:absolute;left:-6px;top:0;width:6px;height:22px;
+  background:rgba(27,24,21,.28);pointer-events:none;
+}
+
+/* ---- 6. motion on arrival ------------------------------------
+   Cards ink in rather than appearing. Short, staggered by nothing
+   more than nth-child so it costs no JS, and gone entirely under
+   reduced motion. */
+@media (prefers-reduced-motion: no-preference){
+  .g-grid > *{animation:inkin .42s ease-out both}
+  .g-grid > *:nth-child(2){animation-delay:.03s}
+  .g-grid > *:nth-child(3){animation-delay:.06s}
+  .g-grid > *:nth-child(4){animation-delay:.09s}
+  .g-grid > *:nth-child(5){animation-delay:.12s}
+  .g-grid > *:nth-child(n+6){animation-delay:.15s}
+  .doors > *{animation:inkin .5s ease-out both}
+}
+@keyframes inkin{
+  from{opacity:0;transform:translateY(6px);filter:blur(3px)}
+  to  {opacity:1;transform:none;filter:none}
+}
+
+/* ---- 7. the Roblox shelf --------------------------------------
+   Same card as the storefront, two additions: a live player count
+   over the thumbnail, and a blurb, because a game needs a sentence
+   in a way a USB cable does not. */
+.g-live{position:absolute;left:0;bottom:0;background:var(--health);color:var(--paper);
+  font-family:var(--bold);font-weight:700;font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;padding:4px 8px;border-top-right-radius:4px}
+.g-blurb{color:var(--text-dim);font-size:13.5px;line-height:1.45}
+.hub-sec{margin-top:40px}

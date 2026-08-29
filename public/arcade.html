@@ -140,5 +140,31 @@ body::after{
 <script src="/js/arcade-games.js"></script>
 <script src="/js/arcade-invaders.js"></script>
 <script src="/js/arcade-play.js"></script>
+
+  <!-- ===========================================================
+       THE ROBLOX SHELF. A second kind of cabinet, and the page is
+       explicit that it is a different kind.
+
+       A ROBLOX GAME CANNOT BE EMBEDDED AND PLAYED IN A PAGE. The
+       browser player was discontinued years ago, games run only in
+       the Roblox client, and there is no third-party embed product.
+       So these are doors: real thumbnail, real player count, and a
+       link to the game's own page where the Play button lives.
+
+       The cabinets above ARE playable here. Presenting the two the
+       same way would be the one genuinely dishonest thing this page
+       could do, so the Roblox cards say "opens roblox" on every one.
+       =========================================================== -->
+  <section class="hub-sec">
+    <h2 class="sec">THE ROBLOX SHELF</h2>
+    <p class="lede" style="margin-bottom:16px;font-size:16px">
+      Games worth your evening, chosen by hand. These open on Roblox rather than
+      here &mdash; Roblox games only run in their own client, so nobody can embed
+      one, us included. Player counts are live.
+    </p>
+    <div id="hub"><p class="loading">reading the cabinets&hellip;</p></div>
+  </section>
+
+<script src="/js/hub.js"></script>
 </body>
 </html>

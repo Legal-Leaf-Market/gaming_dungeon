@@ -367,3 +367,44 @@ test('the worklist distinguishes captured from published, per row', async () => 
   assert.match(src, /reviewed: reviewed\.has\(s\.key\)/,
     '?worklist must keep reporting reviewed per store')
 })
+
+test('the Roblox shelf never claims a game is playable here', async () => {
+  /* THE ONE GENUINELY DISHONEST THING THIS PAGE COULD DO. The arcade
+     already has cabinets that really are playable in the browser. A
+     Roblox game is not and cannot be: the browser player was
+     discontinued years ago, games run only in the Roblox client, and
+     there is no third-party embed product. Presenting the two shelves
+     the same way would tell a visitor they can play something they
+     cannot.
+
+     So: no iframe anywhere near it, every card says it opens Roblox,
+     and the section says so in prose too. */
+  await boot()
+  const html = readFileSync(join(ROOT, 'public', 'arcade.html'), 'utf8')
+  const js = readFileSync(join(ROOT, 'public', 'js', 'hub.js'), 'utf8')
+
+  assert.match(html, /open on Roblox rather than\s+here/i,
+    'the section must say the games open elsewhere')
+  assert.match(js, /opens roblox/i, 'every cabinet must be labelled as leaving the site')
+
+  assert.equal(/<iframe[^>]+roblox/i.test(html + js), false,
+    'a Roblox iframe cannot work and must not be attempted')
+  assert.equal(/roblox:\/\//.test(js + html), false,
+    'a roblox:// protocol link dies silently without the client installed')
+})
+
+test('no place id is ever invented', () => {
+  /* An invented affiliate campaign id dies at the network. An
+     invented Roblox place id is worse: it RESOLVES, to a stranger's
+     game, under our recommendation. So the registry ships zeroes and
+     the endpoint refuses to serve a cabinet without a real one. */
+  const games = readFileSync(join(ROOT, 'api', '_games.js'), 'utf8')
+  const ids = [...games.matchAll(/placeId:\s*(\d+)/g)].map(m => Number(m[1]))
+  assert.ok(ids.length, 'the registry should have at least one cabinet')
+  for (const id of ids) {
+    assert.equal(id, 0,
+      'a non-zero placeId is in the registry. If it was pasted from the game\'s own URL, ' +
+      'delete this assertion in the same commit and say where it came from.')
+  }
+  assert.match(games, /configured/, 'a cabinet without an id must be gated, not served')
+})
