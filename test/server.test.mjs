@@ -465,3 +465,48 @@ test('no page still advertises the old deploy URL', () => {
       f + ' still points at the old deploy URL')
   }
 })
+
+/* ============================================================
+   THE TITLE CARD MUST NEVER BECOME THE SITE
+
+   A full-screen splash is the easiest thing here to get wrong in a
+   way that costs real visitors, and the ways it goes wrong are all
+   silent: it covers the shop for someone with JavaScript off, it
+   replays on every navigation, or it ignores a reduced-motion
+   request. These pin the three.
+   ============================================================ */
+const bootHtml = readFileSync(join(ROOT, 'public', 'index.html'), 'utf8')
+
+test('the title card ships hidden, so no JavaScript means no cover', () => {
+  /* THE DIRECTION IS THE WHOLE SAFETY DESIGN. Shipping it visible and
+     removing it with script means a script failure leaves a white
+     plate over the shop forever. Shipping it hidden and revealing it
+     with script means a script failure shows nothing, which nobody
+     ever notices. */
+  const tag = /<div id="boot"[^>]*>/.exec(bootHtml)
+  assert.ok(tag, 'the boot plate is gone from index.html')
+  /* MATCHED AS A STANDALONE ATTRIBUTE. \bhidden\b was the first
+     version and it passed with the attribute REMOVED, because the tag
+     also carries aria-hidden and the hyphen is a word boundary. The
+     mutation caught it: a guard that cannot tell `hidden` from
+     `aria-hidden` guards nothing here. */
+  assert.ok(/\shidden(?=[\s>])/.test(tag[0]),
+    'the boot plate is not hidden in the markup: with JS off it would cover the site permanently')
+  assert.ok(/aria-hidden="true"/.test(tag[0]), 'the plate is decoration and must be hidden from assistive tech')
+})
+
+test('the title card is torn out on a timer that a stalled animation cannot beat', () => {
+  /* The CSS animation ending is not what removes it. If the
+     stylesheet 404s or the tab is throttled, the animation never
+     runs, and without this the plate would simply stay. */
+  assert.ok(/setTimeout\([\s\S]{0,200}removeChild/.test(bootHtml),
+    'nothing removes the boot plate from the DOM independently of the animation')
+})
+
+test('the title card plays once a session and never under reduced motion', () => {
+  const script = bootHtml.slice(bootHtml.indexOf('<div id="boot"'), bootHtml.indexOf('</script>', bootHtml.indexOf('<div id="boot"')))
+  assert.ok(/sessionStorage/.test(script),
+    'no session check: the splash would replay on every page view, which is a tax on every click')
+  assert.ok(/prefers-reduced-motion/.test(script),
+    'no reduced-motion check: a full-screen wipe is exactly what that setting is for')
+})

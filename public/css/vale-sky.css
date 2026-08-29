@@ -8,17 +8,17 @@
    village under a cyan sky. The rig is what the code asks for; a
    frame is what you get. */
 :root{
-  --vale-sky-top:#6cb9d4;
-  --vale-sky-mid:#84c5d3;
-  --vale-sky-haze:#cdc3bd;
-  --vale-cloud:#efe2d9;
+  --vale-sky-top:#4a8dcd;
+  --vale-sky-mid:#80b2db;
+  --vale-sky-haze:#c9d1d6;
+  --vale-cloud:#f6f8fa;
   --vale-sun-core:#fffdf6;
-  --vale-sun-glow:#f7e7cc;
-  --vale-decay:#29363e;
-  --vale-roof:#29363e;
-  --vale-wall:#e5e8cd;
-  --vale-timber:#c3c7b1;
-  --vale-lantern:#9c3430;
-  --vale-grass:#4c5633;
-  --vale-blossom:#dd91b4;
+  --vale-sun-glow:#fbf2dc;
+  --vale-decay:#2d3a58;
+  --vale-roof:#2d3a58;
+  --vale-wall:#e8e3d6;
+  --vale-timber:#4a3526;
+  --vale-lantern:#f2c268;
+  --vale-grass:#56703e;
+  --vale-blossom:#e087b4;
 }

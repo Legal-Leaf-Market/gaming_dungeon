@@ -216,4 +216,14 @@ a.g-card:active{transform:translateY(0);box-shadow:none}
 /* The one line that explains the realm bands. Sits under THE MAP
    heading, sized down from the hero lede so it reads as a caption on
    the map rather than as a second introduction. */
-.map-lore{max-width:64ch;margin:0 0 16px;font-size:15px;line-height:1.6;color:var(--text-dim)}
+.map-lore{max-width:64ch;margin:0 0 16px;font-size:15px;line-height:1.6;color:var(--text);
+  /* A PANEL, NOT A STROKE. This read fine over the old muted olive
+     background and became unreadable the moment the world went to
+     Azure City colour: dark text over vivid pink blossom and green
+     bamboo is the one place body copy cannot survive on its own.
+     Body copy never gets a text stroke here, so it gets something to
+     sit on instead, the same answer the arcade page needed. */
+  background:rgba(246,243,233,.82);border:1px solid var(--line);
+  border-radius:var(--radius);padding:12px 16px;
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.sec{position:relative}

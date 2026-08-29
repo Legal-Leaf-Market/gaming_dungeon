@@ -34,6 +34,7 @@
 <link rel="stylesheet" href="/css/vale-sky.css"/>
 <link rel="stylesheet" href="/css/vale.css"/>
 <link rel="stylesheet" href="/css/hud.css"/>
+<link rel="stylesheet" href="/css/boot.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <!-- EB Garamond and Merriweather are the two faces the game uses:
@@ -45,6 +46,66 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:wght@700&display=swap" rel="stylesheet"/>
 </head>
 <body>
+
+<!-- ===========================================================
+     THE TITLE CARD.
+
+     Ships HIDDEN and is un-hidden by the inline script below, which
+     is the whole safety design: with no JavaScript it is never
+     shown, rather than a white plate covering the shop forever. The
+     failure mode of "no animation" is invisible; the failure mode of
+     "permanent cover" is the site.
+
+     The script is inline and in the body's first bytes rather than
+     in a file, because a fetched script would paint the page first
+     and the plate would arrive as a flash AFTER the shop, which is
+     worse than not having one.
+
+     aria-hidden and inert: it is a decoration with no information in
+     it, and for the second and a half it exists it must not be
+     reachable by a screen reader or by tab.
+     =========================================================== -->
+<div id="boot" hidden aria-hidden="true" inert>
+  <div class="boot-in">
+    <svg class="boot-ring" viewBox="0 0 100 100" role="presentation">
+      <circle cx="50" cy="50" r="45" transform="rotate(-90 50 50)"/>
+      <!-- the V, as two tapered strokes meeting low, the same
+           geometry the favicon uses -->
+      <path d="M31 32 L38.5 30 L52 63 L45.5 67 Z"/>
+      <path d="M69 32 L62.5 30 L49 63 L55.5 67 Z"/>
+    </svg>
+    <p class="boot-word">VERDA<small>STUDIO</small></p>
+  </div>
+</div>
+
+<script>
+/* Runs before the shop paints. Three reasons to skip the plate, and
+   any one of them is enough:
+     - the visitor has already seen it this session
+     - the visitor asked for reduced motion
+     - this is not the front door (a room link, a deep link)
+   Otherwise show it, and remove it on a timer that CANNOT be beaten
+   by a stalled animation: the plate is torn out of the DOM whether
+   or not the CSS ever ran. */
+(function () {
+  try {
+    var seen = sessionStorage.getItem('verda_boot')
+    var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (seen || still) return
+    sessionStorage.setItem('verda_boot', '1')
+  } catch (e) { /* private mode: show it once, never remember */ }
+
+  var el = document.getElementById('boot')
+  if (!el) return
+  el.hidden = false
+  /* Longer than the animation on purpose. If the browser throttles
+     the tab, or the stylesheet 404s, this still fires and the plate
+     still goes. */
+  setTimeout(function () {
+    if (el.parentNode) el.parentNode.removeChild(el)
+  }, 2200)
+})()
+</script>
 
 <!-- ===========================================================
      THE AZURE VALE, and it is the game's own landform rather than a

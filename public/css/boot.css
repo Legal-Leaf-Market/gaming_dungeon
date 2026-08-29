@@ -1,0 +1,123 @@
+/* ============================================================
+   boot.css — the title card
+   ------------------------------------------------------------
+   A game does not drop you into the world. It shows you its name on
+   a black plate, holds a beat, and then the world resolves. This is
+   that beat, and the structure is the owner's own observation about
+   Verda Cultivation: the OPENING is black-and-white ink, and the
+   world behind it is in colour. So the boot plate is the studio's
+   ink identity, and lifting it reveals the vale.
+
+   THREE RULES IT MUST NOT BREAK, because a splash screen is the
+   easiest thing on a site to get wrong in a way that costs real
+   visitors:
+
+     IT MUST NOT BE THE SITE. Anything that delays content is a tax
+     on every visit. This runs 1.5s once per SESSION, never per page
+     view, and a returning navigation skips it entirely.
+
+     IT MUST NOT SURVIVE A FAILURE. The overlay ships `hidden` in the
+     markup and an inline head script un-hides it. No JavaScript
+     means it is never shown at all, rather than a white plate
+     covering the shop forever. That direction is deliberate: the
+     failure mode of "no animation" is invisible, the failure mode of
+     "permanent cover" is total.
+
+     IT MUST HOLD STILL WHEN ASKED. Under reduced motion the plate is
+     not shown at all. A full-screen wipe is exactly the kind of
+     motion the setting exists for.
+   ============================================================ */
+
+#boot[hidden] { display: none !important }
+
+#boot {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  /* The ink half of the brand: near-white paper, black ink. Not the
+     site's warm paper, because the logo's own ground is cooler and
+     the plate should read as the LOGO's world, not the shop's. */
+  background: #fbfaf7;
+  animation: bootOut .62s cubic-bezier(.65, 0, .35, 1) 1.05s forwards;
+}
+
+.boot-in {
+  display: grid;
+  place-items: center;
+  gap: 18px;
+  transform: translateY(-2%);
+}
+
+/* ---- the enso, drawn rather than shown --------------------
+   stroke-dasharray + a dashoffset sweep is what makes a circle
+   arrive like a brush stroke instead of appearing like a border.
+   The path starts at the top and comes round clockwise, which is
+   the direction the real one in the logo is painted. */
+.boot-ring {
+  width: clamp(96px, 22vmin, 168px);
+  height: clamp(96px, 22vmin, 168px);
+  display: block;
+  overflow: visible;
+}
+.boot-ring circle {
+  fill: none;
+  stroke: #141210;
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  /* 2*pi*45, the circumference of the r=45 circle below */
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  animation: bootDraw .78s cubic-bezier(.4, 0, .2, 1) forwards;
+}
+
+/* The V, fading up inside the ring once the ring is most of the way
+   round: the brand's own order of reading. */
+.boot-ring path {
+  fill: #141210;
+  opacity: 0;
+  animation: bootMark .42s ease-out .42s forwards;
+}
+
+.boot-word {
+  font-family: var(--display, Georgia, serif);
+  font-weight: 600;
+  letter-spacing: .42em;
+  /* the trailing letter-space pushes the word off-centre by half a
+     space; the indent takes it back */
+  text-indent: .42em;
+  font-size: clamp(13px, 2.6vmin, 17px);
+  color: #141210;
+  opacity: 0;
+  animation: bootWord .5s ease-out .58s forwards;
+}
+.boot-word small {
+  display: block;
+  font-size: .72em;
+  letter-spacing: .34em;
+  text-indent: .34em;
+  opacity: .55;
+  margin-top: 7px;
+}
+
+@keyframes bootDraw { to { stroke-dashoffset: 0 } }
+@keyframes bootMark { to { opacity: 1 } }
+@keyframes bootWord { to { opacity: 1 } }
+
+/* THE LIFT. The plate does not fade, it goes UP and takes its ground
+   with it, because a fade reads as a slow page and a lift reads as a
+   curtain. Scaling it slightly as it goes is what sells the depth. */
+@keyframes bootOut {
+  to {
+    opacity: 0;
+    transform: translateY(-6%) scale(1.04);
+    visibility: hidden;
+  }
+}
+
+/* Not shown at all when motion is unwelcome. The head script checks
+   the same query, so this is the belt to its braces. */
+@media (prefers-reduced-motion: reduce) {
+  #boot { display: none !important }
+}

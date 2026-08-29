@@ -340,40 +340,56 @@ function caps(pts) {
    experiment has been run.
    ============================================================ */
 const GAME = {
-  /* sky, sampled up a clear column on the right of the frame */
-  skyHigh: [108, 185, 212],    /* y=60,  cyan                      */
-  skyMid: [132, 197, 211],     /* y=100                            */
-  skyHaze: [205, 195, 189],    /* y=260, the warm pale horizon     */
-  cloud: [239, 226, 217],      /* the bright cloud shoulder        */
+  /* AZURE CITY, NOT THE OLD FOOTAGE.
+
+     These were sampled off 27 seconds of gameplay and gave a cool
+     olive-and-slate village under a cyan sky. Then the owner sent the
+     art direction the game is actually moving to, and it is a
+     different world: BLUE TILED ROOFS, white plaster, dark timber,
+     stone foundations, vivid cherry, bright bamboo, under a real blue
+     sky with misty grey peaks behind. The name Azure City is doing
+     what names do.
+
+     One thing to be plain about: unlike the studio logo, which is
+     committed and which the icons are sampled from numerically, these
+     came through as conversation images and were never on disk here.
+     So this palette is READ BY EYE off the renders, not measured off
+     a file. If those images land in the repo, resample and replace
+     this block; the eye is good at hue and bad at value.
+
+     The owner's own framing, and it is the structure of the whole
+     site now: the black-and-white ink is the OPENING. The world is
+     in colour. boot.css is the ink; this is what it lifts to reveal. */
+
+  /* sky and air */
+  skyHigh: [74, 141, 205],     /* a real blue, not the old cyan     */
+  skyMid: [128, 178, 219],
+  skyHaze: [201, 209, 214],    /* the misty grey the peaks sit in   */
+  cloud: [246, 248, 250],
 
   /* ground and rock */
-  grassNear: [76, 86, 51],
-  grassMid: [84, 94, 57],
-  grassFar: [91, 99, 62],
-  cliff: [74, 80, 80],
-  cliffFar: [51, 61, 60],
+  grassNear: [86, 112, 62],
+  grassMid: [98, 124, 70],
+  grassFar: [112, 136, 84],
+  cliff: [128, 136, 140],      /* pale wet stone, not olive         */
+  cliffFar: [143, 156, 168],
 
-  /* the village */
-  wall: [229, 232, 205],       /* cream plaster                    */
-  timber: [195, 199, 177],     /* the frame between the panels     */
-  roof: [41, 54, 62],          /* dark slate, the strongest note   */
-  lantern: [156, 52, 48],
+  /* AZURE CITY. The roof is the signature: a deep blue tile that is
+     the single strongest note in every render of the place, and the
+     thing that stops this reading as generic pagoda. */
+  wall: [232, 227, 214],       /* white plaster                     */
+  timber: [74, 53, 38],        /* dark structural wood              */
+  roof: [45, 58, 88],          /* blue tile                         */
+  stone: [154, 149, 138],      /* foundations and stairs            */
+  lantern: [242, 194, 104],    /* paper lantern light               */
 
   /* what grows there */
-  pine: [24, 42, 30],
-  trunk: [62, 49, 40],
-  /* CHERRY, and these are not the sampled village pinks any more.
-     Those came off a distant hazed tree in the footage and were
-     mud. The owner sent a sheet of six cherry designs the game is
-     moving to, and they are SATURATED: a deep rose in the shadow of
-     the canopy, a mid pink for the mass, a near white on the lit
-     upper edge. Three tones is the minimum that reads as a canopy
-     rather than as a blob, because what makes a tree look round is
-     the shadow underneath it. */
-  blossomDeep: [184, 104, 143],
-  blossom: [221, 145, 180],
-  blossomPale: [240, 193, 214],
+  pine: [40, 62, 44],
+  trunk: [72, 54, 42],
   bark: [58, 43, 36],
+  blossomDeep: [201, 106, 153],
+  blossom: [224, 135, 180],
+  blossomPale: [240, 184, 212],
 }
 
 const clamp255 = v => Math.max(0, Math.min(255, Math.round(v)))
@@ -593,6 +609,14 @@ function village() {
     const y = GROUND - bodyH
     const eave = w * r(0.16, 0.22)
     const roofH = r(26, 34) * h.s
+
+    /* THE STONE FOUNDATION. Every house in the Azure City renders
+       stands on a stone plinth with steps, and it is most of why they
+       read as built rather than as placed: a wall that meets dirt
+       looks like a prop. Drawn first so the walls sit on it. */
+    parts.push('<rect x="' + n2(x - w * 0.06) + '" y="' + n2(GROUND - bodyH * 0.12) +
+      '" width="' + n2(w * 1.12) + '" height="' + n2(bodyH * 0.12 + 6) +
+      '" fill="' + at(GAME.stone, 70) + '"/>')
 
     /* walls */
     parts.push('<path d="M' + n2(x) + ' ' + n2(GROUND) +
