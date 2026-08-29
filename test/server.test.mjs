@@ -339,3 +339,31 @@ test('the brand mark in the header is the actual mark', async () => {
   assert.ok(url, '.brand-mark still paints a plain colour instead of the mark')
   assert.equal((await fetch(BASE + url[1])).status, 200, url[1] + ' does not serve')
 })
+
+test('the worklist distinguishes captured from published, per row', async () => {
+  /* THE CONFUSION THIS COST. Four shops were scraped, the table said
+     "302" under a column headed Captured, and nothing on the page said
+     a capture publishes nothing. The honest reading of that table was
+     "this shop is in", so the reasonable next thought was that the
+     site was broken.
+
+     `reviewed` was in the API payload the whole time and was rendered
+     only in a summary sentence above the table. A per-row state that
+     exists in the data and not in the UI is the same class of bug this
+     repo keeps finding: a mechanism that is computed and then thrown
+     away. */
+  await boot()
+  const html = readFileSync(join(ROOT, 'public', 'collect.html'), 'utf8')
+
+  assert.match(html, /NEEDS REVIEW/,
+    'a captured-but-unreviewed shop must say so in its own row')
+  assert.match(html, /r\.reviewed/,
+    'the worklist must render the reviewed flag per row, not only in a summary')
+  assert.match(html, /captured but not reviewed/i,
+    'the page must say in words that a capture is not a publish')
+
+  /* The API has to keep supplying it. */
+  const src = readFileSync(join(ROOT, 'api', 'capture.js'), 'utf8')
+  assert.match(src, /reviewed: reviewed\.has\(s\.key\)/,
+    '?worklist must keep reporting reviewed per store')
+})

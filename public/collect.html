@@ -45,6 +45,12 @@
   th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
   th{color:var(--dim);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
   .yes{color:var(--accent)} .no{color:var(--dim)}
+  /* The state that needs a human. Gold rather than the accent, because
+     the accent already means "fine" everywhere else on this page. */
+  .needs{color:var(--gold);font-weight:600}
+  p.warn{border:1px solid var(--gold);background:rgba(240,185,60,.07);
+    border-radius:10px;padding:14px 16px;margin:14px 0;line-height:1.65}
+  p.warn code{background:rgba(10,4,19,.6)}
   .shoplink{color:var(--text);text-decoration:underline;text-underline-offset:2px}
   .shoplink:hover{color:var(--accent)}
   .dom{color:var(--dim);font-size:12px}
@@ -168,9 +174,11 @@ ships.</p>
 </div>
 
 <h2>5 · WHAT IS LEFT TO CAPTURE</h2>
-<p>Live from <code>/api/capture?worklist</code>. Merchants with attribution already
-in place are listed first, because a capture on one of those can go live and start
-earning the day it is reviewed.</p>
+<p><strong>Three states, and only the third one puts products on the shelf:</strong>
+<em>captured</em> means rows are in Neon; <em>reviewed</em> means somebody read the catalogue and
+committed <code>data/captured/&lt;key&gt;.json</code> with their name in it; <em>published</em> also
+needs <code>pending</code> cleared for that key in <code>api/_stores.js</code>. Scraping a shop does
+the first one only. Live from <code>/api/capture?worklist</code>.</p>
 <div id="worklist" class="build">loading…</div>
 
 <script src="/js/grid.js"></script>
@@ -395,30 +403,66 @@ earning the day it is reviewed.</p>
     var el = document.getElementById('worklist');
     if (!j || !j.ok) { el.textContent = 'worklist unavailable'; return; }
 
-    /* Work order: not yet captured first, attributed first within
-       that, then longest cookie. A capture on an attributed shop can
-       go live and start earning the day it is reviewed. */
+    /* Work order: CAPTURED-BUT-NOT-REVIEWED FIRST. Those are the only
+       rows one step from being live, and they were previously sorted
+       to the BOTTOM with the finished work -- which is how somebody
+       scrapes four shops, sees "302", and reasonably concludes the
+       site is broken when nothing appears. Then uncaptured shops,
+       attributed first, because a capture on one of those can go live
+       and start earning the day it is reviewed. Reviewed rows last:
+       they are done here and waiting on a commit. */
+    function rank(r) {
+      if (r.captured && !r.reviewed) return 0;
+      if (!r.captured) return 1;
+      return 2;
+    }
     var rows = j.rows.slice().sort(function (a, b) {
-      if (a.captured !== b.captured) return a.captured ? 1 : -1;
+      if (rank(a) !== rank(b)) return rank(a) - rank(b);
       if (a.attributed !== b.attributed) return a.attributed ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
+    var waiting = j.rows.filter(function (r) { return r.captured && !r.reviewed; });
+
+    /* THE LINE THAT WAS MISSING. A capture fills the database and
+       publishes NOTHING, which is deliberate -- and the old table
+       said "302" in a column headed Captured and stopped there, so
+       the honest reading of it was "this shop is in". Said loudly,
+       once, with the count and the next action, because this is the
+       exact point somebody concludes the site is broken. */
+    var stuck = waiting.length
+      ? '<p class="warn"><strong>' + waiting.length + ' shop' + (waiting.length === 1 ? '' : 's') +
+        ' captured but not reviewed, so ' + (waiting.length === 1 ? 'it is' : 'they are') +
+        ' not on the shelf.</strong><br>A capture fills the database and publishes nothing on its ' +
+        'own, on purpose. For each one: put its key in the box above, press ' +
+        '<em>Draft the capture file</em>, save the JSON as <code>data/captured/&lt;key&gt;.json</code> ' +
+        'with your name in <code>reviewedBy</code>, clear <code>pending</code> for that key in ' +
+        '<code>api/_stores.js</code>, and commit both.</p>'
+      : '';
 
     el.innerHTML =
-      '<p>' + j.captured + ' of ' + j.total + ' captured, ' + j.reviewed + ' reviewed. ' +
-      '<strong>' + j.remaining + ' to go.</strong><br>Capture store: ' + esc(j.captureStore) + '</p>' +
+      '<p>' + j.captured + ' of ' + j.total + ' captured, <strong>' + j.reviewed +
+      ' reviewed</strong> (reviewed is the one that puts products on the shelf). ' +
+      j.remaining + ' still to capture.<br>Capture store: ' + esc(j.captureStore) + '</p>' +
+      stuck +
       '<p class="build">Click a shop to open it in a new tab. Click a key to copy it, then paste ' +
       'it into the collector panel. Links are deliberately un-tracked.</p>' +
-      '<table><tr><th>Shop</th><th>Key</th><th>Room</th><th>Captured</th><th>Attr</th></tr>' +
+      '<table><tr><th>Shop</th><th>Key</th><th>Room</th><th>Status</th><th>Attr</th></tr>' +
       rows.map(function (r) {
         var url = 'https://' + r.domain.replace(/^https?:\/\//, '');
-        return '<tr' + (r.captured ? ' class="done"' : '') + '>' +
+        /* Three states, named, rather than one number that reads as
+           a verdict. "302" under a column headed Captured is not a
+           status; "302 captured, NEEDS REVIEW" is. */
+        var status = !r.captured
+          ? '<span class="no">not captured</span>'
+          : r.reviewed
+            ? '<span class="yes">reviewed \u00b7 ' + r.capturedProducts + '</span>'
+            : '<span class="needs">' + r.capturedProducts + ' captured \u00b7 NEEDS REVIEW</span>';
+        return '<tr' + (r.reviewed ? ' class="done"' : '') + '>' +
           '<td><a class="shoplink" href="' + esc(url) + '" target="_blank" rel="nofollow noopener">' +
             esc(r.name) + '</a><br><span class="dom">' + esc(r.domain) + '</span></td>' +
           '<td><code class="key" data-key="' + esc(r.key) + '" title="click to copy">' + esc(r.key) + '</code></td>' +
           '<td>' + esc(r.room) + '</td>' +
-          '<td class="' + (r.captured ? 'yes' : 'no') + '">' +
-            (r.captured ? r.capturedProducts : '\u2014') + '</td>' +
+          '<td>' + status + '</td>' +
           '<td class="' + (r.attributed ? 'yes' : 'no') + '">' + (r.attributed ? 'yes' : '\u2014') + '</td></tr>';
       }).join('') + '</table>';
 
