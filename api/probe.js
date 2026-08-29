@@ -139,6 +139,7 @@ export default async function handler(req, res) {
         'GET ?key=<key>': 'read one merchant\'s feed and report on it',
         'GET ?key=<key>&draft': 'the same, plus the data/captured/<key>.json to commit',
         'GET ?keys=a,b,c': 'several, stopping when the time budget runs out',
+        'GET ?keys=a,b,c&brief': 'one triage line each: counts, off-scene share, types',
       },
       keys: STORES.map(s => s.key),
     })
@@ -155,6 +156,38 @@ export default async function handler(req, res) {
        exists to prevent somebody making by hand. */
     if (Date.now() > deadline) { skipped.push(k); continue }
     results.push(await probeOne(st, deadline))
+  }
+
+  /* ------------------------------------------------ ?brief
+     TRIAGE, NOT REVIEW. Reading 50 merchants' full analyses is not a
+     thing anybody does in one sitting, and most of them will be
+     decided in one line: how many products, how much of it is off
+     scene, and what the types look like. This is that line.
+
+     It exists because the full response for 50 shops is tens of
+     thousands of lines, and a review nobody can physically read is
+     the same as no review. Pick from this, then draft the ones you
+     picked. */
+  if ('brief' in q) {
+    return res.status(200).json({
+      ok: true,
+      probed: results.length,
+      legend: 'products / inStock / offScene% / types as "name xN -> room"',
+      rows: results.map(r => r.ok ? {
+        key: r.key, name: r.name, room: r.room,
+        products: r.products, inStock: r.inStock, priced: r.priced,
+        offScenePct: r.offScenePct,
+        untyped: (r.productTypeAnalysis.find(a => a.type === '(none)') || {}).n || 0,
+        types: r.productTypeAnalysis.slice(0, 10).map(a => {
+          const top = Object.keys(a.rooms)[0] || 'REFUSED'
+          return a.type + ' x' + a.n + ' -> ' + top + (a.refused ? ' (' + a.refused + ' refused)' : '')
+        }),
+        priceRange: r.priceRange,
+        samples: r.sampleTitles.slice(0, 3),
+        notes: r.notes,
+      } : { key: r.key, name: r.name, ok: false, error: r.error, hint: r.hint }),
+      skipped: skipped.length ? skipped : undefined,
+    })
   }
 
   const out = { ok: true, probed: results.length, results }

@@ -154,11 +154,15 @@ ships.</p>
      <button id="pvProbe" style="background:none;color:var(--gold);border:1px solid var(--gold)">Read the live feed</button>
      <span id="pvMsg" class="build"></span></p>
   <p><button id="pvAll" style="background:var(--gold);color:#0a0413">Draft every shop that is waiting</button>
+     <button id="pvTriage" style="background:none;color:var(--gold);border:1px solid var(--gold)">Triage every unread shop</button>
      <span id="pvAllMsg" class="build"></span></p>
-  <p style="font-size:13px;margin:6px 0 0;color:var(--dim)">One request per shop that is captured but
-  not reviewed, in one go, concatenated into the box below. Saves typing four keys when four shops are
-  waiting. The files still have to be saved and committed by hand, and <code>reviewedBy</code> is still
-  blank in every one of them.</p>
+  <p style="font-size:13px;margin:6px 0 0;color:var(--dim)"><strong>Draft every shop that is
+  waiting</strong> does one request per shop that is captured but not reviewed. <strong>Triage every
+  unread shop</strong> is the other end of the funnel: it reads the live feed of every shop nobody has
+  looked at yet, in batches, and returns <em>one block each</em> &mdash; counts, how much of the
+  catalogue is off scene, and the product types. Reading 50 full analyses is not a thing anybody does
+  in one sitting, and a review nobody can physically read is the same as no review. Triage first, pick,
+  then draft the ones you picked (the Merchant key box takes a comma-separated list).</p>
   <p style="font-size:13px;margin:8px 0 0;color:var(--dim)"><strong>Read the live feed</strong> skips
   the walk entirely: the server reads the shop&rsquo;s own <code>products.json</code> and drafts the
   same file. 53 of the 54 merchants here are Shopify, and Shopify publishes that endpoint so that
@@ -347,11 +351,23 @@ the first one only. Live from <code>/api/capture?worklist</code>.</p>
     if (!token) { msg.textContent = 'Passcode first.'; return; }
     msg.textContent = 'reading the feed… (a big catalogue takes a few seconds)';
 
-    fetch('/api/probe?draft&key=' + encodeURIComponent(key), {
+    /* A comma-separated list works here too, so a triage pass can be
+       turned into drafts for the shops it picked without typing them
+       back one at a time. */
+    fetch('/api/probe?draft&keys=' + encodeURIComponent(key), {
       headers: { 'x-gd-admin-token': token }
     }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (o) {
         if (!o.ok) { msg.textContent = 'Refused: ' + (o.j.error || 'unknown'); return; }
+        if ((o.j.drafts || []).length > 1) {
+          document.getElementById('pvPath').textContent = o.j.drafts.length + ' files';
+          document.getElementById('pvDraftJson').value = o.j.drafts.map(function (d) {
+            return '/* ' + d.path + ' */\n' + JSON.stringify(d.file, null, 2);
+          }).join('\n\n');
+          document.getElementById('pvDraftBox').hidden = false;
+          msg.textContent = 'drafted ' + o.j.drafts.length + (o.j.skipped ? ', ' + o.j.skipped.length + ' skipped (budget)' : '');
+          return;
+        }
         var res = (o.j.results || [])[0];
         if (!res) { msg.textContent = 'Nothing came back.'; return; }
         if (!res.ok) {
@@ -416,6 +432,63 @@ the first one only. Live from <code>/api/capture?worklist</code>.</p>
           });
       }
       next(0);
+    }).catch(function () { msg.textContent = 'Could not read the worklist.'; });
+  };
+
+  /* ---- triage every unread shop --------------------------------------
+     Batched because a single request cannot read 50 catalogues inside
+     a 60s function, and the endpoint reports what it skipped rather
+     than pretending it finished. Five per request is comfortably
+     inside the budget for shops of a few hundred products and leaves
+     room for the one that turns out to have three thousand. */
+  document.getElementById('pvTriage').onclick = function () {
+    var msg = document.getElementById('pvAllMsg');
+    var token = document.getElementById('pvToken').value.trim();
+    if (!token) { msg.textContent = 'Passcode first (the box above).'; return; }
+    msg.textContent = 'finding the unread shops…';
+
+    fetch('/api/capture?worklist').then(function (r) { return r.json(); }).then(function (j) {
+      var keys = (j.rows || []).filter(function (r) { return !r.reviewed; })
+        .map(function (r) { return r.key; });
+      if (!keys.length) { msg.textContent = 'Every shop has been reviewed.'; return; }
+
+      var batches = [];
+      for (var i = 0; i < keys.length; i += 5) batches.push(keys.slice(i, i + 5));
+      var lines = [], done = 0;
+
+      function run(bi) {
+        if (bi >= batches.length) {
+          document.getElementById('pvPath').textContent = 'triage of ' + done + ' shops (paste this back)';
+          document.getElementById('pvDraftJson').value = lines.join('\n');
+          document.getElementById('pvDraftBox').hidden = false;
+          msg.textContent = 'triaged ' + done + ' of ' + keys.length + '. Copy the box below.';
+          return;
+        }
+        msg.textContent = 'reading feeds… ' + done + '/' + keys.length;
+        fetch('/api/probe?brief&keys=' + encodeURIComponent(batches[bi].join(',')), {
+          headers: { 'x-gd-admin-token': token }
+        }).then(function (r) { return r.json(); }).then(function (o) {
+          (o.rows || []).forEach(function (r) {
+            done++;
+            if (r.ok === false) {
+              lines.push(r.key + ': NO FEED (' + r.error + ')');
+              return;
+            }
+            lines.push(
+              r.key + ' [' + r.room + '] ' + r.products + ' products, ' + r.inStock + ' in stock, ' +
+              r.priced + ' priced, ' + r.offScenePct + '% off scene, ' + r.untyped + ' untyped' +
+              (r.priceRange ? ', $' + r.priceRange.min + '-' + r.priceRange.max : '') + '\n' +
+              '  types: ' + (r.types.join(' | ') || '(none)') + '\n' +
+              '  eg: ' + r.samples.join(' / ') +
+              (r.notes && r.notes.length ? '\n  NOTE: ' + r.notes.join(' ') : ''));
+          });
+          run(bi + 1);
+        }).catch(function () {
+          batches[bi].forEach(function (k) { done++; lines.push(k + ': request failed'); });
+          run(bi + 1);
+        });
+      }
+      run(0);
     }).catch(function () { msg.textContent = 'Could not read the worklist.'; });
   };
 

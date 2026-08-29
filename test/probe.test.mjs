@@ -256,3 +256,61 @@ test('no admin-gated endpoint is left cacheable by the CDN', async () => {
       'responses are cacheable at the edge for 600s')
   }
 })
+
+test('brief mode returns a triage line, not a full analysis', async () => {
+  /* WHY THIS MODE EXISTS. The full response for 50 merchants is tens
+     of thousands of lines, and a review nobody can physically read is
+     the same as no review. Triage answers the three questions that
+     decide most shops in one line -- how much stock, how much of it is
+     off scene, what the types look like -- and the full draft is
+     pulled only for the ones that survive it.
+
+     So the assertion that matters is that brief is actually BRIEF:
+     if it ever grows back into the full payload it has stopped doing
+     its job while still passing a "does it return rows" test. */
+  serve([[
+    product(1, 'Cabinets', 'Arcade Cabinet'),
+    product(2, 'Cabinets', 'Second Cabinet'),
+    product(3, 'Gift Cards', 'Gift Card'),
+  ]])
+  const { code, payload } = await call(
+    { keys: 'goretrogame', brief: '' },
+    { 'x-gd-admin-token': 'secret' },
+    { ADMIN_PASSCODE: 'secret' })
+
+  assert.equal(code, 200)
+  assert.equal(payload.rows.length, 1)
+  const r = payload.rows[0]
+
+  assert.equal(r.products, 3)
+  assert.equal(typeof r.offScenePct, 'number')
+  assert.ok(Array.isArray(r.types) && r.types.length, 'the type histogram is the point of triage')
+  assert.match(r.types[0], /x\d+ ->/, 'each type line must show its count and room')
+  assert.ok(r.samples.length <= 3, 'triage carries a few sample titles, not the catalogue')
+
+  /* The brief row must NOT carry the things that make the full
+     response unreadable at scale. */
+  assert.equal('productTypeAnalysis' in r, false, 'brief is carrying the full analysis')
+  assert.equal('proposed' in r, false, 'brief is carrying the proposals')
+  assert.equal('results' in payload, false, 'brief must replace the full results, not accompany them')
+
+  /* And it must never be a way to publish: no drafts in brief mode. */
+  assert.equal('drafts' in payload, false, 'brief must not hand back committable files')
+})
+
+test('the untyped count is surfaced in triage, because it decides the include list', async () => {
+  /* The lesson from customgamingchair: 18 of its 23 products had no
+     product_type, and the proposed include list would have published
+     5. The untyped share is the single number that catches that, so
+     it is on the triage line rather than three levels down. */
+  serve([[
+    product(1, '', 'Untyped Chair'),
+    product(2, '', 'Another Untyped Chair'),
+    product(3, 'Custom Chair', 'A Typed One'),
+  ]])
+  const { payload } = await call(
+    { keys: 'goretrogame', brief: '' },
+    { 'x-gd-admin-token': 'secret' },
+    { ADMIN_PASSCODE: 'secret' })
+  assert.equal(payload.rows[0].untyped, 2, 'an untyped majority must be visible at triage')
+})
