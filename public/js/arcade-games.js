@@ -73,7 +73,7 @@
     {
       id: "invaders",
       title: "Shelf Invaders",
-      by: "Gaming Dungeon",
+      by: "Verda Store",
       blurb: "The house cabinet. A few kilobytes of canvas, no download.",
       builtin: true,
       threads: false,

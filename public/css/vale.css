@@ -79,6 +79,17 @@
    phone, and a fixed pixel height puts it at the ankles of one. */
 .vale .far   { height: 96vh; min-height: 420px; background-image: url(../assets/vale-far.svg) }
 .vale .mid   { height: 82vh; min-height: 360px; background-image: url(../assets/vale-mid.svg) }
+.vale .village {
+  /* Sits on the mid ridge's shoulder, in front of the wash so the
+     roofs stay dark. The village is the thing that makes this the
+     game's vale rather than a mountain range, so it does not get
+     dissolved into the paper with the ridges behind it. */
+  height: 66vh; min-height: 330px;
+  background-image: url(../assets/vale-village.svg);
+  opacity: .96;
+  -webkit-mask-image: linear-gradient(180deg, #000 74%, transparent 99%);
+  mask-image: linear-gradient(180deg, #000 74%, transparent 99%);
+}
 .vale .grove { height: 58vh; min-height: 300px; background-image: url(../assets/vale-grove.svg);
                opacity: .9;
                /* the grove's feet dissolve rather than end: culms cut
@@ -109,13 +120,21 @@
 .vale .wash {
   top: 0;
   height: 100%;
+  /* NOT A FADE TO PAPER ANY MORE. This dissolved the far ridges into
+     the page, which was right when the page was an ink painting and
+     is wrong now: in the footage you are STANDING IN A FIELD, and
+     the bottom of the frame is grass, not paper. So the wash still
+     eats the ridges' flat feet, but what it hands them off to is the
+     ground. Everything below the village line is the meadow you are
+     standing in, and the shop's cards sit on it the way a game's
+     HUD sits on the world. */
   background: linear-gradient(180deg,
     transparent 0%,
-    transparent 66%,
-    rgba(246, 243, 233, .40) 78%,
-    rgba(246, 243, 233, .86) 89%,
-    var(--paper) 96%,
-    var(--paper) 100%);
+    transparent 52%,
+    color-mix(in srgb, var(--vale-sky-haze) 55%, transparent) 66%,
+    color-mix(in srgb, var(--vale-grass) 62%, var(--vale-sky-haze)) 80%,
+    var(--vale-grass) 92%,
+    var(--vale-grass) 100%);
 }
 
 /* ------------------------------------------------------------

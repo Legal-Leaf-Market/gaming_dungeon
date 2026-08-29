@@ -96,7 +96,7 @@
   /* ------------------------------------------------------------- map */
   function renderMap() {
     var published = state.stores.length;
-    var html = ROOMS.map(function (r) {
+    var html = ROOMS.map(function (r, i) {
       var n = countIn(r.key);
       var label = !state.reached ? 'shut'
                 : published === 0 ? 'not stocked yet'
@@ -104,7 +104,20 @@
                 : n + (n === 1 ? ' thing' : ' things');
       /* The band is set as a custom property rather than a class, so
          adding a room needs no CSS. --band is read by .door::before. */
-      return '<a class="door" href="' + r.path + '" style="--band:' + esc(r.band) + '">' +
+      /* A ROOM IS A SLOT ON YOUR BAR. The game's hotbar is six dark
+         rounded squares with a numeral in the corner, and the map is
+         the same shape for the same reason: these are the things you
+         can reach. The index is 1-based because the game's is.
+
+         The glyph is the room's own ink drawing, from the sprite
+         inlined at the top of index.html. It takes currentColor, so
+         the card sets the colour and the drawing follows: one file,
+         two contexts, nothing to keep in step. */
+      return '<a class="door slot" href="' + r.path + '" style="--band:' + esc(r.band) + '">' +
+        '<span class="n">' + (i + 1) + '</span>' +
+        '<svg class="door-ico" viewBox="0 0 64 64" aria-hidden="true">' +
+          '<use href="#ico-' + esc(r.key) + '"></use>' +
+        '</svg>' +
         '<h3>' + esc(r.name) + '</h3>' +
         '<p class="epithet">' + esc(r.epithet) + '</p>' +
         '<p>' + esc(r.blurb) + '</p>' +
@@ -119,7 +132,11 @@
     /* Immortal Ascension, the eleventh realm, is the one high band
        spent anywhere on this site -- on the room that sells nothing.
        "The last stair has no rail." */
-    html += '<a class="door cabinet" href="/arcade" style="--band:#ffe2a0">' +
+    html += '<a class="door slot cabinet" href="/arcade" style="--band:#ffe2a0">' +
+      '<span class="n">' + (ROOMS.length + 1) + '</span>' +
+      '<svg class="door-ico" viewBox="0 0 64 64" aria-hidden="true">' +
+        '<use href="#ico-arcade-stick"></use>' +
+      '</svg>' +
       '<h3>The Arcade</h3>' +
       '<p class="epithet">The last stair has no rail.</p>' +
       '<p>Cabinets in the corner. Free play, nothing for sale, no sign-up.</p>' +

@@ -1,0 +1,176 @@
+/* ============================================================
+   hud.css — the game's own interface, on the web
+   ------------------------------------------------------------
+   SOURCED FROM 27 SECONDS OF THE GAME RUNNING, frame by frame, not
+   from the UiKit module. UiKit says what the code asks for; the
+   footage is what a player sees, and where the two disagree the
+   footage wins. (It cost a whole redesign to learn that: a palette
+   derived from the lighting rig came out golden for a game that is
+   cool olive and slate.)
+
+   Four shapes carry the entire HUD, and every one of them is a
+   measurement:
+
+     PILL BUTTON   cream fill, near-black outline about 2px, radius
+                   equal to half the height, serif label in ink.
+                   The game's row reads Updates / Arts / Destiny /
+                   Bag / Sect / Menu. Ours reads like a shop.
+     STAT BAR      the same pill, filled: crimson HP, blue QI, and a
+                   cream empty one for cultivation. Label centred
+                   INSIDE the bar in outlined serif.
+     SLOT          rounded square, dark and translucent, thin near
+                   black border, numeral in the top-left corner.
+                   Six of them, numbered 1 to 6.
+     BADGE         cream disc, heavy dark ring, one big serif
+                   numeral. The realm you are on.
+
+   THE TEXT OUTLINE IS REAL AND IT IS NOT A MISTAKE. Every HUD label
+   in the footage is light serif with a dark stroke around it,
+   because it sits over grass and cliff and has to stay legible on
+   both. The site inherited a rule from the game's UiKit saying never
+   stroke glyphs, and that rule is about PANEL text on a solid panel,
+   where a stroke does make everything read blobby. Over the world
+   the opposite is true. So the stroke lives on `.hud-label` and on
+   nothing else: never on body copy, never on a product name, never
+   on a price.
+   ============================================================ */
+
+:root{
+  --hud-cream:#f3f0e4;
+  --hud-ink:#14120f;
+  --hud-hp:#c8302c;
+  --hud-qi:#3b7dd8;
+  --hud-slot:rgba(20,18,15,.42);
+  --hud-ring:2px;
+}
+
+/* ---- the outlined HUD label -------------------------------
+   paint-order is what makes this work: without it the stroke is
+   painted OVER the glyph and eats half the letterform at these
+   sizes, which is the version that earns the game's own warning. */
+.hud-label{
+  font-family:var(--display);font-weight:600;
+  color:var(--hud-cream);
+  paint-order:stroke fill;
+  -webkit-text-stroke:3px var(--hud-ink);
+  letter-spacing:.01em;
+}
+
+/* ---- pill button ------------------------------------------ */
+.pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-weight:600;font-size:14px;
+  color:var(--hud-ink);background:var(--hud-cream);
+  border:var(--hud-ring) solid var(--hud-ink);
+  border-radius:999px;
+  padding:5px 17px;line-height:1.25;
+  text-decoration:none;white-space:nowrap;
+  transition:background .12s,transform .08s;
+}
+.pill:hover{background:#fffdf3}
+.pill:active{transform:translateY(1px)}
+.pill.on{background:var(--hud-ink);color:var(--hud-cream)}
+
+/* ---- stat bar ---------------------------------------------
+   One element, one custom property. --fill is a percentage and the
+   ::before is the filled part, so a bar at 0 is still a bar: the
+   game shows an empty cream cultivation bar and it reads as
+   "nothing yet", which is exactly what a shop with no stock in a
+   room needs to say. */
+.bar{
+  position:relative;overflow:hidden;
+  height:19px;border-radius:999px;
+  background:var(--hud-cream);
+  border:var(--hud-ring) solid var(--hud-ink);
+}
+.bar::before{
+  content:'';position:absolute;inset:0;right:auto;
+  width:var(--fill,0%);
+  background:var(--bar,var(--hud-qi));
+  transition:width .5s cubic-bezier(.22,.61,.36,1);
+}
+.bar b{
+  position:relative;display:block;text-align:center;
+  font-size:12.5px;line-height:19px;
+  font-family:var(--display);font-weight:600;
+  color:var(--hud-cream);
+  paint-order:stroke fill;-webkit-text-stroke:2.6px var(--hud-ink);
+}
+.bar.hp{--bar:var(--hud-hp)}
+.bar.qi{--bar:var(--hud-qi)}
+
+/* ---- the realm badge -------------------------------------- */
+.badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:54px;height:54px;border-radius:50%;
+  background:var(--hud-cream);
+  border:3px solid var(--hud-ink);
+  font-family:var(--display);font-weight:600;font-size:26px;
+  color:var(--hud-ink);flex:none;
+}
+
+/* ---- slot -------------------------------------------------
+   The rounded dark square from the hotbar. On the map every room is
+   one of these, which is the whole conceit: the rooms of a shop are
+   the slots on your bar. */
+.slot{
+  position:relative;
+  background:var(--hud-slot);
+  border:var(--hud-ring) solid var(--hud-ink);
+  border-radius:11px;
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+.slot>.n{
+  position:absolute;top:5px;left:9px;
+  font-family:var(--display);font-weight:600;font-size:14px;
+  color:var(--hud-cream);
+  paint-order:stroke fill;-webkit-text-stroke:2.4px var(--hud-ink);
+}
+
+/* ============================================================
+   THE MAP AS A HOTBAR
+   ------------------------------------------------------------
+   .door already carried the paper-card look. These override it into
+   the game's slot: dark and translucent so the vale shows through,
+   heavy dark border, corner numeral, the room's ink glyph watermarked
+   behind the text.
+
+   THE TEXT HAD TO GO LIGHT. A dark translucent slot over grass is
+   the one place the site's ink-on-paper colours stop working, and
+   the fix is not to lighten the slot: the slot being dark is what
+   makes the numerals and the world read at once, which is the whole
+   point of a HUD.
+   ============================================================ */
+.doors .door.slot{
+  position:relative;overflow:hidden;
+  background:var(--hud-slot);
+  border:var(--hud-ring) solid var(--hud-ink);
+  border-radius:11px;
+  backdrop-filter:blur(4px) saturate(1.1);
+  -webkit-backdrop-filter:blur(4px) saturate(1.1);
+  padding-top:6px;
+}
+.doors .door.slot h3{color:var(--hud-cream);margin-top:18px}
+.doors .door.slot .epithet{color:rgba(243,240,228,.82)}
+.doors .door.slot p{color:rgba(243,240,228,.76)}
+.doors .door.slot .count{color:var(--hud-cream)}
+.doors .door.slot .count.shut{color:rgba(243,240,228,.6)}
+.doors .door.slot:hover{transform:translateY(-2px);box-shadow:3px 3px 0 var(--hud-ink)}
+
+/* The realm band stays: it is the one saturated colour on the slot
+   and it is what tells nine near-identical dark squares apart. */
+.doors .door.slot::before{border-radius:9px 9px 0 0}
+
+/* THE GLYPH IS A WATERMARK, NOT AN ICON. Sized large and set low in
+   the card at a weight you read second, because a room's name is the
+   thing you are scanning for and a bright 34px pictogram beside it
+   competes for the same glance. Big and quiet beats small and loud. */
+.door-ico{
+  position:absolute;right:-10px;bottom:-14px;
+  width:128px;height:128px;
+  color:var(--band,var(--hud-cream));
+  opacity:.34;
+  pointer-events:none;
+}
+.doors .door.slot:hover .door-ico{opacity:.5}

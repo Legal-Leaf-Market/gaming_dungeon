@@ -311,48 +311,69 @@ function caps(pts) {
    would let the sky tint every ridge behind every other ridge.
    ============================================================ */
 /* ============================================================
-   THE COLOURS ARE THE GAME'S LIGHTING RIG, NOT A PALETTE
+   THE COLOURS ARE SAMPLED FROM THE GAME, NOT COMPUTED FROM IT
    ------------------------------------------------------------
-   The first cut of this file picked ridge colours by eye and got
-   them badly wrong in a way no amount of nudging would have fixed:
-   they were COLD BLUE, and the vale is not cold or blue. Read
-   WorldService.tuneSky() and it says so in its own comment, "late
-   golden afternoon: warm, hazy, readable", and then sets the values
-   that make it one. ClockTime 16.4, a low sun. Atmosphere the colour
-   of old paper. A cream colour grade over the whole frame.
+   The previous version derived these from WorldService.tuneSky():
+   terrain material defaults, lit by the rig's outdoor ambient,
+   faded toward its atmosphere colour, graded by its ColorCorrection.
+   The arithmetic was right and the answer was wrong. It produced a
+   golden hazy afternoon, and then the owner sent 27 seconds of the
+   game running and the vale is a COOL OLIVE-AND-SLATE VILLAGE UNDER
+   A CYAN SKY. Not close.
 
-   So none of the numbers below are chosen. The terrain materials
-   give the rock, grass and snow their base colours; the lighting rig
-   gives the haze that eats them with distance and the grade that
-   warms what is left; and the plate colours fall out of the two.
-   Change the game's sky and this background changes with it, which
-   is the entire point of deriving rather than drawing.
+   Why the derivation missed is worth writing down, because the same
+   trap is one commit away at all times: tuneSky() is what the code
+   ASKS for, and a render is what you GET. Between the two sit
+   Roblox's own tone mapping, the sun angle at the moment of capture,
+   whether the server had run Init yet, and every default the rig
+   does not set. A frame of the running game has all of that baked
+   in. It is the only artefact that does.
+
+   So every colour below is a median of a patch of an actual frame
+   at 1450x800, listed with where it was taken from. Numbers, not
+   impressions: eyeballing a screenshot is how you end up back at
+   invented colours with extra steps.
+
+   TO RESAMPLE: pull frames with ffmpeg, take a median over a small
+   patch rather than a single pixel (JPEG ringing will lie to you on
+   one pixel), and update here. Do not re-derive from the rig; that
+   experiment has been run.
    ============================================================ */
+const GAME = {
+  /* sky, sampled up a clear column on the right of the frame */
+  skyHigh: [108, 185, 212],    /* y=60,  cyan                      */
+  skyMid: [132, 197, 211],     /* y=100                            */
+  skyHaze: [205, 195, 189],    /* y=260, the warm pale horizon     */
+  cloud: [239, 226, 217],      /* the bright cloud shoulder        */
 
-/* WorldService.tuneSky(), verbatim. */
-const SKY = {
-  ambient: [96, 90, 78],
-  outdoorAmbient: [138, 128, 112],
-  atmosphere: [222, 214, 198],   /* what distance fades everything toward */
-  decay: [130, 120, 104],        /* what the light decays to at the horizon */
-  haze: 2.6,
-  density: 0.38,
-  clouds: [235, 230, 220],
-  cloudCover: 0.66,
-  tint: [255, 246, 230],         /* ColorCorrection.TintColor */
-  contrast: 0.05,
-  saturation: 0.05,
-}
+  /* ground and rock */
+  grassNear: [76, 86, 51],
+  grassMid: [84, 94, 57],
+  grassFar: [91, 99, 62],
+  cliff: [74, 80, 80],
+  cliffFar: [51, 61, 60],
 
-/* Roblox's default terrain material colours, which is what
-   Terrain.build() is filling with: it names materials, never
-   colours, so these are the colours the vale actually is. */
-const MATERIAL = {
-  grass: [106, 127, 63],
-  leafyGrass: [115, 132, 74],
-  rock: [102, 92, 59],
-  snow: [195, 199, 218],
-  sand: [143, 126, 95],
+  /* the village */
+  wall: [229, 232, 205],       /* cream plaster                    */
+  timber: [195, 199, 177],     /* the frame between the panels     */
+  roof: [41, 54, 62],          /* dark slate, the strongest note   */
+  lantern: [156, 52, 48],
+
+  /* what grows there */
+  pine: [24, 42, 30],
+  trunk: [62, 49, 40],
+  /* CHERRY, and these are not the sampled village pinks any more.
+     Those came off a distant hazed tree in the footage and were
+     mud. The owner sent a sheet of six cherry designs the game is
+     moving to, and they are SATURATED: a deep rose in the shadow of
+     the canopy, a mid pink for the mass, a near white on the lit
+     upper edge. Three tones is the minimum that reads as a canopy
+     rather than as a blob, because what makes a tree look round is
+     the shadow underneath it. */
+  blossomDeep: [184, 104, 143],
+  blossom: [221, 145, 180],
+  blossomPale: [240, 193, 214],
+  bark: [58, 43, 36],
 }
 
 const clamp255 = v => Math.max(0, Math.min(255, Math.round(v)))
@@ -361,55 +382,37 @@ const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t)
 
 /* HOW MUCH OF A THING AT DISTANCE d IS JUST AIR.
 
-   Roblox does not publish the curve it runs Density and Haze
-   through, so this is the standard exponential extinction fitted to
-   the two numbers the rig sets: at the mid band's representative
-   distance it should be about a quarter air, and at the far band's
-   about half. SCALE is the fitted constant and it is the one number
-   in this file that is tuned rather than read.
+   The one piece of the old derivation worth keeping. Distance in
+   this vale is carried almost entirely by haze: the far rim in the
+   footage is barely darker than the sky behind it while the near
+   grass is nearly black-green, and that spread is the whole depth
+   cue. SCALE is fitted so the far band lands about half air and the
+   mid band about a quarter.
 
-   IT WAS FITTED TOO STRONG FIRST TIME, at 550, which put the far
-   band three quarters into the atmosphere colour. On its own that is
-   defensible physics; on the page it erased the mountains, because
-   the sky immediately behind a ridge IS the atmosphere colour and a
-   ridge three quarters of the way there has almost nothing left to
-   separate it. The visible check is the only check that matters
-   here: a ridge that cannot be seen is not hazy, it is missing. */
+   IT WAS FITTED AT 550 FIRST AND ERASED THE MOUNTAINS. The sky
+   immediately behind a ridge IS the haze colour, so a ridge three
+   quarters of the way into it has nothing left to separate. A ridge
+   that cannot be seen is not hazy, it is missing. */
 const HAZE_SCALE = 1150
 const airAt = d => 1 - Math.exp(-d / HAZE_SCALE)
 
-/* The colour grade, applied last because that is where it sits in
-   the pipeline: after everything, over the whole frame. */
-function grade(c) {
-  const lum = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
-  let out = c.map(v => lum + (v - lum) * (1 + SKY.saturation))     /* saturation */
-  out = out.map(v => 128 + (v - 128) * (1 + SKY.contrast))          /* contrast   */
-  return out.map((v, i) => (v * SKY.tint[i]) / 255)                 /* tint       */
-}
+/* A surface at distance: the sampled colour, walked toward the
+   sampled horizon haze. No lighting model, because the sample was
+   taken through the lighting already. */
+const at = (colour, distance) => hex(mix(colour, GAME.skyHaze, airAt(distance)))
 
-/* Lit, then hazed, then graded. The lift is the outdoor ambient plus
-   a low sun, which is why everything here reads warmer than the raw
-   material colour: at ClockTime 16.4 the light itself is yellow. */
-function surface(material, distance) {
-  const lit = material.map((v, i) => v * 0.62 + SKY.outdoorAmbient[i] * 0.55)
-  return hex(grade(mix(lit, SKY.atmosphere, airAt(distance))))
-}
-
-/* A ridge's EDGE is the same surface a little less hazed, which is
-   what an edge physically is: the near lip of the ridge, closer to
-   you than the slope behind it. */
 const PLATES = [
   {
     band: BANDS[0],
-    fill: surface(MATERIAL.rock, 800),
-    snow: surface(MATERIAL.snow, 800),
-    edge: surface(MATERIAL.rock, 560),
+    fill: at(GAME.cliffFar, 800),
+    snow: at([232, 236, 240], 800),
+    edge: at(GAME.cliffFar, 620),
   },
   {
     band: BANDS[1],
-    fill: surface(MATERIAL.grass, 300),
-    snow: surface(MATERIAL.snow, 300),
-    edge: surface(MATERIAL.rock, 210),
+    fill: at(GAME.cliff, 300),
+    snow: at([232, 236, 240], 300),
+    edge: at(GAME.cliff, 190),
   },
 ]
 
@@ -465,9 +468,9 @@ for (const line of summary) console.log('  ' + line)
    grade doing the work, not the haze, and that is correct. Bamboo
    in a golden afternoon is olive, not the flat spring green the raw
    Color3 is. */
-const BAMBOO_GREEN = surface([126, 168, 92], 20)
-const BAMBOO_LEAF = surface([104, 146, 78], 24)
-const BAMBOO_DARK = surface([77, 107, 58], 16)
+const BAMBOO_GREEN = at(GAME.grassNear, 20)
+const BAMBOO_LEAF = at(GAME.pine, 24)
+const BAMBOO_DARK = at(GAME.trunk, 16)
 
 /* mulberry32: 32 bits of state, same sequence every run */
 function seeded(seed) {
@@ -540,6 +543,197 @@ function grove() {
     parts.join('') + '</svg>\n'
 }
 
+
+/* ============================================================
+   THE VILLAGE
+   ------------------------------------------------------------
+   The single thing that makes the background read as THIS game
+   rather than as generic mountains. The footage is not a landscape,
+   it is a place: cream plaster walls in dark timber frames, deep
+   slate roofs with the eaves kicked up, red lanterns burning in the
+   daytime, cherry blossom over pine.
+
+   Terrain.VILLAGE is a flattened plateau 120 studs across at height
+   11, so the houses sit on a shelf rather than on a slope, which is
+   why they line up along one baseline here instead of stepping.
+
+   The roof is the whole silhouette. Get the eave curve wrong and it
+   is a shed; the upturn is doing all the work, so it is drawn as two
+   quadratics meeting at a ridgepole rather than as a triangle.
+   Seeded, like the grove, so the file is byte-stable and a diff
+   means somebody changed the drawing.
+
+   HAZED AT SEVENTY STUDS, NOT AT TWO HUNDRED AND FIFTY. The first
+   pass put the village at the mid ridge's distance and it came out
+   as pale pink ghosts, which is what half-air does to a cream wall.
+   The village is on the plateau you are STANDING on. Terrain's own
+   VILLAGE marker is 170 studs from the world origin and the camera
+   is pitched to look past it, so the near edge of it is close, and
+   close things keep their colour. If the roofs ever go grey again,
+   this is the number.
+   ============================================================ */
+function village() {
+  const rng = seeded(0x5bf03635)
+  const r = (a, b) => a + rng() * (b - a)
+  const parts = []
+  const GROUND = PLATE_H - 96
+
+  /* Houses across the plate, larger toward the middle where the
+     village centre sits, thinning at both edges into the trees. */
+  const houses = [
+    { x: 150, s: 0.72 }, { x: 300, s: 0.9 }, { x: 430, s: 1.05 },
+    { x: 600, s: 1.15 }, { x: 780, s: 1.1 }, { x: 930, s: 0.95 },
+    { x: 1075, s: 0.8 }, { x: 1195, s: 0.66 },
+  ]
+
+  for (const h of houses) {
+    const w = r(96, 128) * h.s
+    const bodyH = r(40, 54) * h.s
+    const x = h.x - w / 2
+    const y = GROUND - bodyH
+    const eave = w * r(0.16, 0.22)
+    const roofH = r(26, 34) * h.s
+
+    /* walls */
+    parts.push('<path d="M' + n2(x) + ' ' + n2(GROUND) +
+      ' L' + n2(x) + ' ' + n2(y) + ' L' + n2(x + w) + ' ' + n2(y) +
+      ' L' + n2(x + w) + ' ' + n2(GROUND) + ' Z" fill="' + at(GAME.wall, 70) + '"/>')
+
+    /* timber posts, the dark uprights that break the plaster up */
+    const posts = Math.max(2, Math.round(w / (26 * h.s)))
+    for (let i = 1; i < posts; i++) {
+      parts.push('<rect x="' + n2(x + (w * i) / posts - 1.6 * h.s) + '" y="' + n2(y) +
+        '" width="' + n2(3.2 * h.s) + '" height="' + n2(bodyH) +
+        '" fill="' + at(GAME.timber, 70) + '"/>')
+    }
+    /* the sill line, which is what stops a wall reading as a slab */
+    parts.push('<rect x="' + n2(x) + '" y="' + n2(y + bodyH * 0.52) +
+      '" width="' + n2(w) + '" height="' + n2(2.6 * h.s) +
+      '" fill="' + at(GAME.timber, 70) + '"/>')
+
+    /* THE ROOF, and the kicked eaves are the point */
+    parts.push('<path d="M' + n2(x - eave) + ' ' + n2(y + 3) +
+      ' Q' + n2(x - eave * 0.35) + ' ' + n2(y - 2) +
+      ' ' + n2(x + w * 0.5) + ' ' + n2(y - roofH) +
+      ' Q' + n2(x + w + eave * 0.35) + ' ' + n2(y - 2) +
+      ' ' + n2(x + w + eave) + ' ' + n2(y + 3) +
+      ' Q' + n2(x + w * 0.5) + ' ' + n2(y - roofH * 0.28) +
+      ' ' + n2(x - eave) + ' ' + n2(y + 3) +
+      ' Z" fill="' + at(GAME.roof, 70) + '"/>')
+
+    /* a lantern under the eave on about half the houses */
+    if (rng() < 0.55) {
+      const lx = x + w * r(0.2, 0.8)
+      parts.push('<ellipse cx="' + n2(lx) + '" cy="' + n2(y + 9) +
+        '" rx="' + n2(4 * h.s) + '" ry="' + n2(5.4 * h.s) +
+        '" fill="' + at(GAME.lantern, 60) + '"/>')
+    }
+  }
+
+  /* ---------------------------------------------------------
+     CHERRY TREES
+
+     The first version drew a stick with six ellipses scattered
+     round the top and it read as pink smoke, not as a tree. What
+     was missing is structure: a real cherry is a THICK FORKED
+     TRUNK carrying ONE BROAD MASS that is wider than it is tall,
+     and the mass only looks round because it is darker underneath.
+
+     So each tree here is built in that order. Trunk that widens at
+     the base and forks into three or four limbs, drawn as tapering
+     quads so the fork has weight. Then the canopy in three passes,
+     back to front: deep rose across the whole underside, mid pink
+     over most of it, pale pink on the upper left only, where the
+     light is. The passes overlap heavily on purpose; the gaps
+     between blobs are what made the old ones read as smoke.
+     --------------------------------------------------------- */
+  function cherry(x, groundY, scale) {
+    const trunkH = 84 * scale
+    const top = groundY - trunkH
+    const bw = 9 * scale
+
+    /* trunk, flaring at the foot */
+    parts.push('<path d="M' + n2(x - bw * 1.5) + ' ' + n2(groundY) +
+      ' Q' + n2(x - bw * 0.8) + ' ' + n2(groundY - trunkH * 0.5) +
+      ' ' + n2(x - bw * 0.45) + ' ' + n2(top) +
+      ' L' + n2(x + bw * 0.45) + ' ' + n2(top) +
+      ' Q' + n2(x + bw * 0.8) + ' ' + n2(groundY - trunkH * 0.5) +
+      ' ' + n2(x + bw * 1.5) + ' ' + n2(groundY) +
+      ' Z" fill="' + at(GAME.bark, 80) + '"/>')
+
+    /* limbs into the canopy */
+    const limbs = 3 + Math.floor(rng() * 2)
+    for (let i = 0; i < limbs; i++) {
+      const spread = (i / (limbs - 1) - 0.5) * 2      /* -1 .. 1 */
+      const lx = x + spread * 46 * scale
+      const ly = top - 34 * scale + Math.abs(spread) * 12 * scale
+      const t = 3.6 * scale
+      parts.push('<path d="M' + n2(x - t) + ' ' + n2(top + 4) +
+        ' Q' + n2(x + spread * 16 * scale) + ' ' + n2(top - 14 * scale) +
+        ' ' + n2(lx) + ' ' + n2(ly) +
+        ' L' + n2(lx + t * 1.3) + ' ' + n2(ly + t) +
+        ' Q' + n2(x + spread * 16 * scale + t) + ' ' + n2(top - 12 * scale) +
+        ' ' + n2(x + t) + ' ' + n2(top + 4) +
+        ' Z" fill="' + at(GAME.bark, 80) + '"/>')
+    }
+
+    /* THE CANOPY: wider than tall, three passes back to front */
+    const cw = 96 * scale          /* half-width  */
+    const ch = 50 * scale          /* half-height */
+    const cy = top - 40 * scale
+    const pass = (colour, count, dy, sx, sy) => {
+      for (let i = 0; i < count; i++) {
+        const a = rng() * Math.PI * 2
+        const rad = Math.sqrt(rng())
+        parts.push('<ellipse cx="' + n2(x + Math.cos(a) * rad * cw * sx) +
+          '" cy="' + n2(cy + dy + Math.sin(a) * rad * ch * sy) +
+          '" rx="' + n2((22 + rng() * 16) * scale) +
+          '" ry="' + n2((15 + rng() * 11) * scale) +
+          '" fill="' + colour + '"/>')
+      }
+    }
+    pass(at(GAME.blossomDeep, 80), 11, 8 * scale, 1, 1)
+    pass(at(GAME.blossom, 80), 13, -2 * scale, 0.94, 0.9)
+    pass(at(GAME.blossomPale, 80), 6, -16 * scale, 0.6, 0.5)
+  }
+
+  function pine(x, groundY, scale) {
+    parts.push('<rect x="' + n2(x - 3.4 * scale) + '" y="' + n2(groundY - 62 * scale) +
+      '" width="' + n2(6.8 * scale) + '" height="' + n2(62 * scale) +
+      '" fill="' + at(GAME.trunk, 80) + '"/>')
+    for (let k = 0; k < 3; k++) {
+      const cyy = groundY - (150 - k * 30) * scale
+      const cw = (20 + k * 12) * scale
+      parts.push('<path d="M' + n2(x) + ' ' + n2(cyy) +
+        ' L' + n2(x + cw) + ' ' + n2(cyy + 44 * scale) +
+        ' L' + n2(x - cw) + ' ' + n2(cyy + 44 * scale) +
+        ' Z" fill="' + at(GAME.pine, 80) + '"/>')
+    }
+  }
+
+  /* CHERRY OUTNUMBERS PINE THREE TO ONE. The owner is moving the
+     game to cherry and the trees are the loudest thing in the
+     frame, so the ratio is the design decision, not a detail. Pines
+     stay as the dark note that keeps a wall of pink from turning
+     into candyfloss. */
+  const stands = []
+  for (let i = 0; i < 13; i++) stands.push({ x: r(30, PLATE_W - 30), cherry: rng() < 0.75 })
+  /* far to near, so a nearer tree overlaps a further one */
+  stands.sort((a, b) => a.x - b.x)
+  for (const t of stands) {
+    const scale = r(0.62, 1.15)
+    if (t.cherry) cherry(t.x, GROUND + r(2, 16), scale)
+    else pine(t.x, GROUND + r(2, 14), scale)
+  }
+
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + PLATE_W + ' ' + PLATE_H +
+    '" preserveAspectRatio="none" width="' + PLATE_W + '" height="' + PLATE_H + '">' +
+    parts.join('') + '</svg>\n'
+}
+
+writeFileSync(join(out, 'vale-village.svg'), village())
+console.log('  vale-village.svg' + String(village().length).padStart(8) + ' bytes')
+
 writeFileSync(join(out, 'vale-grove.svg'), grove())
 console.log('  vale-grove.svg  ' + String(grove().length).padStart(7) + ' bytes')
 
@@ -566,34 +760,26 @@ console.log('  vale-grove.svg  ' + String(grove().length).padStart(7) + ' bytes'
    happen.
    ============================================================ */
 
-/* Roblox's clear-sky zenith, which the atmosphere and the grade then
-   act on. Everything below it is the rig. */
-/* Deeper than the literal zenith, on purpose. The rig's Brightness
-   is 2.6 with a 0.55 environment diffuse, so the real sky is bright,
-   but the shop is printed on paper and the ridges have to read
-   against it. Holding the top of the sky down is what buys the
-   skyline its silhouette. */
-const ZENITH = [126, 156, 196]
-
-const skyTop = hex(grade(mix(ZENITH, SKY.atmosphere, 0.30)))
-const skyMid = hex(grade(mix(ZENITH, SKY.atmosphere, 0.72)))
-const skyHaze = hex(grade(SKY.atmosphere))
-const cloud = hex(grade(SKY.clouds))
-/* the sun's core is the grade's own tint at full brightness; its
-   glow is the horizon decay colour, which is what a low sun turns
-   the air around it into */
-const sunCore = hex(SKY.tint)
-const sunGlow = hex(grade(mix(SKY.atmosphere, [255, 214, 140], 0.55)))
-const decay = hex(grade(SKY.decay))
+/* Straight from the frame. The generated stylesheet exists so that
+   vale.css and the plates can never disagree about what colour the
+   sky is: they read the same six values, written once, here. */
+const skyTop = hex(GAME.skyHigh)
+const skyMid = hex(GAME.skyMid)
+const skyHaze = hex(GAME.skyHaze)
+const cloud = hex(GAME.cloud)
+const sunCore = '#fffdf6'
+const sunGlow = hex(mix(GAME.cloud, [255, 236, 190], 0.5))
+const decay = hex(GAME.roof)
 
 const sky = `/* GENERATED by tools/vale.mjs. Do not edit; run the tool.
-   Every value here is computed from WorldService.tuneSky() in
-   Legal-Leaf-Market/roblox-game: the terrain material colours lit by
-   the vale's own outdoor ambient, faded toward the atmosphere colour
-   by distance, then put through the game's colour grade. The sky the
-   shop stands under is the sky the game is lit by.
 
-   ClockTime 16.4, late golden afternoon, in the rig's own words. */
+   Sampled, not derived. Every value is a median over a patch of a
+   frame of the running game, which is the only artefact that has
+   Roblox's tone mapping and the real sun angle baked into it. An
+   earlier version computed these from WorldService.tuneSky() and
+   produced a golden afternoon for a game that is a cool olive
+   village under a cyan sky. The rig is what the code asks for; a
+   frame is what you get. */
 :root{
   --vale-sky-top:${skyTop};
   --vale-sky-mid:${skyMid};
@@ -602,6 +788,12 @@ const sky = `/* GENERATED by tools/vale.mjs. Do not edit; run the tool.
   --vale-sun-core:${sunCore};
   --vale-sun-glow:${sunGlow};
   --vale-decay:${decay};
+  --vale-roof:${hex(GAME.roof)};
+  --vale-wall:${hex(GAME.wall)};
+  --vale-timber:${hex(GAME.timber)};
+  --vale-lantern:${hex(GAME.lantern)};
+  --vale-grass:${hex(GAME.grassNear)};
+  --vale-blossom:${hex(GAME.blossom)};
 }
 `
 writeFileSync(join(out, '..', 'css', 'vale-sky.css'), sky)

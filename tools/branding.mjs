@@ -373,9 +373,9 @@ export function tokenBg(root = process.cwd()) {
 
 export function manifest(root = process.cwd()) {
   return {
-    name: 'Gaming Dungeon',
+    name: 'Verda Store',
     /* 12 characters is where Android starts truncating under an icon. */
-    short_name: 'Dungeon',
+    short_name: 'Verda',
     description: 'A room to wander. Retro, tabletop, battlestation, workshop, audio and the vault, ' +
       'from independent shops. Plus an arcade.',
     start_url: '/',

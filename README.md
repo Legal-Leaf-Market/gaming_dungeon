@@ -1,4 +1,4 @@
-# Gaming Dungeon
+# Verda Store
 
 An affiliate storefront for the scene: retro and arcade, tabletop, gaming,
 battlestation, PC and 3D printing, audio, power, collectibles and apparel.

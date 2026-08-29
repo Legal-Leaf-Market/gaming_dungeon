@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Gaming Dungeon</title>
+<title>Verda Store</title>
 <meta name="description" content="A room to wander. Retro, tabletop, battlestation, workshop, audio and the vault, from independent shops. Plus an arcade."/>
 <meta name="theme-color" content="#f6f3e9"/>
 <meta name="color-scheme" content="light"/>
@@ -16,15 +16,15 @@
      other domain yet. When one lands they change here, in the same
      pass as robots.txt and the sitemap (CLAUDE.md launch checklist) --
      a test fails if these and tools/sitemap.mjs disagree. -->
-<meta property="og:site_name" content="Gaming Dungeon"/>
+<meta property="og:site_name" content="Verda Store"/>
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://gaming-dungeon.vercel.app/"/>
-<meta property="og:title" content="Gaming Dungeon"/>
+<meta property="og:title" content="Verda Store"/>
 <meta property="og:description" content="A room to wander, not a search box."/>
 <meta property="og:image" content="https://gaming-dungeon.vercel.app/assets/og.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
-<meta property="og:image:alt" content="Gaming Dungeon: a coin door, and the words A ROOM TO WANDER."/>
+<meta property="og:image:alt" content="Verda Store: a coin door, and the words A ROOM TO WANDER."/>
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="stylesheet" href="/css/tokens.css"/>
 <link rel="stylesheet" href="/css/app.css"/>
@@ -33,6 +33,7 @@
      its custom properties. Run `node tools/vale.mjs` to rebuild. -->
 <link rel="stylesheet" href="/css/vale-sky.css"/>
 <link rel="stylesheet" href="/css/vale.css"/>
+<link rel="stylesheet" href="/css/hud.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <!-- EB Garamond and Merriweather are the two faces the game uses:
@@ -66,6 +67,168 @@
      information, so a screen reader should walk straight past it,
      and it is first so that nothing on the page has to out-stack it.
      =========================================================== -->
+<!-- ===========================================================
+     THE INK SET: one drawn object per room.
+
+     Outline only, no fill, stroke on currentColor, so a glyph takes
+     its colour from whatever it sits in: the room's own band on a
+     card, the vale's haze in the background. One drawing, two jobs,
+     and never a second copy to keep in step.
+
+     DRAWN, NOT PICKED FROM AN ICON FONT. The rule the game's UiKit
+     states and this whole site inherited is brush and woodblock, and
+     a geometric pictogram set reads as neither. So the outlines
+     wobble on purpose: long runs are quadratic curves that miss
+     straight by a pixel or two, corners overshoot the way a brush
+     overruns a turn, and the weight drops from 2.5 on the silhouette
+     to 1.5 on interior detail, which is what happens when a hand
+     stops pressing. Perfectly straight is the tell.
+
+     ONE OBJECT PER ROOM, and the object is the obvious one. A room
+     glyph has to survive being 34px in the corner of a card, so it
+     is a cabinet, a pad, a die, never a scene.
+
+     viewBox is 64x64 for every symbol so they scale as a set. Ids
+     are `ico-<room key>` and app.js builds the reference from
+     r.key, which means adding a room means adding a symbol here and
+     nothing else anywhere.
+     =========================================================== -->
+<svg width="0" height="0" aria-hidden="true" focusable="false"
+     style="position:absolute;left:-9999px" class="ink-set">
+  <defs>
+    <g id="ink-defaults"></g>
+  </defs>
+
+  <!-- THE ARCADE FLOOR: an upright cabinet, marquee to coin door. -->
+  <symbol id="ico-arcade" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 57 Q15.4 38 16.2 21 Q16.4 14.4 22.6 13.4 L41.8 13.2 Q48.2 14 48 20.6 Q48.6 38 48 57"/>
+    <path d="M17.2 23.4 Q32 22.4 47 23.2" stroke-width="1.5"/>
+    <path d="M21.4 27.6 Q32 26.9 43 27.4 Q43.6 34 43 40.4 Q32 41.1 21 40.6 Q20.6 34 21.4 27.6 Z"
+          stroke-width="1.5"/>
+    <path d="M18.6 45.2 Q32 44.2 46 45 Q46.4 47.4 46 49.4 Q32 50.4 18 49.6 Q17.9 47.4 18.6 45.2 Z"
+          stroke-width="1.5"/>
+    <path d="M27.6 45 L27.6 41.6" stroke-width="1.5"/>
+    <circle cx="27.6" cy="39.4" r="2.3" stroke-width="1.5"/>
+    <circle cx="35.4" cy="46.6" r="1.7" stroke-width="1.5"/>
+    <circle cx="40.6" cy="46.8" r="1.7" stroke-width="1.5"/>
+    <path d="M14.6 57.2 Q32 58 49.4 57"/>
+  </symbol>
+
+  <!-- PLAY: a pad. The one object anybody reads as "games". -->
+  <symbol id="ico-play" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.4 35.6 Q11.6 26.4 20.4 24.2 Q32 23.4 43.8 24.2 Q52.6 26.2 49.8 35.6
+             Q47.8 44.8 42.2 42.6 Q37.4 40.4 32 40.5 Q26.6 40.4 21.8 42.6
+             Q16.2 44.9 14.4 35.6 Z"/>
+    <path d="M20.4 31.4 L27 31.2" stroke-width="1.5"/>
+    <path d="M23.7 28 L23.8 34.6" stroke-width="1.5"/>
+    <circle cx="40.4" cy="29.4" r="2" stroke-width="1.5"/>
+    <circle cx="44.6" cy="33.4" r="2" stroke-width="1.5"/>
+  </symbol>
+
+  <!-- THE TABLE: a d20. Dice are the table's own shorthand. -->
+  <symbol id="ico-tabletop" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 9.4 Q41.6 14.6 50.4 21 Q51 32 50.2 43.2 Q41.4 49.6 32 54.6
+             Q22.6 49.4 13.8 43 Q13.2 32 14 20.8 Q22.4 14.4 32 9.4 Z"/>
+    <path d="M32 19.6 Q38.6 30 44.4 40.6 Q32 41.4 19.6 40.4 Q25.4 30 32 19.6 Z"
+          stroke-width="1.5"/>
+    <path d="M32 9.6 L32 19.4" stroke-width="1.5"/>
+    <path d="M50 21.4 L44.6 40.2" stroke-width="1.5"/>
+    <path d="M14.2 21.2 L19.4 40.2" stroke-width="1.5"/>
+    <path d="M32 54.4 Q37 47.6 44.2 40.8" stroke-width="1.5"/>
+    <path d="M32 54.4 Q27 47.6 19.8 40.8" stroke-width="1.5"/>
+  </symbol>
+
+  <!-- BATTLESTATION: the desk, which is a screen and a board. -->
+  <symbol id="ico-battlestation" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11.6 13.6 Q32 12.8 52.4 13.6 Q53 25.6 52.2 37.4 Q32 38.2 11.8 37.4
+             Q11.2 25.6 11.6 13.6 Z"/>
+    <path d="M29.8 37.6 Q29.4 41.4 29.6 44.6" stroke-width="1.5"/>
+    <path d="M22.4 45 Q32 44.2 41.8 45" stroke-width="1.5"/>
+    <path d="M14.2 50.4 Q32 49.6 49.8 50.4 Q51.4 53.6 52 56.4 Q32 57.2 12 56.4
+             Q12.8 53.4 14.2 50.4 Z"/>
+    <path d="M19 53.4 L45.2 53.2" stroke-width="1.5"/>
+  </symbol>
+
+  <!-- THE WORKSHOP: a printer mid-job, spool alongside. -->
+  <symbol id="ico-workshop" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15.6 53 Q15 34 15.8 16.4 Q29 15.6 42.4 16.2 Q43 34 42.2 53"/>
+    <path d="M12.8 53.4 Q29 54.2 45 53.2"/>
+    <path d="M16 30.6 Q29 29.8 42 30.4" stroke-width="1.5"/>
+    <path d="M25.4 30.6 L33 30.6 L31.4 37.4 L27 37.4 Z" stroke-width="1.5"/>
+    <path d="M20.6 45.4 Q29 44.8 37.4 45.2" stroke-width="1.5"/>
+    <circle cx="52" cy="23.6" r="5.6" stroke-width="1.5"/>
+    <circle cx="52" cy="23.6" r="1.6" stroke-width="1.5"/>
+  </symbol>
+
+  <!-- AUDIO: cans. Not a note, not a speaker cone: cans. -->
+  <symbol id="ico-audio" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.4 37.6 Q12.4 14.6 32 13.8 Q51.6 14.4 50.6 37.6"/>
+    <path d="M10.4 37 Q10.2 33.6 14.2 33.4 L17 33.4 Q20.4 33.6 20.4 37
+             Q21 42.6 20.4 47.4 Q20.4 50.8 17 50.9 L14.2 50.9 Q10.2 50.7 10.4 47.2
+             Q9.9 42.4 10.4 37 Z" stroke-width="1.5"/>
+    <path d="M53.6 37 Q53.8 33.6 49.8 33.4 L47 33.4 Q43.6 33.6 43.6 37
+             Q43 42.6 43.6 47.4 Q43.6 50.8 47 50.9 L49.8 50.9 Q53.8 50.7 53.6 47.2
+             Q54.1 42.4 53.6 37 Z" stroke-width="1.5"/>
+  </symbol>
+
+  <!-- POWER: the brick you keep losing, with its cable. -->
+  <symbol id="ico-power" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M25.4 11.6 Q25 16.4 25.2 21.4" stroke-width="1.5"/>
+    <path d="M38.6 11.4 Q39 16.4 38.8 21.6" stroke-width="1.5"/>
+    <path d="M18.4 21.6 Q32 20.8 45.6 21.6 Q46.2 27.6 45.6 32.4
+             Q45.4 38.6 38.6 39.4 Q32 39.9 25.4 39.4 Q18.6 38.6 18.4 32.4
+             Q17.8 27.4 18.4 21.6 Z"/>
+    <path d="M31.8 39.6 Q32.4 47.6 25 50.2 Q16.6 52.6 18.6 58.4" stroke-width="1.5"/>
+  </symbol>
+
+  <!-- THE VAULT: a figure still in the box, which is the joke and
+       also literally what the room stocks. -->
+  <symbol id="ico-vault" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18.4 11.6 Q32 10.8 45.6 11.6 Q46.2 33 45.6 55.4 Q32 56.2 18.4 55.4
+             Q17.8 33 18.4 11.6 Z"/>
+    <path d="M22.6 18.4 Q32 17.8 41.4 18.4 Q42 31 41.4 44.4 Q32 45 22.6 44.4
+             Q22 31 22.6 18.4 Z" stroke-width="1.5"/>
+    <circle cx="32" cy="25.4" r="3.2" stroke-width="1.5"/>
+    <path d="M32 28.6 L32 37.8" stroke-width="1.5"/>
+    <path d="M26.8 32.4 Q32 31.8 37.2 32.4" stroke-width="1.5"/>
+    <path d="M32 37.8 L28.4 43.6" stroke-width="1.5"/>
+    <path d="M32 37.8 L35.6 43.6" stroke-width="1.5"/>
+  </symbol>
+
+  <!-- THE WARDROBE: on a hanger, because "what you wear to the
+       thing" is a thing you own, not a thing you are wearing. -->
+  <symbol id="ico-wardrobe" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 15.4 Q31.6 9.6 35.4 9.4 Q39 9.6 38.6 13.4" stroke-width="1.5"/>
+    <path d="M32 15.4 L19.4 23.4 Q32 24.2 44.6 23.4 Z" stroke-width="1.5"/>
+    <path d="M24.4 25.6 Q18.4 27.6 16.4 36.4 L21.4 38.4 L23.4 32.6
+             Q22.8 44 23.4 53.4 Q32 56.2 40.6 53.4 Q41.2 44 40.6 32.6
+             L42.6 38.4 L47.6 36.4 Q45.6 27.6 39.6 25.6
+             Q36 29.4 32 29.4 Q28 29.4 24.4 25.6 Z"/>
+    <path d="M32 29.6 Q32.4 42 32 54.4" stroke-width="1.5"/>
+  </symbol>
+
+  <!-- THE ARCADE (free play): a ball-top stick. The room next door
+       gets the whole cabinet; this one gets the part you hold. -->
+  <symbol id="ico-arcade-stick" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 46.6 Q32 45.8 47 46.6 Q48.6 52 49.4 56.4 Q32 57.2 14.6 56.4
+             Q15.4 51.8 17 46.6 Z"/>
+    <path d="M32 46.6 Q31.6 38 32 31.4" stroke-width="1.5"/>
+    <circle cx="32" cy="25.6" r="6"/>
+    <circle cx="22.6" cy="51.6" r="2" stroke-width="1.5"/>
+    <circle cx="41.4" cy="51.8" r="2" stroke-width="1.5"/>
+  </symbol>
+</svg>
+
 <div class="vale" aria-hidden="true">
   <i class="rays"></i>
   <i class="sun"></i>
@@ -74,6 +237,7 @@
   <i class="mid"></i>
   <i class="mist mist-1"></i>
   <i class="wash"></i>
+  <i class="village"></i>
   <i class="grove"></i>
   <i class="mist mist-2"></i>
 </div>
@@ -92,7 +256,7 @@
 <header class="top">
   <a class="brand" href="/">
     <span class="brand-mark" aria-hidden="true"></span>
-    <span class="brand-name">GAMING&nbsp;DUNGEON</span>
+    <span class="brand-name">VERDA&nbsp;STORE</span>
   </a>
   <nav class="top-nav">
     <a href="/arcade">THE&nbsp;ARCADE</a>
@@ -206,7 +370,7 @@
 
 <footer class="foot">
   <p>
-    Gaming Dungeon is an affiliate storefront. We never take an order: every
+    Verda Store is an affiliate storefront. We never take an order: every
     checkout is a hand-off to the shop's own site. Some of those links pay us
     and <a href="#" id="disclosureLink">many currently do not</a> &mdash;
     <a href="/disclosure">the whole story is here</a>.

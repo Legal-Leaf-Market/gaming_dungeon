@@ -1,4 +1,4 @@
-# CLAUDE.md — Operating guide for Gaming Dungeon
+# CLAUDE.md — Operating guide for Verda Store
 
 Read this fully before editing. Sister project to **Legal-Leaf Market**,
 **Herbal Leaf Market**, **Nicotia Market** and **Kawaii Katz**. It copies their
@@ -688,7 +688,7 @@ link, which is the entire reason it is the connective tissue across the sites.
 
 **This site left the sister-site palette on 2026-08-29, on the owner's explicit
 call.** Legal-Leaf, Herbal-Leaf, Nicotia and Kawaii Katz still share the old dark
-family tokens; Gaming Dungeon does not. The cross-links in the footer visibly do
+family tokens; Verda Store does not. The cross-links in the footer visibly do
 not match, and **that is the intended outcome, not drift.** Do not "fix" it by
 reverting to the family palette.
 
