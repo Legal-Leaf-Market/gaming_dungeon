@@ -1022,6 +1022,23 @@ function village() {
 
      Sorted by x and drawn left to right, which keeps neighbouring
      canopies overlapping in a consistent direction. */
+  /* THE ROOFS HAVE TO SHOW.
+
+     Houses are drawn before the trees, so every canopy covered them
+     and the blue tile, which is the loudest note in the whole Azure
+     City palette and the thing that says WHICH game this is, was
+     invisible behind blossom.
+
+     The fix is not layer order, because a tree drawn behind a house
+     is a tree the house is standing in front of, which is worse. It
+     is CLEARANCE: the trees keep out of a corridor around each roof,
+     the way a real village has a gap where the buildings are. The
+     canopies still overlap the walls and the eaves; what they no
+     longer do is sit on the ridgeline. */
+  const ROOF_CLEAR = 74
+  const roofXs = houses.map(h => h.x)
+  const clearOf = x => roofXs.every(rx => Math.abs(x - rx) > ROOF_CLEAR)
+
   const stands = [
     { kind: 'ancient', x: 232 }, { kind: 'ancient', x: 1010 },
     { kind: 'mature', x: 96 }, { kind: 'mature', x: 402 },
@@ -1036,6 +1053,10 @@ function village() {
   ]
   for (const t of stands) {
     t.x += r(-26, 26)
+    /* nudged out of a roof corridor rather than deleted: losing a
+       tree leaves a hole, moving one leaves a village */
+    let guard = 0
+    while (!clearOf(t.x) && guard++ < 40) t.x += t.x < PLATE_W / 2 ? -9 : 9
     /* JITTER ONLY. The species table carries the real variation, so
        this stays inside a band that cannot distort the proportions
        that make an ancient read as ancient. */
@@ -1047,7 +1068,11 @@ function village() {
 
   /* Pines behind, as the dark note. A wall of pink with nothing dark
      in it turns to candyfloss no matter how the pinks are tuned. */
-  for (let i = 0; i < 5; i++) pine(r(40, PLATE_W - 40), GROUND + r(2, 14), r(0.7, 1.1))
+  for (let i = 0; i < 5; i++) {
+    let px = r(40, PLATE_W - 40), guard = 0
+    while (!clearOf(px) && guard++ < 40) px += px < PLATE_W / 2 ? -11 : 11
+    pine(px, GROUND + r(2, 14), r(0.7, 1.1))
+  }
 
   /* Defined once, placed hundreds of times. `bl` is a five-lobed
      blossom rosette with a gap at its centre; `lf` is a pointed

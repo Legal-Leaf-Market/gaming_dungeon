@@ -79,11 +79,21 @@ body::after{
   border:var(--stroke) solid var(--ink);border-radius:var(--radius);
   background:
     linear-gradient(100deg,
-      rgba(251,249,242,.95) 0%,
-      rgba(248,245,236,.91) 44%,
-      rgba(246,243,233,.30) 63%,
-      rgba(246,243,233,.04) 84%,
-      rgba(246,243,233,0) 100%);
+      rgba(251,249,242,.96) 0%,
+      rgba(248,245,236,.93) 46%,
+      rgba(246,243,233,.52) 64%,
+      rgba(246,243,233,.20) 82%,
+      rgba(246,243,233,.10) 100%);
+  /* RETUNED FOR A BRIGHTER WORLD. These stops were set against the
+     old muted olive palette, where clearing to nothing on the right
+     let the peak through and the panel still read as a panel. Against
+     Azure City's blue sky the same stops washed out: a near-invisible
+     veil over a bright ground stops looking like a window onto the
+     valley and starts looking like a rendering fault.
+
+     So the right end no longer reaches zero. Ten percent is enough to
+     hold an edge and little enough to keep the mountain. */
+  box-shadow: inset 0 0 0 1px rgba(27,24,21,.06), 0 1px 0 rgba(255,255,255,.5);
   /* THE STOPS ARE THE LEDE'S OWN RIGHT EDGE. The paragraph runs to
      about 46% of the hero's width, so the veil holds full strength
      to 44% and then falls off a cliff. An earlier, gentler ramp put
