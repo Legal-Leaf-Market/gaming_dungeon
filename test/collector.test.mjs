@@ -98,3 +98,62 @@ test('no credential is baked into the program', () => {
   assert.equal(/ADMIN_PASSCODE\s*=/.test(source), false)
   assert.ok(source.includes('type="password"'), 'the panel must ask for it instead')
 })
+
+/* ============================================================
+   A SERVER ERROR IS NOT A SHOP BLOCKING YOU
+
+   The send path called r.json() directly, so any response that
+   arrived without being JSON (a platform 404, a 500 HTML page, a
+   domain pointed at the wrong project) threw, landed in the CSP
+   catch, and told the operator the SHOP was refusing. A whole
+   session of captures went nowhere and every message blamed the
+   merchant. The HTTP status, the one thing that would have explained
+   it, was discarded before anyone could read it.
+
+   These assert on source because the collector is a served string,
+   not an importable module, and the behaviour lives in a browser
+   that no test here runs.
+   ============================================================ */
+import { readFileSync as readCollector } from 'node:fs'
+
+/* COMMENTS STRIPPED, and the first run of these tests is why: the
+   fix's own comment explains the bug by NAMING the call it removed,
+   and the guard read that as the call coming back. products.test.mjs
+   already carries this scar written out in full. A guard that cannot
+   tell "the bug is back" from "here is why the bug existed" punishes
+   the documentation, and the documentation is the more valuable
+   half. */
+const collectorSrc = readCollector(new URL('../api/collector.js', import.meta.url), 'utf8')
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/^\s*\/\/.*$/gm, '')
+
+test('the send path reads the response as text before parsing it', () => {
+  const send = collectorSrc.slice(collectorSrc.indexOf('$("gd-send").disabled = true'))
+  const body = send.slice(0, send.indexOf('function relay('))
+  assert.ok(/r\.text\(\)/.test(body),
+    'the send path must read the body as text; r.json() throws on a non-JSON ' +
+    'response and that throw is indistinguishable from a CSP refusal')
+  assert.ok(!/\br\.json\(\)/.test(body),
+    'r.json() is back in the send path, which reintroduces the misdiagnosis')
+})
+
+test('a non-JSON response reports the status and the destination', () => {
+  const send = collectorSrc.slice(collectorSrc.indexOf('$("gd-send").disabled = true'))
+  const body = send.slice(0, send.indexOf('function relay('))
+  /* The two facts that separate "wrong deployment" from "shop is
+     blocking us", and the operator cannot tell them apart without
+     both. */
+  assert.ok(/o\.status/.test(body), 'the HTTP status must reach the operator')
+  assert.ok(/did not return JSON/.test(body),
+    'a reachable server that is not speaking JSON must say so, not blame the shop')
+  assert.ok(/not the shop/.test(body),
+    'the message must explicitly clear the merchant, since the old one blamed it')
+})
+
+test('the panel shows where captures are being sent', () => {
+  /* A bookmarklet keeps its build origin forever. Move the site and
+     every saved bookmark posts to the old deployment, which has no
+     symptom except an empty library. */
+  assert.ok(/sending to/.test(collectorSrc),
+    'the panel must print its destination origin, or a stale bookmarklet is invisible')
+})

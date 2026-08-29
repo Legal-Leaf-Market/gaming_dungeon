@@ -493,6 +493,15 @@ const OPERATOR_SOURCE = `
       'border:1px solid #8b5cf6;border-radius:999px;padding:9px 14px;cursor:pointer;font:inherit;' +
       'font-weight:700">Scan everything</button>' +
     '<div id="gd-scanmsg" style="margin-top:6px;opacity:.7;font-size:12px"></div>' +
+    /* THE DESTINATION, ON SCREEN, ALWAYS. A bookmarklet keeps the
+       origin it was built with, forever, sitting in a bookmarks bar.
+       Move the site to a new domain and every old bookmark quietly
+       goes on posting to the old deployment, where the captures
+       really are stored, just not anywhere the new site reads. That
+       failure has no symptom at all except an empty library. One
+       line of text turns it into something you can see. */
+    '<div style="margin-top:8px;opacity:.55;font-size:11px;word-break:break-all">' +
+      'sending to ' + esc(ORIGIN) + '</div>' +
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
       '<button id="gd-send" style="flex:1;background:#8b5cf6;color:#0a0413;border:0;' +
       'border-radius:999px;padding:9px 14px;cursor:pointer;font:inherit;font-weight:700">Send</button>' +
@@ -601,21 +610,53 @@ const OPERATOR_SOURCE = `
       headers: { "content-type": "application/json", "x-gd-admin-token": token },
       body: JSON.stringify(body())
     })
-      .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, j: j }; }); })
+      /* READ IT AS TEXT AND PARSE IT OURSELVES.
+
+         r.json() was called directly here and it is the reason a
+         batch of captures could vanish without a word. A response
+         that ARRIVED but is not JSON, which is what a platform 404,
+         a 500 HTML error page or a domain pointed at the wrong
+         project all look like, makes .json() throw, and a throw here
+         landed in the catch below whose entire message is "this shop
+         blocks sending directly". So the operator captured shop after
+         shop, was told each time that the SHOP was at fault, watched
+         a relay tab open and fail, and nothing was ever stored. The
+         one thing that could have explained it, the HTTP status, was
+         thrown away before anybody could read it.
+
+         A response is a response. If it came back at all the server
+         is reachable and the status is the answer. */
+      .then(function(r){
+        return r.text().then(function(t){
+          var j = null;
+          try { j = JSON.parse(t); } catch (e) {}
+          return { ok: r.ok, status: r.status, j: j, text: t };
+        });
+      })
       .then(function(o){
         $("gd-send").disabled = false;
-        say(o.ok
-          ? "Stored. " + o.j.added + " new, " + o.j.total + " on file for " + o.j.merchantKey + "."
-          : "Refused: " + (o.j.error || "unknown"));
+        if (o.j) {
+          say(o.ok
+            ? "Stored. " + o.j.added + " new, " + o.j.total + " on file for " + o.j.merchantKey + "."
+            : "Refused (" + o.status + "): " + (o.j.error || "unknown"));
+          return;
+        }
+        /* Reachable, and not speaking JSON. Name the status and the
+           address, because at this point the likeliest causes are a
+           bookmarklet built against an old deployment and a domain
+           that is not serving this project's functions, and the
+           address on screen distinguishes them instantly. */
+        say("Server answered " + o.status + " at " + ORIGIN +
+            " but did not return JSON. That is this deployment, not the shop. " +
+            "Check that " + ORIGIN + "/api/capture?worklist loads, and that the " +
+            "bookmarklet was built from the site you are trying to store into.");
       })
       .catch(function(){
-        /* A THROWN fetch HERE IS ALMOST ALWAYS CSP, NOT AN OUTAGE.
-           connect-src refusals surface as a bare TypeError with no
-           detail, so there is nothing to read and no point reporting
-           it as a network error. The relay is tried automatically
-           rather than offered, because an operator who has already
-           captured the page should not have to know what connect-src
-           is. */
+        /* NOW this really is CSP or the network. A thrown fetch gives
+           a bare TypeError with no detail, so there is nothing to
+           read; the relay is tried automatically rather than offered,
+           because an operator who has already captured the page
+           should not have to know what connect-src is. */
         say("This shop blocks sending directly. Opening a relay tab...");
         relay(token);
       });
