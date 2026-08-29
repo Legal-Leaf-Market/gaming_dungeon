@@ -1,0 +1,27 @@
+{
+  "key": "longer3d",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "",
+  "capture": {
+    "products": 168,
+    "claimedTotal": 882,
+    "partial": true,
+    "platform": "shopify",
+    "priceRange": {
+      "min": 3.99,
+      "max": 2499,
+      "mean": 196.88
+    },
+    "unpriced": 0,
+    "withoutImage": 1
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "EMPTY INCLUDE BECAUSE THIS IS A 19% SAMPLE. The capture holds 168 of 882 products. A non-empty include list can only name types somebody has SEEN, so on a sample it silently drops every type in the unseen 80%. That is the failure mode nobody notices: the shelf fills, it looks plausible, and two thirds of the catalogue is missing.",
+    "The cost of the empty list is three junk rows: two 'Additional Payment Link' and one 'AI Credits', which are checkout mechanisms rather than products and will render as cards with prices. Three bad rows in eight hundred is a rounding error against dropping seven hundred good ones. If an exclude list ever exists, they are the first entries.",
+    "The Gift Card is refused by the classifier without help.",
+    "Everything lands in the Workshop, which is correct: laser engravers, 3D printers and their parts."
+  ]
+}

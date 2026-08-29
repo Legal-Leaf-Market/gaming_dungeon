@@ -1,0 +1,27 @@
+{
+  "key": "creativearcades",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "",
+  "capture": {
+    "products": 150,
+    "claimedTotal": 150,
+    "partial": false,
+    "platform": "shopify",
+    "priceRange": {
+      "min": 75,
+      "max": 18900,
+      "mean": 5463.24
+    },
+    "unpriced": 0,
+    "withoutImage": 0
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "THE DRAFT'S 21-TYPE INCLUDE LIST WOULD HAVE COST 31 PRODUCTS. 31 of 150 are untyped, and an include list can only name types, so a non-empty one drops every one of them. At 21% untyped the generator sat just under its 25% threshold and proposed a list; the threshold is a heuristic and this is the case where reading it beats trusting it.",
+    "Empty include instead, so all 150 are carried. The one thing that needed dropping, a Gift Card, is refused by _scene.js on its own, which is exactly why the empty list is safe here: the classifier is already doing the excluding.",
+    "Every type lands in arcade, which is the cleanest single-room fit of the thirteen shops read today. Two Stern Pinball rows go to tabletop and five Parts rows scatter; both are fine.",
+    "$75 to $18,900, mean $5,463. This merchant will dominate a price-sorted Arcade shelf and it should: they sell actual cabinets."
+  ]
+}

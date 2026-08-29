@@ -1,0 +1,29 @@
+{
+  "key": "ohrija",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "recommendation": "DO NOT PUBLISH. `pending` stays true. Read the review.",
+  "source": "",
+  "capture": {
+    "products": 224,
+    "claimedTotal": null,
+    "partial": false,
+    "platform": "woocommerce",
+    "priceRange": {
+      "min": 1.99,
+      "max": 124.3,
+      "mean": 32.12
+    },
+    "unpriced": 0,
+    "withoutImage": 0
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "NOT A GAMING MERCHANT, AND HELD FOR THE SAME REASON POWOXI WAS. 224 products and the type list reads: 13S 54.6V CHARGER, 48V GOLF CHARGER, RV CHARGER, 4S LIFEPO4 BMS, 30S 126V CHARGER. These are e-bike, golf-cart and RV battery chargers and battery management boards. Nothing here plugs into a desk, a handheld or a console.",
+    "This is the single largest capture of the thirteen, so holding it is the most expensive judgement in this batch and it is made anyway. POWOXI's 32 deer-feeder solar chargers were held on 2026-08-29; publishing ohrija's 224 would be the same shelf with more of it, and the only difference is the size of the number.",
+    "The Power room's blurb is 'chargers, cables, and the brick you keep losing'. A 126V lithium pack charger is not that brick.",
+    "REGISTRY PLATFORM WAS WRONG here too: it said shopify, the Woo Store API answered. Corrected in the same commit so that if this is ever published the strategy is right.",
+    "One word from the owner publishes it. The capture is understood and the file is here so nobody reads it twice."
+  ]
+}

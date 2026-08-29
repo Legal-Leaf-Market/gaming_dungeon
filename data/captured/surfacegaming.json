@@ -1,0 +1,27 @@
+{
+  "key": "surfacegaming",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "",
+  "capture": {
+    "products": 34,
+    "claimedTotal": 34,
+    "partial": false,
+    "platform": "shopify",
+    "priceRange": {
+      "min": 0,
+      "max": 15.9,
+      "mean": 12.84
+    },
+    "unpriced": 2,
+    "withoutImage": 0
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "ROOM CORRECTED FROM play TO battlestation. Every one of the 34 landed in play, and that was not a classification, it was the STORE'S OWN FALLBACK ROOM: the classifier matched nothing and _scene.js dropped each product into the registry's room. Mouse skates and grip tape at a mean of $12.84 are desk goods. Play is 'games, keys and the things you actually play'.",
+    "That is worth naming as a pattern, not a one-off: a room breakdown showing 100% in the store's own room is the shape of a fallback, not of a fit. Check the products before believing it.",
+    "Empty include: a list of ['mouse','phone'] would drop the single untyped row for nothing.",
+    "Two products are unpriced. They will show without a price rather than with a wrong one."
+  ]
+}

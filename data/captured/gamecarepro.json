@@ -1,0 +1,25 @@
+{
+  "key": "gamecarepro",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "",
+  "capture": {
+    "products": 2,
+    "claimedTotal": 2,
+    "partial": false,
+    "platform": "shopify",
+    "priceRange": {
+      "min": 29.95,
+      "max": 49.95,
+      "mean": 39.95
+    },
+    "unpriced": 0,
+    "withoutImage": 0
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "Two products, both untyped, both landing in arcade. Empty include because a list would drop both.",
+    "A two-product shop is barely a shelf, but it is honest: the sitemap says two and the capture holds two."
+  ]
+}

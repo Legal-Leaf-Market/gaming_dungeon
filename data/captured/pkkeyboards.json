@@ -1,0 +1,40 @@
+{
+  "key": "pkkeyboards",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "",
+  "capture": {
+    "products": 128,
+    "claimedTotal": 128,
+    "partial": false,
+    "platform": "shopify",
+    "priceRange": {
+      "min": 2,
+      "max": 159,
+      "mean": 20.57
+    },
+    "unpriced": 0,
+    "withoutImage": 0
+  },
+  "include": [
+    "Switches",
+    "Tools",
+    "Stabilizers",
+    "Keyboards",
+    "keycaps",
+    "Lubricant",
+    "accessories",
+    "Cases",
+    "Cables",
+    "PCB",
+    "Plates"
+  ],
+  "roomMap": {
+    "Plates": "workshop"
+  },
+  "review": [
+    "The cleanest capture of the thirteen: 128 of 128, every product typed, nothing untyped, nothing refused. The proposal is taken as written.",
+    "'keycaps' and 'accessories' appear in lowercase while the rest are capitalised. Both are listed exactly as the feed spells them, because the include match is on the string the merchant sends, not on a tidied version of it.",
+    "One Plates row goes to the Workshop by the classifier's own reading, and that is kept: a keyboard plate is a part for a build, which is what that room is."
+  ]
+}

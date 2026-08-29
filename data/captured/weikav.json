@@ -1,0 +1,31 @@
+{
+  "key": "weikav",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "",
+  "capture": {
+    "products": 62,
+    "claimedTotal": 63,
+    "partial": true,
+    "platform": "woocommerce",
+    "priceRange": {
+      "min": 10.99,
+      "max": 149,
+      "mean": 49.66
+    },
+    "unpriced": 0,
+    "withoutImage": 0
+  },
+  "include": [
+    "Switches",
+    "Accessories",
+    "Keycaps"
+  ],
+  "roomMap": {},
+  "review": [
+    "DISCONTINUED IS EXCLUDED, AND IT IS HALF THE CATALOGUE. 30 of 62 products carry the product_type 'Discontinued'. The draft proposed including them because they classify cleanly into battlestation, which they do: they are keyboards, and they are also keyboards the merchant has stopped selling. Shipping them means a shopper clicks a card and lands on a dead product, which is the single worst thing this storefront can do.",
+    "That leaves 26 of 62 published. A smaller shelf that works beats a bigger one that sends people to nothing.",
+    "REGISTRY PLATFORM WAS WRONG. It said shopify; the capture came back through the WooCommerce Store API. Fourth time in thirteen shops. Corrected.",
+    "62 of 63 by the sitemap. The live scrape reads the shop directly rather than replaying this, so the last one arrives if it is still listed."
+  ]
+}

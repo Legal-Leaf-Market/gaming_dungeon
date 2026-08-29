@@ -1,0 +1,26 @@
+{
+  "key": "animemousepad",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "",
+  "capture": {
+    "products": 33,
+    "claimedTotal": null,
+    "partial": false,
+    "platform": "shopify",
+    "priceRange": {
+      "min": 0,
+      "max": 55,
+      "mean": 28.59
+    },
+    "unpriced": 1,
+    "withoutImage": 0
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "33 products, none typed, all landing in battlestation. Empty include because a list would drop all 33.",
+    "Captured through the DOM rather than a JSON endpoint, which means the registry's shopify strategy is the thing to watch on first publish: if the shelf comes back empty, the platform field is the first place to look.",
+    "One product has no price."
+  ]
+}

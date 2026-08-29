@@ -1,0 +1,28 @@
+{
+  "key": "bestofkawaii",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "recommendation": "DO NOT PUBLISH. Spam in the catalogue and no usable prices or images.",
+  "source": "",
+  "capture": {
+    "products": 82,
+    "claimedTotal": 1,
+    "partial": false,
+    "platform": "json-ld",
+    "priceRange": {
+      "min": 0,
+      "max": 55903,
+      "mean": 681.74
+    },
+    "unpriced": 81,
+    "withoutImage": 75
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "THIS CAPTURE IS NOT USABLE AND THE SHOP MAY NOT BE HEALTHY. 81 of 82 products have no price, 75 of 82 have no image, and the prices that did come through run to $55,903 against a mean of $681. Those are JSON-LD blobs being read as products, not a catalogue.",
+    "ONE OF THE PRODUCT TYPES IS 'Situs Togel Terpercaya'. That is Indonesian gambling spam, and finding it in a kawaii shop's structured data is the signature of an injected page or a compromised site. It is the reason this is held rather than merely recaptured.",
+    "The sitemap lists ONE product URL and the capture returned 82 products from it, which is the same fact from the other side: whatever was read, it was not 82 product pages.",
+    "Do not publish, and it is worth telling the merchant. A partner site serving spam in its structured data is their problem before it is ours, and we would be linking shoppers into it."
+  ]
+}

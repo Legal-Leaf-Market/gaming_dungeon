@@ -158,13 +158,13 @@ export const STORES = [
     note:'Arcade sticks and fight controllers. Thin rate, exactly the right room.' },
 
   { key:'creativearcades', name:'Creative Arcades', room:'arcade', domain:'creative-arcades.com',
-    platform:'shopify', ref:'', rate:'1%', cookie:30, tier:1, pending:true,
+    platform:'shopify', ref:'', rate:'1%', cookie:30, tier:1, pending:false,
     note:'Sells ACTUAL ARCADE CABINETS. 1% is nearly nothing, and they are here for the ' +
          'content rather than the commission: a site with an arcade in it should be able ' +
          'to point at a real cabinet. On a $2,000 cabinet 1% is still $20.' },
 
   { key:'gamecarepro', name:'Game Care Pro', room:'arcade', domain:'gamecarepro.com',
-    platform:'shopify', ref:'', rate:'20%', cookie:7, tier:2, pending:true,
+    platform:'shopify', ref:'', rate:'20%', cookie:7, tier:2, pending:false,
     note:'Cleaning and restoration for discs and cartridges. Genuinely a retro-collector need.' },
 
   /* ==========================================================
@@ -193,8 +193,8 @@ export const STORES = [
   { key:'trtlgaming', name:'TRTL GAMING', room:'play', domain:'www.trtlgaming.com',
     platform:'shopify', ref:'', rate:'5%', cookie:30, tier:1, pending:true },
 
-  { key:'surfacegaming', name:'Surface Gaming', room:'play', domain:'surface-gaming.com',
-    platform:'shopify', ref:'', rate:'20%', cookie:7, tier:2, pending:true },
+  { key:'surfacegaming', name:'Surface Gaming', room:'battlestation', domain:'surface-gaming.com',
+    platform:'shopify', ref:'', rate:'20%', cookie:7, tier:2, pending:false },
 
   /* ==========================================================
      TABLETOP — dice, TCG, miniatures.
@@ -245,11 +245,11 @@ export const STORES = [
     platform:'shopify', ref:'', rate:'10%', cookie:30, tier:1, pending:true },
 
   { key:'weikav', name:'Weikav Keyboard', room:'battlestation', domain:'weikav.com',
-    platform:'shopify', ref:'fimmfdau', rate:'8%', cookie:30, tier:1, pending:true,
+    platform:'woocommerce', ref:'fimmfdau', rate:'8%', cookie:30, tier:1, pending:false,
     note:'A real mechanical keyboard brand.' },
 
   { key:'pkkeyboards', name:'pkkeyboards', room:'battlestation', domain:'pkkeyboards.com',
-    platform:'shopify', ref:'', rate:'5%', cookie:30, tier:1, pending:true },
+    platform:'shopify', ref:'', rate:'5%', cookie:30, tier:1, pending:false },
 
   { key:'onikuma', name:'Onikuma Gaming', room:'battlestation', domain:'www.onikuma.com',
     platform:'shopify', ref:'', rate:'20%', cookie:7, tier:1, pending:true,
@@ -271,7 +271,7 @@ export const STORES = [
          'One of exactly two the research says to take from those twenty domains.' },
 
   { key:'animemousepad', name:'Anime Mousepads', room:'battlestation', domain:'anime-mousepad.com',
-    platform:'shopify', ref:'', rate:'15%', cookie:7, tier:2, pending:true,
+    platform:'shopify', ref:'', rate:'15%', cookie:7, tier:2, pending:false,
     note:'The other one of the two. Same cluster, same caveat.' },
 
   /* ---- screens; both Portable Monitor domains, and why both ----
@@ -312,7 +312,7 @@ export const STORES = [
      people research for weeks.
      ========================================================== */
   { key:'longer3d', name:'LONGER 3D', room:'workshop', domain:'www.longer3d.com',
-    platform:'shopify', ref:'', rate:'5%', cookie:180, tier:1, pending:true,
+    platform:'shopify', ref:'', rate:'5%', cookie:180, tier:1, pending:false,
     note:'Major 3D-printer brand. On a $300 printer the 180-day window is worth more than ' +
          'double the rate would be at 30 days.' },
 
@@ -331,7 +331,7 @@ export const STORES = [
      AUDIO.
      ========================================================== */
   { key:'fosiaudio', name:'Fosi Audio', room:'audio', domain:'fosiaudio.com',
-    platform:'shopify', ref:'', rate:'8%', cookie:30, tier:1, pending:true,
+    platform:'shopify', ref:'', rate:'8%', cookie:30, tier:1, pending:false,
     note:'Budget hi-fi amps with a real cult following: heavily researched, badly covered ' +
          'by everybody else. The single best brand fit in the electronics cut.' },
 
@@ -353,7 +353,7 @@ export const STORES = [
     platform:'woocommerce', ref:'tzexwwsr', rate:'8%', cookie:30, tier:1, pending:true },
 
   { key:'ohrija', name:'ohrija charger', room:'power', domain:'ohrija.com',
-    platform:'shopify', ref:'auoqghqm', rate:'3%', cookie:30, tier:1, pending:true },
+    platform:'woocommerce', ref:'auoqghqm', rate:'3%', cookie:30, tier:1, pending:true },
 
   { key:'cablepro', name:'Cable Pro', room:'power', domain:'shopcablepro.com',
     platform:'shopify', ref:'vamnsdsg', rate:'10%', cookie:7, tier:3, pending:true },
@@ -383,7 +383,7 @@ export const STORES = [
      one. Do not keep both because both are approved.
      ========================================================== */
   { key:'maximuscollectibles', name:'Maximus Collectibles', room:'vault', domain:'maximuscollectibles.myshopify.com',
-    platform:'shopify', ref:'', rate:'5%', cookie:365, tier:1, pending:true,
+    platform:'shopify', ref:'', rate:'5%', cookie:365, tier:1, pending:false,
     note:'365-DAY cookie, the longest in the entire file. 5% over a year-long window is ' +
          'genuinely unusual and worth taking on those terms alone.' },
 

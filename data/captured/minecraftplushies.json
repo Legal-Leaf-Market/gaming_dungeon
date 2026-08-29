@@ -1,0 +1,28 @@
+{
+  "key": "minecraftplushies",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "recommendation": "DO NOT PUBLISH. Platform unconfirmed; would likely ship zero products.",
+  "source": "",
+  "capture": {
+    "products": 8,
+    "claimedTotal": 21,
+    "partial": true,
+    "platform": "shopify",
+    "priceRange": {
+      "min": 25.99,
+      "max": 112.5,
+      "mean": 39.83
+    },
+    "unpriced": 0,
+    "withoutImage": 0
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "THE PLATFORM IS THE PROBLEM, NOT THE PRODUCTS. Eight plushies, all landing in the Vault, all priced, all with images. There is nothing wrong with the catalogue.",
+    "But no JSON endpoint answered and the capture fell back to walking the DOM, while the registry says shopify. The ingest supports shopify, woocommerce and unknown, and has no DOM strategy. Publishing this as shopify is betting that products.json answers for the live scrape when it refused the capture, and the way that bet loses is Custom Gaming Chair's failure exactly: the shop reads as published and ships zero products.",
+    "8 of 21 by the sitemap, so it is a 38% sample on top of that.",
+    "Cheap to fix: confirm what the shop actually runs on and set the field. Held rather than guessed."
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "key": "gearotaku",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "recommendation": "DO NOT PUBLISH. 90% of products have no image.",
+  "source": "",
+  "capture": {
+    "products": 192,
+    "claimedTotal": 2500,
+    "partial": true,
+    "platform": "shopify",
+    "priceRange": {
+      "min": 34.99,
+      "max": 68,
+      "mean": 50.27
+    },
+    "unpriced": 0,
+    "withoutImage": 173
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "173 OF 192 PRODUCTS HAVE NO IMAGE. That is 90% of the capture, and a shelf of cards showing a letter placeholder where the photograph should be does not read as a shop, it reads as broken. This is the reason to hold, and it is not a judgement call about taste: the grid renders the first letter of the title when an image is missing.",
+    "It is also a 7.7% sample: 192 of 2,500. The two problems compound, because there is no way to tell from this whether the missing images are the merchant's or the scraper's until somebody reads more pages.",
+    "Captured through the DOM after no JSON endpoint answered, while the registry says shopify. The registry supports shopify, woocommerce and unknown; there is no DOM strategy, so publishing this as shopify is a live bet that products.json answers for the ingest when it did not answer for the capture.",
+    "The draft also proposed roomMap {'(none)': 'wardrobe'}, which would force all 192 into the Wardrobe including the 34 the classifier put in the Vault. That is an override of a correct answer and is dropped.",
+    "Recapture with images before revisiting."
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "key": "maximuscollectibles",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /collect draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "",
+  "capture": {
+    "products": 20,
+    "claimedTotal": 20,
+    "partial": false,
+    "platform": "shopify",
+    "priceRange": {
+      "min": 0,
+      "max": 9999,
+      "mean": 560.19
+    },
+    "unpriced": 1,
+    "withoutImage": 1
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "Empty include rather than the proposed eight-type list, which would have dropped the 4 untyped rows, a fifth of a twenty-product shop. The Gift Card the list existed to exclude is refused by _scene.js anyway.",
+    "One Booster Pack classifies to tabletop rather than vault and that is right: a booster pack is a card game, not a collectible in a box.",
+    "One item is priced at $9,999 and one has no price at all. On a twenty-product shelf both are visible, so worth knowing before somebody reports them as bugs."
+  ]
+}
