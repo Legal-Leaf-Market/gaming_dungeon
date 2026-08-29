@@ -296,3 +296,46 @@ test('the manifest serves as a manifest, not as a download', async () => {
   const mf = await r.json()
   assert.equal(mf.name, 'Gaming Dungeon')
 })
+
+test('no heading is left standing over content that is hidden', async () => {
+  /* THE FRONT PAGE SHIPPED "EVERYTHING" OVER AN EMPTY SPACE. app.js
+     hid #allGrid when nothing was published, but the heading lives one
+     level up in #allShelf, so a visitor got a section title promising
+     a shelf with nothing under it -- worse than the empty map above
+     it, because the map at least says "not stocked yet" in each door.
+
+     The fix is structural: the heading and the grid are one claim, so
+     the SECTION is what gets hidden, and it ships hidden so it cannot
+     flash before /api/products answers.
+
+     Asserted against the source rather than a rendered page, because
+     there is no DOM in this suite and adding one to check three lines
+     of toggling would be the largest dependency in the repo. So it
+     pins the three facts that together make the bug impossible. */
+  const html = readFileSync(join(ROOT, 'public', 'index.html'), 'utf8')
+  const app = readFileSync(join(ROOT, 'public', 'js', 'app.js'), 'utf8')
+
+  const shelf = /<section[^>]*id="allShelf"[^>]*>([\s\S]*?)<\/section>/.exec(html)
+  assert.ok(shelf, 'index.html has no #allShelf section')
+  assert.match(shelf[0], /<section[^>]*\bhidden\b/,
+    '#allShelf must ship hidden, or EVERYTHING flashes before the fetch lands')
+  assert.match(shelf[1], /<h2[^>]*>EVERYTHING<\/h2>/,
+    'the heading must live inside the section that gets hidden')
+
+  assert.match(app, /shelf\.hidden = true/, 'app.js must hide the section, not only the grid')
+  assert.equal(/\ball\.hidden = true\b/.test(app), false,
+    'app.js is hiding only #allGrid again, which leaves the heading orphaned')
+})
+
+test('the brand mark in the header is the actual mark', async () => {
+  /* It was a 14px violet rounded square for as long as there was no
+     logo. There is one now, and a logo that is not the logo is the
+     kind of thing everybody sees and nobody files. */
+  await boot()
+  const css = readFileSync(join(ROOT, 'public', 'css', 'app.css'), 'utf8')
+  const rule = /\.brand-mark\{([^}]*)\}/.exec(css)
+  assert.ok(rule, 'no .brand-mark rule')
+  const url = /url\((\/[^)]+)\)/.exec(rule[1])
+  assert.ok(url, '.brand-mark still paints a plain colour instead of the mark')
+  assert.equal((await fetch(BASE + url[1])).status, 200, url[1] + ' does not serve')
+})

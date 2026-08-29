@@ -169,9 +169,15 @@
        rooms gives a visitor nothing to look at. The map is how you
        navigate deliberately; the grid under it is how you wander,
        which is the thesis. It stays hidden until there is stock. */
-    var all = $('#allGrid');
-    if (!all) return;
-    if (!state.items.length) { all.hidden = true; return; }
+    var shelf = $('#allShelf'), all = $('#allGrid');
+    if (!shelf || !all) return;
+    /* THE SECTION, NOT THE GRID INSIDE IT. Hiding only #allGrid left
+       the EVERYTHING heading standing over an empty space -- a
+       promise of content with nothing under it, which is the one
+       thing worse than the empty map it sits below. The heading and
+       the grid are one claim, so they appear and disappear together. */
+    if (!state.items.length) { shelf.hidden = true; return; }
+    shelf.hidden = false;
     all.hidden = false;
     window.GDGrid.mount(all, state.items, { shopNames: state.shopNames });
   }

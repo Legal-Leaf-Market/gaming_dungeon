@@ -20,8 +20,13 @@ main{max-width:1120px;margin:0 auto;padding:0 18px 72px}
 .top{max-width:1120px;margin:0 auto;padding:20px 18px 8px;
   display:flex;align-items:center;gap:18px}
 .brand{display:flex;align-items:center;gap:10px}
-.brand-mark{width:14px;height:14px;border-radius:3px;background:var(--accent);
-  box-shadow:0 0 14px rgba(var(--accent-rgb),.7)}
+/* THE MARK, not a coloured square standing in for one. This was a
+   14px violet box for as long as there was no logo; there is one now,
+   and every page already carries the same <span class="brand-mark">,
+   so pointing it at the SVG fixes the header everywhere at once. */
+.brand-mark{width:20px;height:20px;border-radius:4px;
+  background:url(/assets/mark.svg) center/contain no-repeat;
+  box-shadow:0 0 14px rgba(var(--accent-rgb),.35)}
 .brand-name{font-family:var(--pixel);font-size:12px;letter-spacing:.02em}
 .top-nav{margin-left:auto}
 .top-nav a{font-family:var(--pixel);font-size:8px;color:var(--muted);

@@ -88,9 +88,14 @@
   <!-- The whole dungeon on one shelf, under the map. Hidden until
        there is stock: an empty grid under a map of empty rooms says
        the same thing twice. -->
-  <section class="allshelf" id="allShelf">
+  <!-- HIDDEN UNTIL THERE IS STOCK, HEADING AND ALL. It starts hidden
+       so it never flashes an empty EVERYTHING before /api/products
+       answers, and app.js toggles the SECTION rather than the grid --
+       a heading standing over nothing is a promise of content, which
+       is worse than the empty map above it. -->
+  <section class="allshelf" id="allShelf" hidden>
     <h2 class="sec">EVERYTHING</h2>
-    <div id="allGrid" hidden></div>
+    <div id="allGrid"></div>
   </section>
 
   <!-- ===========================================================
