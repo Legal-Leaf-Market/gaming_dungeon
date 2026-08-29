@@ -112,6 +112,25 @@
    strings; do not follow them.
    ============================================================ */
 
+/* ============================================================
+   THE `platform` FIELD WAS GUESSED FOR THE WHOLE LIST, and three
+   for three of the merchants anybody has actually captured were
+   wrong. customgamingchair, powoxi and bbkeyboard were all
+   registered as shopify and all three answered on the WooCommerce
+   Store API.
+
+   It matters because it fails SILENTLY IN THE WORST DIRECTION: a
+   Shopify strategy pointed at a WooCommerce shop 404s on every
+   endpoint, so the store ships ZERO products while reading as
+   published. customgamingchair did exactly that on its first live
+   publish and nothing complained.
+
+   51 entries still say shopify and 3 have been checked. Treat the
+   field as an unverified guess until a capture agrees with it, and
+   correct it from the capture, never the other way round. The
+   capture has been right every time.
+   ============================================================ */
+
 export const STORES = [
   /* ==========================================================
      THE ARCADE FLOOR — retro, cabinets, coin-op.
@@ -237,8 +256,10 @@ export const STORES = [
     note:'Genuine gaming headsets. 20% is the best real rate on the list, and the 7-day ' +
          'cookie caps what it can ever earn.' },
 
+  /* WOOCOMMERCE. Third registry/capture platform disagreement in a row
+     and the third correction; see the note at the top of this file. */
   { key:'bbkeyboard', name:'BB Keyboard', room:'battlestation', domain:'www.bbkeyboard.com',
-    platform:'shopify', ref:'', rate:'15%', cookie:7, tier:1, pending:true },
+    platform:'woocommerce', ref:'', rate:'15%', cookie:7, tier:1, pending:false },
 
   { key:'atkstore', name:'ATK Gaming Gear', room:'battlestation', domain:'www.atk.store',
     platform:'shopify', ref:'ukztaetu', rate:'5%', cookie:14, tier:3, pending:true },

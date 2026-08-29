@@ -1,0 +1,32 @@
+{
+  "key": "bbkeyboard",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the pasted bookmarklet capture with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "bookmarklet capture via the Woo Store API, 8 of 8 products",
+  "platform": "woocommerce",
+  "capture": {
+    "products": 8,
+    "claimedTotal": 8,
+    "partial": false,
+    "priceRange": { "min": 1, "max": 179, "mean": 114.25 },
+    "unpriced": 0,
+    "withoutImage": 0,
+    "outOfStock": 0
+  },
+  "productTypes": [
+    ["Mini Keyboards", 6],
+    ["Phone Keyboard Cases", 1],
+    ["(none)", 1]
+  ],
+  "include": ["Mini Keyboards", "Phone Keyboard Cases"],
+  "roomMap": {},
+  "review": [
+    "The first complete capture in the set: the sitemap lists 8 products and the scan holds 8. Nothing is being inferred from a sample here.",
+    "A NON-EMPTY include LIST, AND THE ONE UNTYPED ROW IS WHY. 'VIP Members Only' at $1.00 has no product type, no description, no SKU and one stock photo. It is a membership, and the classifier files it into Battlestation on the store's own room fallback, so without the include list the shelf would carry a one dollar card that is not a thing. Naming the two real types drops it, which is the mechanism this repo already prefers: a per-merchant list written from that merchant's capture, never a new global regex.",
+    "That leaves 7 of 8 published: six mini keyboards and one phone keyboard case. Every one of them classifies to battlestation on its own title, so the room assignment is not resting on the store fallback.",
+    "$99 to $179, everything in stock, every product has an image. This is the healthiest feed reviewed so far.",
+    "THE ENTITY BUG IS CONFIRMED IN A SECOND MERCHANT. 'BBQ20KBD Mini BlackBerry-Style Keyboard &#8211; Black' is the product's own name in the feed, so before the decoder landed this card would have read '&#8211;' where the dash belongs. POWOXI found it, this one proves it was never about POWOXI.",
+    "REGISTRY HAD THE PLATFORM WRONG. Third in a row: it said shopify, the Woo Store API answered. Corrected. See the platform note in _stores.js.",
+    "No affiliate ref yet. It ships anyway, per the publishable() rule, and ?debug names it as unattributed."
+  ]
+}
