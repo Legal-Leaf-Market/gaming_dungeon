@@ -684,26 +684,87 @@ link, which is the entire reason it is the connective tissue across the sites.
 
 ---
 
-## 8. The design system is shared — do not drift it
+## 8. The design system: Heavenpillar's ink and paper
 
-`public/css/tokens.css`. **Shared across all sister sites:** `--gold #f0b93c`,
-`--red #ef5350`, and the three font families (Fraunces / Cormorant Garamond /
-Jost). Change one here and you must change it on the other four, or the family
-stops looking like a family — and these sites cross-link, so the seam shows.
+**This site left the sister-site palette on 2026-08-29, on the owner's explicit
+call.** Legal-Leaf, Herbal-Leaf, Nicotia and Kawaii Katz still share the old dark
+family tokens; Gaming Dungeon does not. The cross-links in the footer visibly do
+not match, and **that is the intended outcome, not drift.** Do not "fix" it by
+reverting to the family palette.
 
-**Ours alone** is the accent slot: `--arcade`, a CRT violet, mapped onto
-`--accent`. Legal-Leaf uses a cold blue, Nicotia tobacco amber, Herbal-Leaf
-terracotta. Shared components reach for `--accent` and never for the
-site-specific name, which is what lets `arcade.html` be byte-identical across
-sites.
+### Where the design comes from
 
-The Google Fonts request is byte-identical to the sisters' on purpose: a visitor
-crossing between them gets a cache hit.
+`Legal-Leaf-Market/roblox-game` — **Heavenpillar**, the owner's own Roblox
+cultivation MMORPG. Every value in `tokens.css` is lifted from two files there:
 
-A note earned on Legal-Leaf: **a stylesheet that claims in its own header to
-match another file, and does not, is worse than one that never claimed it.**
-Its market pages were recoloured and `tokens.css` was not, so `/library` painted
-itself in the old palette for weeks. Nothing errored. Recolour in one commit.
+| Source | What it gives |
+|---|---|
+| `src/client/Modules/UiKit.luau` | the palette, the two faces, the radii and stroke widths, and every component shape |
+| `src/shared/Realms.luau` | the twelve major realms: band colours and epithets |
+| `src/shared/Items.luau` | the rarity grades: `common / fine / rare / precious` |
+
+UiKit's own header states the language in one line: **"the ink-and-paper
+interface language: paper panels, ink text, serif faces, brush-stroke bars."**
+Read that file before changing anything here. A colour that drifts from the game
+is worse than one that never matched, because the point is that a player who
+finds this site recognises it.
+
+**It is LIGHT.** Paper `#f6f3e9`, ink `#1b1815`. The old site was violet on
+near-black; nothing about that survives. `--pixel` resolves to the bold serif so
+that any stale rule asking for Press Start 2P degrades to type rather than to a
+missing face.
+
+**Type is EB Garamond + Merriweather** — the game's Garamond and Merriweather.
+EB Garamond is the open metric-compatible Garamond, so this is the same type
+rather than a lookalike. The Google Fonts request is **no longer byte-identical
+to the sisters'**; that cache-hit optimisation was traded for the redesign
+knowingly.
+
+### The one hard rule, ported verbatim
+
+UiKit's header records it as a costly lesson: **every stroke goes on the BORDER
+of a box, never on the glyphs of text**, or "everything reads blobby". In Roblox
+that is `ApplyStrokeMode.Border`; here it is `border` on a container and never
+`-webkit-text-stroke` or a shadow ring on body copy. The one exception is the
+label inside a filled bar, which the game also strokes.
+
+### Rooms are realms
+
+Each room flies one of the twelve major realms — its band colour and its
+epithet, both verbatim. The mapping is by meaning and each row is a claim you can
+argue with; it lives in `ROOMS_META` (`api/_scene.js`) with the reasoning, and is
+mirrored in `public/js/app.js` because that one ships to a browser. **The two must
+agree.**
+
+**Realms 10 to 12 are deliberately unspent** — Tribulation Transcendence,
+Immortal Ascension, True Immortal. They are the top of the game's ladder and no
+shelf here earns them. The single exception is the arcade door, which flies
+Immortal Ascension because it is the one room that sells nothing: *"the last
+stair has no rail."*
+
+### Rarity is the card's left edge
+
+`Items.luau` grades every item `common | fine | rare | precious`, and a
+price-sorted shelf is a rarity ladder whether or not anybody says so. The
+thresholds are **ours, not the game's** — it grades by what a thing IS and we
+only know what it costs — and they are set against this catalogue's real spread
+($1 to $62,895). Unpriced is `common`, never blank: a card with no grade reads
+as a bug.
+
+`rarityOf()` exists twice, in `api/_scene.js` and in `public/js/grid.js`, because
+one ships to a browser and the other does not. They must agree.
+
+### arcade.html is FORKED now
+
+It was byte-identical across all four sister sites and it no longer is. The other
+three keep the shared dark copy; this one carries the paper palette. Do not
+copy it back over a sister site, and do not expect changes there to arrive here.
+
+A note earned on Legal-Leaf and still true: **a stylesheet that claims in its own
+header to match another file, and does not, is worse than one that never claimed
+it.** Its market pages were recoloured and `tokens.css` was not, so `/library`
+painted itself in the old palette for weeks. Nothing errored. Recolour in one
+commit.
 
 ---
 

@@ -30,17 +30,44 @@
 (function () {
   'use strict';
 
+  /* ROOMS ARE REALMS. Band colour and epithet come from the twelve
+     major realms in `src/shared/Realms.luau` of the Heavenpillar
+     repo, verbatim. The mapping and the reasoning for it live in
+     ROOMS_META in api/_scene.js -- this is the client's copy of the
+     same nine rows, and the two must agree.
+
+     Realms 10 to 12 are deliberately unspent: they are the top of
+     the game's ladder and no room here earns them yet. */
   var ROOMS = [
-    { key:'arcade',        path:'/arcade-floor',  name:'The Arcade Floor', blurb:'Cabinets, sticks, and everything that used to eat quarters.' },
-    { key:'play',          path:'/play',          name:'Play',             blurb:'Games, keys and the things you actually play.' },
-    { key:'tabletop',      path:'/tabletop',      name:'The Table',        blurb:'Dice, decks, minis and the four hours you lost to them.' },
-    { key:'battlestation', path:'/battlestation', name:'Battlestation',    blurb:'The desk. Boards, mice, screens, chairs.' },
-    { key:'workshop',      path:'/workshop',      name:'The Workshop',     blurb:'Parts, printers and the rig you keep almost finishing.' },
-    { key:'audio',         path:'/audio',         name:'Audio',            blurb:'Amps, cans and speakers worth the shelf.' },
-    { key:'power',         path:'/power',         name:'Power',            blurb:'Chargers, cables, and the brick you keep losing.' },
-    { key:'vault',         path:'/vault',         name:'The Vault',        blurb:'Figures, manga, plush and things kept in the box.' },
-    { key:'wardrobe',      path:'/wardrobe',      name:'The Wardrobe',     blurb:'What you wear to the thing.' }
+    { key:'arcade',        path:'/arcade-floor',  name:'The Arcade Floor', realm:5, band:'#e8be50',
+      epithet:'A sun the size of a seed.',
+      blurb:'Cabinets, sticks, and everything that used to eat quarters.' },
+    { key:'play',          path:'/play',          name:'Play',             realm:2, band:'#78aadc',
+      epithet:'Breath by breath, the sea fills.',
+      blurb:'Games, keys and the things you actually play.' },
+    { key:'tabletop',      path:'/tabletop',      name:'The Table',        realm:3, band:'#60b496',
+      epithet:'What is built on stone endures.',
+      blurb:'Dice, decks, minis and the four hours you lost to them.' },
+    { key:'battlestation', path:'/battlestation', name:'Battlestation',    realm:4, band:'#5896eb',
+      epithet:'A whirlpool learns to hold its center.',
+      blurb:'The desk. Boards, mice, screens, chairs.' },
+    { key:'workshop',      path:'/workshop',      name:'The Workshop',     realm:1, band:'#9b948a',
+      epithet:'Flesh is the first furnace.',
+      blurb:'Parts, printers and the rig you keep almost finishing.' },
+    { key:'audio',         path:'/audio',         name:'Audio',            realm:9, band:'#8cdcdc',
+      epithet:'The way walks with you now.',
+      blurb:'Amps, cans and speakers worth the shelf.' },
+    { key:'power',         path:'/power',         name:'Power',            realm:8, band:'#6e6ea0',
+      epithet:'Emptiness, polished until it shines.',
+      blurb:'Chargers, cables, and the brick you keep losing.' },
+    { key:'vault',         path:'/vault',         name:'The Vault',        realm:6, band:'#be82eb',
+      epithet:'The self that steps outside the self.',
+      blurb:'Figures, manga, plush and things kept in the box.' },
+    { key:'wardrobe',      path:'/wardrobe',      name:'The Wardrobe',     realm:7, band:'#e278b4',
+      epithet:'The river forgets it was rain.',
+      blurb:'What you wear to the thing.' }
   ];
+
 
   var $ = function (s) { return document.querySelector(s); };
   var esc = function (v) {
@@ -75,8 +102,11 @@
                 : published === 0 ? 'not stocked yet'
                 : n === 0 ? 'nothing in here yet'
                 : n + (n === 1 ? ' thing' : ' things');
-      return '<a class="door" href="' + r.path + '">' +
+      /* The band is set as a custom property rather than a class, so
+         adding a room needs no CSS. --band is read by .door::before. */
+      return '<a class="door" href="' + r.path + '" style="--band:' + esc(r.band) + '">' +
         '<h3>' + esc(r.name) + '</h3>' +
+        '<p class="epithet">' + esc(r.epithet) + '</p>' +
         '<p>' + esc(r.blurb) + '</p>' +
         '<span class="count' + (n ? '' : ' shut') + '">' + esc(label) + '</span>' +
       '</a>';
@@ -86,8 +116,12 @@
        it is one. It is also the only door that works today, which is
        worth something: a dungeon with one open room is still a place
        you can visit. */
-    html += '<a class="door cabinet" href="/arcade">' +
+    /* Immortal Ascension, the eleventh realm, is the one high band
+       spent anywhere on this site -- on the room that sells nothing.
+       "The last stair has no rail." */
+    html += '<a class="door cabinet" href="/arcade" style="--band:#ffe2a0">' +
       '<h3>The Arcade</h3>' +
+      '<p class="epithet">The last stair has no rail.</p>' +
       '<p>Cabinets in the corner. Free play, nothing for sale, no sign-up.</p>' +
       '<span class="count">open</span>' +
     '</a>';

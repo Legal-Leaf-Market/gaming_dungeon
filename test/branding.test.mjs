@@ -103,7 +103,15 @@ test('the renderer refuses artwork it cannot draw, rather than dropping it', () 
   assert.throws(() => parseMark(withPath), /<path>/,
     'a shape this renderer cannot draw must fail the build, not disappear')
 
-  const withGradient = svg.replace('fill="#a78bfa"', 'fill="url(#g)"')
+  /* DERIVED FROM THE ARTWORK, NOT FROM A COLOUR LITERAL. This
+     replaced the exact string `fill="#a78bfa"`, so the day the mark
+     was repainted in a new palette the replace became a no-op, the
+     mutation stopped happening, and the test failed for the right
+     reason by luck rather than catching anything. A fixture pinned to
+     a value the subject is free to change is a fixture that expires. */
+  assert.match(svg, /fill="#[0-9a-f]{6}"/i, 'the mark should have at least one hex fill to mutate')
+  const withGradient = svg.replace(/fill="#[0-9a-f]{6}"/i, 'fill="url(#g)"')
+  assert.notEqual(withGradient, svg, 'the mutation must actually change the SVG')
   assert.throws(() => parseMark(withGradient), /#rrggbb/,
     'a fill this renderer cannot draw must fail the build')
 })

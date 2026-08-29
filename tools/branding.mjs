@@ -356,9 +356,19 @@ export function manifestIcons() {
    ============================================================ */
 export function tokenBg(root = process.cwd()) {
   const css = readFileSync(join(root, 'public', 'css', 'tokens.css'), 'utf8')
-  const m = /--bg\s*:\s*(#[0-9a-f]{6})/i.exec(css)
-  if (!m) throw new Error('branding: could not find --bg in tokens.css')
-  return m[1]
+  /* THE GROUND TOKEN, IN ORDER OF TRUTH. This read `--bg` and only
+     `--bg`, and threw the day the palette moved to ink-and-paper and
+     `--bg` became an alias (`--bg:var(--paper)`) rather than a hex.
+     Throwing was correct -- a manifest that silently kept painting
+     the old splash colour is the failure this function exists to
+     prevent -- but the fix is to ask for the real ground first.
+     `--paper` is what the interface is actually drawn on; `--bg` stays
+     as a fallback for the sister sites' shape. */
+  for (const name of ['--paper', '--bg']) {
+    const m = new RegExp(name + '\\s*:\\s*(#[0-9a-f]{6})', 'i').exec(css)
+    if (m) return m[1]
+  }
+  throw new Error('branding: tokens.css has no --paper or --bg hex; the manifest needs a real ground colour')
 }
 
 export function manifest(root = process.cwd()) {
@@ -526,16 +536,20 @@ export function renderCard(mark, opts = {}) {
   const { w: W, h: H } = CARD
   const px = new Uint8ClampedArray(W * H * 4)
   const bg = colour(plate(mark))
-  const violet = colour(opts.accent || '#a78bfa')
-  const gold = colour(opts.gold || '#f0b93c')
-  const ink = colour(opts.ink || '#efe6f7')
+  /* Heavenpillar's palette. `violet` keeps its variable name from the
+     old CRT theme rather than being renamed through every use below;
+     what it holds now is the gold the game uses for its own accents.
+     UiKit.Colors: ink 1b1815, gold a8822a, text 26221e. */
+  const violet = colour(opts.accent || '#a8822a')
+  const gold = colour(opts.gold || '#1b1815')
+  const ink = colour(opts.ink || '#26221e')
 
   fillRect(px, W, H, 0, 0, W, H, bg)
 
   /* A hairline frame, inset. Gives the card an edge when a client
      puts it on a white background, which about half of them do. */
-  fillRect(px, W, H, 0, 0, W, 6, violet, 0.9)
-  fillRect(px, W, H, 0, H - 6, W, 6, violet, 0.35)
+  fillRect(px, W, H, 0, 0, W, 6, colour('#1b1815'), 0.9)
+  fillRect(px, W, H, 0, H - 6, W, 6, colour('#1b1815'), 0.3)
 
   /* LAID OUT FROM THE CONTENT, NOT FROM SIX MAGIC NUMBERS. Every
      measurement below is derived, so changing the tagline or a type
@@ -584,7 +598,7 @@ export function renderCard(mark, opts = {}) {
   if (tx + textWidth(tagline, TAG) > W - 48) {
     throw new Error('branding: the tagline "' + tagline + '" does not fit the card')
   }
-  drawText(px, W, H, tagline, tx, ty, TAG, ink, 0.72)
+  drawText(px, W, H, tagline, tx, ty, TAG, colour('#6e665c'), 1)
 
   return px
 }

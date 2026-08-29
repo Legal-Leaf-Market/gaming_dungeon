@@ -62,9 +62,36 @@
     power: 'Power', vault: 'The Vault', wardrobe: 'The Wardrobe'
   };
 
+  /* THE RARITY LADDER. Items.luau in the Heavenpillar repo grades
+     every item common | fine | rare | precious, and a price-sorted
+     shelf is a rarity ladder whether or not anybody says so out loud.
+     So the shelf says so.
+
+     The thresholds are ours, not the game's -- it grades by what a
+     thing IS and we only know what it costs -- and they are set
+     against this catalogue's real spread rather than guessed. They
+     are duplicated from rarityOf() in api/_scene.js because this file
+     ships to a browser and that one does not; the two must agree, and
+     a test asserts they do. Unpriced is `common`, never blank: a card
+     with no grade at all reads as a bug. */
+  var RARITY = [
+    { key:'precious', from:500 },
+    { key:'rare',     from:100 },
+    { key:'fine',     from:25 },
+    { key:'common',   from:0 }
+  ];
+
+  function rarityOf(price) {
+    var n = Number(price);
+    if (!isFinite(n) || n <= 0) return 'common';
+    for (var i = 0; i < RARITY.length; i++) if (n >= RARITY[i].from) return RARITY[i].key;
+    return 'common';
+  }
+
   /* ------------------------------------------------------------ card */
   function card(it, opts) {
     var price = money(it.price, it.cur);
+    var rar = rarityOf(it.price);
     var img = it.image
       ? '<img loading="lazy" decoding="async" alt="" src="' + esc(it.image) + '"/>'
       : '<span class="g-noimg" aria-hidden="true">' + esc((it.title || '?').charAt(0)) + '</span>';
@@ -76,7 +103,13 @@
     var href = (!opts || !opts.preview) && it.url
       ? ' href="' + esc(it.url) + '" target="_blank" rel="nofollow sponsored noopener"' : '';
 
-    return '<' + tag + ' class="g-card"' + href + '>' +
+    /* The rarity is the card's LEFT EDGE, set as a custom property so
+       a new grade needs no new class. It is the one place a grade can
+       be read at a glance down a column without becoming decoration,
+       and the word underneath is not coloured for the same reason:
+       saying it twice in colour turns a shelf into a paint chart. */
+    return '<' + tag + ' class="g-card"' + href +
+      ' style="--rar:var(--' + rar + ')" data-rarity="' + rar + '">' +
       '<span class="g-shot">' + img +
         (it.oos ? '<span class="g-oos">out of stock</span>' : '') +
       '</span>' +
@@ -86,6 +119,7 @@
           '<span class="g-shop">' + esc(it.shopName || it.k || '') + '</span>' +
           (price ? '<span class="g-price">' + esc(price) + '</span>' : '') +
         '</span>' +
+        '<span class="g-rar">' + rar + '</span>' +
       '</span>' +
     '</' + tag + '>';
   }
@@ -243,5 +277,5 @@
     return { draw: draw, state: state };
   }
 
-  global.GDGrid = { mount: mount, card: card, money: money, esc: esc, ROOMS: ROOMS };
+  global.GDGrid = { mount: mount, card: card, money: money, esc: esc, ROOMS: ROOMS, rarityOf: rarityOf, RARITY: RARITY };
 })(window);

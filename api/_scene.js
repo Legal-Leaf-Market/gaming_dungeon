@@ -297,16 +297,81 @@ export function classify(st, name, blob = '', ptype = '') {
 
 /** The rooms, in crawl order, with the names a visitor sees. */
 export const ROOMS_META = [
-  { key:'arcade',        name:'The Arcade Floor', blurb:'Cabinets, sticks, and everything that used to eat quarters.' },
-  { key:'play',          name:'Play',             blurb:'Games, keys and the things you actually play.' },
-  { key:'tabletop',      name:'The Table',        blurb:'Dice, decks, minis and the four hours you lost to them.' },
-  { key:'battlestation', name:'Battlestation',    blurb:'The desk. Boards, mice, screens, chairs.' },
-  { key:'workshop',      name:'The Workshop',     blurb:'Parts, printers and the rig you keep almost finishing.' },
-  { key:'audio',         name:'Audio',            blurb:'Amps, cans and speakers worth the shelf.' },
-  { key:'power',         name:'Power',            blurb:'Chargers, cables, and the brick you keep losing.' },
-  { key:'vault',         name:'The Vault',        blurb:'Figures, manga, plush and things kept in the box.' },
-  { key:'wardrobe',      name:'The Wardrobe',     blurb:'What you wear to the thing.' },
+  /* ---- ROOMS ARE REALMS -------------------------------------
+     Each room flies one of the twelve major realms from
+     `src/shared/Realms.luau` in Legal-Leaf-Market/roblox-game:
+     its band colour and its epithet, both verbatim. The mapping is
+     by meaning rather than by list order, and each one is a claim
+     you can argue with:
+
+       Workshop      Body Tempering   a printer IS the first furnace
+       Play          Qi Gathering     a library fills breath by breath
+       The Table     Foundation Est.  what is built on stone endures
+       Battlestation Core Formation   the desk is where you hold centre
+       Arcade Floor  Golden Core      a sun the size of a seed, in a cabinet
+       The Vault     Nascent Soul     a figure IS a self outside the self
+       The Wardrobe  Soul Transform.  the river forgets it was rain
+       Power         Void Refinement  a charged cell is stored emptiness
+       Audio         Dao Integration  sound is the way walking with you
+
+     Realms 10 to 12 -- Tribulation Transcendence, Immortal
+     Ascension, True Immortal -- are DELIBERATELY UNSPENT. They are
+     the top of the game's ladder and there is no room here that
+     earns them yet. Leave them for rooms that do not exist, rather
+     than promoting a shelf of cables to immortality. */
+  { key:'arcade',        name:'The Arcade Floor', realm:5,  band:'#e8be50',
+    epithet:'A sun the size of a seed.',
+    blurb:'Cabinets, sticks, and everything that used to eat quarters.' },
+  { key:'play',          name:'Play',             realm:2,  band:'#78aadc',
+    epithet:'Breath by breath, the sea fills.',
+    blurb:'Games, keys and the things you actually play.' },
+  { key:'tabletop',      name:'The Table',        realm:3,  band:'#60b496',
+    epithet:'What is built on stone endures.',
+    blurb:'Dice, decks, minis and the four hours you lost to them.' },
+  { key:'battlestation', name:'Battlestation',    realm:4,  band:'#5896eb',
+    epithet:'A whirlpool learns to hold its center.',
+    blurb:'The desk. Boards, mice, screens, chairs.' },
+  { key:'workshop',      name:'The Workshop',     realm:1,  band:'#9b948a',
+    epithet:'Flesh is the first furnace.',
+    blurb:'Parts, printers and the rig you keep almost finishing.' },
+  { key:'audio',         name:'Audio',            realm:9,  band:'#8cdcdc',
+    epithet:'The way walks with you now.',
+    blurb:'Amps, cans and speakers worth the shelf.' },
+  { key:'power',         name:'Power',            realm:8,  band:'#6e6ea0',
+    epithet:'Emptiness, polished until it shines.',
+    blurb:'Chargers, cables, and the brick you keep losing.' },
+  { key:'vault',         name:'The Vault',        realm:6,  band:'#be82eb',
+    epithet:'The self that steps outside the self.',
+    blurb:'Figures, manga, plush and things kept in the box.' },
+  { key:'wardrobe',      name:'The Wardrobe',     realm:7,  band:'#e278b4',
+    epithet:'The river forgets it was rain.',
+    blurb:'What you wear to the thing.' },
 ]
+
+/* ---- ITEM RARITY -------------------------------------------
+   Items.luau grades every item common | fine | rare | precious, and
+   a price-sorted shelf is a rarity ladder whether or not anybody
+   says so out loud. So the shelf says so.
+
+   The thresholds are ours, not the game's -- the game grades by
+   what a thing IS and we only know what it costs -- and they are
+   set against this catalogue's actual spread ($1 to $62,895), not
+   guessed. Anything unpriced is `common` rather than blank: a card
+   with no grade at all reads as a bug. */
+export const RARITY = [
+  { key:'precious', from: 500 },
+  { key:'rare',     from: 100 },
+  { key:'fine',     from: 25 },
+  { key:'common',   from: 0 },
+]
+
+export function rarityOf(price) {
+  const n = Number(price)
+  if (!isFinite(n) || n <= 0) return 'common'
+  for (const r of RARITY) if (n >= r.from) return r.key
+  return 'common'
+}
+
 
 export function roomMeta(key) {
   return ROOMS_META.find(r => r.key === key) || null
