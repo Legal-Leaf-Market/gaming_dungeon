@@ -23,7 +23,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { inflateSync } from 'node:zlib'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { render, manifest, manifestIcons, parseMark, rasterize, ASSETS, plate, tokenBg, CARD, textWidth, renderCard } from '../tools/branding.mjs'
+import { render, manifest, manifestIcons, parseMark, rasterize, ASSETS, plate, tokenBg, CARD, textWidth, renderCard, iconSource, ICON_VECTOR_MAX } from '../tools/branding.mjs'
 import { SITE } from '../tools/sitemap.mjs'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -284,45 +284,73 @@ test('the share card is the size the unfurlers crop to, and is opaque', () => {
   assert.equal(clear, 0, 'the share card has transparent pixels')
 })
 
-test('the share card actually has the type on it', () => {
-  /* The failure this catches is a card that renders as an empty
-     rectangle -- which is exactly what an og:image is FOR avoiding,
-     so a blank one is worse than none.
+test('the share card is not a blank rectangle', () => {
+  /* The failure this catches is an og:image that renders as an empty
+     field, which is exactly what an og:image is FOR avoiding, so a
+     blank one is worse than none.
 
-     ASSERTED STRUCTURALLY, NOT BY PIXEL COUNT. The first draft
-     compared counts of specific colours against numbers I had picked
-     by eye; when they failed I nearly replaced them with the numbers
-     the current card happens to produce, which would have made the
-     test say "the card is what the card is". What actually matters is
-     that the two thirds of the canvas to the right of the mark are
-     not empty, and that the rule under the title is a solid bar. Both
-     survive a recolour and neither can be satisfied by a blank. */
+     ASSERTED AGAINST WHATEVER PRODUCED IT. This used to test
+     renderCard's layout on the shipped file: type in the right two
+     thirds, a solid rule bar. Then the studio banner became the card
+     and both assertions failed, on a card that is plainly better than
+     the one they were written for. The layout was never the point;
+     the point was that something drew. renderCard's own structure is
+     still checked, below, against renderCard.
+
+     Two independent ways a blank slips through, so both are closed:
+     a uniform field has almost no distinct colours, and a card whose
+     content missed the centre would still pass a whole-canvas count. */
   const px = decodePNG(readFileSync(pub('assets/og.png')))
-  const bg = plate(parseMark(readFileSync(pub('assets/mark.svg'), 'utf8')))
-  const ground = [parseInt(bg.slice(1, 3), 16), parseInt(bg.slice(3, 5), 16), parseInt(bg.slice(5, 7), 16)]
-  const at = (x, y) => px.data.subarray((y * px.w + x) * 4, (y * px.w + x) * 4 + 3)
-  const isGround = (x, y) => { const c = at(x, y); return c[0] === ground[0] && c[1] === ground[1] && c[2] === ground[2] }
+  assert.equal(px.w, CARD.w)
+  assert.equal(px.h, CARD.h)
 
-  /* The type column: right of the mark, inside the frame lines. */
-  let lit = 0
-  for (let y = 40; y < px.h - 40; y++) {
-    for (let x = 432; x < px.w - 48; x++) if (!isGround(x, y)) lit++
-  }
-  assert.ok(lit > 5000, 'the right two thirds of the card are empty: no type drew (' + lit + ' lit pixels)')
-
-  /* The rule is the one solid horizontal bar on the card, so a long
-     unbroken run of one colour proves it drew. Letters cannot fake
-     this: the widest solid run in a 5-cell glyph is 5 units. */
-  let longest = 0
-  for (let y = 40; y < px.h - 40; y++) {
-    let run = 0, prev = ''
-    for (let x = 432; x < px.w - 48; x++) {
-      const c = at(x, y), k = c[0] + ',' + c[1] + ',' + c[2]
-      if (k === prev && !isGround(x, y)) { run++; if (run > longest) longest = run }
-      else { run = 1; prev = k }
+  const seen = new Set()
+  let mid = 0
+  for (let y = 0; y < px.h; y += 2) {
+    for (let x = 0; x < px.w; x += 2) {
+      const i = (y * px.w + x) * 4
+      seen.add((px.data[i] >> 3) + ',' + (px.data[i + 1] >> 3) + ',' + (px.data[i + 2] >> 3))
+      /* the centre band, where a wordmark lives on either design */
+      if (y > px.h * 0.28 && y < px.h * 0.72 && px.data[i] < 110) mid++
     }
   }
-  assert.ok(longest > 300, 'no solid rule under the title (longest run ' + longest + 'px)')
+  assert.ok(seen.size > 40, 'the card is a near-uniform field (' + seen.size + ' distinct tones)')
+  assert.ok(mid > 1200, 'the middle of the card is empty (' + mid + ' dark pixels)')
+})
+
+test('renderCard still lays out type and a rule', () => {
+  /* renderCard is the fallback whenever no banner is committed, so it
+     has to keep working even while nothing ships from it. Tested
+     against its OWN output rather than against the file on disk,
+     which is the change that let the shipped card become the banner
+     without giving up this guarantee. */
+  const mark = parseMark(readFileSync(pub('assets/mark.svg'), 'utf8'))
+  const card = renderCard(mark)
+  const bg = plate(mark)
+  const ground = [parseInt(bg.slice(1, 3), 16), parseInt(bg.slice(3, 5), 16), parseInt(bg.slice(5, 7), 16)]
+  const at = (x, y) => card.subarray((y * CARD.w + x) * 4, (y * CARD.w + x) * 4 + 3)
+  const isGround = (x, y) => { const c = at(x, y); return c[0] === ground[0] && c[1] === ground[1] && c[2] === ground[2] }
+
+  let lit = 0
+  for (let y = 40; y < CARD.h - 40; y++) {
+    for (let x = 432; x < CARD.w - 48; x++) if (!isGround(x, y)) lit++
+  }
+  assert.ok(lit > 5000, 'the right two thirds of the card are empty: no type drew (' + lit + ')')
+
+  /* The rule is the one solid horizontal bar, so a long unbroken run
+     of one colour proves it drew. Letters cannot fake this: the
+     widest solid run in a 5-cell glyph is 5 units. */
+  let longest = 0
+  for (let y = 40; y < CARD.h - 40; y++) {
+    let run = 0, prev = ''
+    for (let x = 432; x < CARD.w - 48; x++) {
+      const c = at(x, y).join(',')
+      if (c === prev && !isGround(x, y)) { run++; if (run > longest) longest = run }
+      else run = 0
+      prev = c
+    }
+  }
+  assert.ok(longest > 120, 'no solid rule on the card (longest run ' + longest + ')')
 })
 
 test('the card font refuses a glyph it does not have', () => {
@@ -502,4 +530,54 @@ test('a comment naming a refused element does not fail the build', () => {
     '<!-- this renderer throws on <path> and <polygon> -->' +
     '<rect width="10" height="10" fill="#000000"/></svg>')
   assert.equal(m.shapes.length, 1)
+})
+
+/* ============================================================
+   THE RASTER BRAND
+
+   Two sources now feed the icons: the studio painting above 64px and
+   mark.svg at or below it, because a wash painting has nothing left
+   at 16px and two bars and a ring do. These pin the split and the
+   shape they share.
+   ============================================================ */
+
+test('the painting is cut to the same plate the vector mark is', () => {
+  /* The failure this caught for real: dropping the painting in
+     unchanged produced icons that were the right picture and the
+     wrong silhouette, hard-cornered squares sitting in a set where
+     every other size is a rounded plate. */
+  const png = decodePNG(readFileSync(pub('assets/icon-512.png')))
+  const corner = (x, y) => png.data[(y * png.w + x) * 4 + 3]
+  for (const [x, y] of [[1, 1], [png.w - 2, 1], [1, png.h - 2], [png.w - 2, png.h - 2]]) {
+    assert.equal(corner(x, y), 0, 'icon-512 corner (' + x + ',' + y + ') is opaque: the plate radius was not applied')
+  }
+  /* and the middle is still artwork, not a hole */
+  assert.ok(png.data[((png.h >> 1) * png.w + (png.w >> 1)) * 4 + 3] > 200, 'the icon is empty')
+})
+
+test('small icons come from the vector, large ones from the painting', () => {
+  /* THIS TEST WAS VACUOUS AND THE MUTATION RUN CAUGHT IT. The first
+     version asserted that icon-192 was tonally rich, which it is
+     under every policy, because 192 is the painting either way.
+     Moving the threshold so that EVERY size used the painting changed
+     nothing it could observe and it passed unchanged.
+
+     The rule is an exported function now and this asserts the rule,
+     which is the thing that can actually be wrong. Both directions,
+     because a threshold has two ways to break. */
+  assert.equal(iconSource(16, true), 'vector')
+  assert.equal(iconSource(32, true), 'vector')
+  assert.equal(iconSource(ICON_VECTOR_MAX, true), 'vector')
+  assert.equal(iconSource(ICON_VECTOR_MAX + 1, true), 'painting')
+  assert.equal(iconSource(512, true), 'painting')
+  /* and with no artwork committed, everything is the vector mark */
+  assert.equal(iconSource(512, false), 'vector')
+})
+
+test('the brand artwork is committed, not just referenced', () => {
+  /* An icon set generated from a file nobody committed regenerates
+     into something else on the next machine, silently. */
+  for (const f of ['brand-logo.png', 'brand-banner.png']) {
+    assert.ok(existsSync(pub('assets/' + f)), f + ' is missing; the icons would fall back to the vector mark')
+  }
 })

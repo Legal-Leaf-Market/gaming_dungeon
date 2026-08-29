@@ -33,9 +33,9 @@
    The single source of truth stays the SVG. Nothing about the artwork
    is restated below.
 */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { deflateSync } from 'node:zlib'
+import { deflateSync, inflateSync } from 'node:zlib'
 
 /* ============================================================
    1. READ THE MARK
@@ -389,6 +389,250 @@ export function encodeICO(images) {
    mark's own backing rect, so an inset icon and a full-bleed one
    cannot disagree about the colour behind the coin door however the
    artwork is recoloured later. */
+/* ============================================================
+   THE RASTER BRAND
+
+   The studio artwork is a painting. It is not two bars and a ring,
+   it is an ink-wash enso around a brush V with mountains, a pagoda,
+   cloud scrollwork and a wordmark, and no amount of <rect> is going
+   to be it. So when public/assets/brand-logo.png exists, the icons
+   come from the artwork and mark.svg stops being the source.
+
+   That means decoding a PNG, here, with no dependencies. It is less
+   work than it sounds: inflate the IDAT, undo the five scanline
+   filters, done. Only what the artwork actually is, is supported,
+   8-bit non-interlaced truecolour with or without alpha, and
+   anything else throws rather than guessing.
+
+   SIZE-ADAPTIVE CROPPING IS THE POINT, and it was decided by looking
+   at the thing rather than by reasoning about it. Rendered at every
+   icon size and compared:
+
+     16 and 32px   only the V survives. The ring becomes a grey
+                   smear and the wordmark becomes dirt.
+     48px          the ring comes back and is worth having; the
+                   wordmark is still mush.
+     192px and up  the whole lockup, wordmark included.
+
+   A favicon is not a small logo, and this is what "adaptive" has to
+   mean when the logo is a painting: at 16px you show the letter,
+   because the letter is the part that is still legible.
+   ============================================================ */
+
+const PNG_SIG = [137, 80, 78, 71, 13, 10, 26, 10]
+
+export function decodePNG(buf) {
+  for (let i = 0; i < 8; i++) {
+    if (buf[i] !== PNG_SIG[i]) throw new Error('branding: not a PNG')
+  }
+  let w = 0, h = 0, depth = 0, type = 0, interlace = 0
+  const idat = []
+  let p = 8
+  while (p < buf.length) {
+    const len = buf.readUInt32BE(p)
+    const tag = buf.toString('ascii', p + 4, p + 8)
+    const body = buf.subarray(p + 8, p + 8 + len)
+    if (tag === 'IHDR') {
+      w = body.readUInt32BE(0); h = body.readUInt32BE(4)
+      depth = body[8]; type = body[9]; interlace = body[12]
+    } else if (tag === 'IDAT') idat.push(body)
+    else if (tag === 'IEND') break
+    p += 12 + len
+  }
+  if (depth !== 8) throw new Error('branding: only 8-bit PNGs, got depth ' + depth)
+  if (type !== 2 && type !== 6) throw new Error('branding: only truecolour PNGs, got type ' + type)
+  if (interlace) throw new Error('branding: interlaced PNGs are not supported')
+
+  const ch = type === 6 ? 4 : 3
+  const raw = inflateSync(Buffer.concat(idat))
+  const stride = w * ch
+  const out = new Uint8ClampedArray(w * h * 4)
+
+  /* Undo the per-scanline filters. Each row's first byte names its
+     filter and every predictor refers to bytes already reconstructed,
+     which is why this has to run top to bottom in one pass. */
+  let prev = new Uint8Array(stride)
+  for (let y = 0; y < h; y++) {
+    const f = raw[y * (stride + 1)]
+    const line = raw.subarray(y * (stride + 1) + 1, y * (stride + 1) + 1 + stride)
+    const cur = new Uint8Array(stride)
+    for (let i = 0; i < stride; i++) {
+      const a = i >= ch ? cur[i - ch] : 0
+      const b = prev[i]
+      const c = i >= ch ? prev[i - ch] : 0
+      let v = line[i]
+      if (f === 1) v += a
+      else if (f === 2) v += b
+      else if (f === 3) v += (a + b) >> 1
+      else if (f === 4) {
+        const pp = a + b - c
+        const pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c)
+        v += (pa <= pb && pa <= pc) ? a : (pb <= pc ? b : c)
+      } else if (f !== 0) throw new Error('branding: unknown PNG filter ' + f)
+      cur[i] = v & 255
+    }
+    for (let x = 0; x < w; x++) {
+      const s = x * ch, d = (y * w + x) * 4
+      out[d] = cur[s]; out[d + 1] = cur[s + 1]; out[d + 2] = cur[s + 2]
+      out[d + 3] = ch === 4 ? cur[s + 3] : 255
+    }
+    prev = cur
+  }
+  return { w, h, px: out }
+}
+
+/* Box-filter downscale. Averaging every source pixel that lands in a
+   destination pixel, not sampling one of them: at these ratios (1254
+   down to 16) point sampling throws away 98% of the image and turns
+   a brush stroke into aliased confetti. */
+export function resample(img, sx, sy, sw, sh, dw, dh = dw) {
+  const out = new Uint8ClampedArray(dw * dh * 4)
+  for (let y = 0; y < dh; y++) {
+    const y0 = sy + (y * sh) / dh, y1 = sy + ((y + 1) * sh) / dh
+    for (let x = 0; x < dw; x++) {
+      const x0 = sx + (x * sw) / dw, x1 = sx + ((x + 1) * sw) / dw
+      let r = 0, g = 0, b = 0, a = 0, n = 0
+      for (let j = Math.floor(y0); j < Math.max(Math.ceil(y1), Math.floor(y0) + 1); j++) {
+        if (j < 0 || j >= img.h) continue
+        for (let i = Math.floor(x0); i < Math.max(Math.ceil(x1), Math.floor(x0) + 1); i++) {
+          if (i < 0 || i >= img.w) continue
+          const s = (j * img.w + i) * 4
+          r += img.px[s]; g += img.px[s + 1]; b += img.px[s + 2]; a += img.px[s + 3]; n++
+        }
+      }
+      const d = (y * dw + x) * 4
+      if (n) { out[d] = r / n; out[d + 1] = g / n; out[d + 2] = b / n; out[d + 3] = a / n }
+    }
+  }
+  return out
+}
+
+/* WHICH PART OF THE PAINTING A GIVEN SIZE SHOWS. The fractions are
+   the ones the comparison sheet picked; the vertical nudge lifts the
+   crop off the wordmark, which sits below centre. */
+/* THE SPLIT, AS A NAMED RULE RATHER THAN AN INLINE COMPARISON.
+
+   Pulled out because the test written against it was VACUOUS while it
+   was buried in render(): it checked the 192px icon, which is the
+   painting under either policy, so moving the threshold changed
+   nothing it could see and the mutation passed. A test that survives
+   its own mutation is worse than no test, because it reads like
+   cover.
+
+   Now the rule is one exported function and the test asserts the
+   rule. 64 is where the comparison sheet showed the enso ring stops
+   resolving. */
+export const ICON_VECTOR_MAX = 64
+
+export function iconSource(size, hasLogo) {
+  return hasLogo && size > ICON_VECTOR_MAX ? 'painting' : 'vector'
+}
+
+export function cropFor(size) {
+  if (size <= 32) return { frac: 0.48, dy: -0.05 }   /* the V alone   */
+  if (size <= 64) return { frac: 0.78, dy: 0 }       /* V and ring    */
+  return { frac: 1, dy: 0 }                          /* whole lockup  */
+}
+
+/* SHARPEN THE SMALL ONES.
+
+   Downscaling a wash painting to 16px averages ink and paper into a
+   field of greys, and grey is what makes a small icon look smudged
+   rather than small. This pushes luminance through a steep curve
+   about a threshold, so the brush strokes go to ink, the paper goes
+   to paper, and only the pixels genuinely straddling an edge keep a
+   midtone.
+
+   A HARD CUT WAS THE OBVIOUS THING AND IT IS WRONG: thresholding to
+   pure black and white throws away the antialiasing too, and a 16px
+   glyph with jagged edges reads worse than a soft one. The curve
+   keeps the edge pixels and kills everything else, which is the
+   whole difference between sharp and aliased. */
+export function sharpen(rgba, k = 5.5, t = 0.62) {
+  for (let i = 0; i < rgba.length; i += 4) {
+    const lum = (0.2126 * rgba[i] + 0.7152 * rgba[i + 1] + 0.0722 * rgba[i + 2]) / 255
+    const v = Math.max(0, Math.min(1, (lum - t) * k + 0.5))
+    /* Ink is neutral in this artwork, so collapsing to luminance
+       loses nothing and avoids the colour fringing a per-channel
+       curve would produce on an off-white paper. */
+    rgba[i] = rgba[i + 1] = rgba[i + 2] = v * 255
+  }
+  return rgba
+}
+
+/* Centre-crop to an aspect ratio, then resample. Takes the excess off
+   whichever axis is long, so nothing is ever stretched. */
+export function cropTo(img, w, h) {
+  const want = w / h
+  const have = img.w / img.h
+  let sw = img.w, sh = img.h
+  if (have > want) sw = img.h * want
+  else sh = img.w / want
+  const sx = (img.w - sw) / 2
+  const sy = (img.h - sh) / 2
+  /* ONE CALL, NOT ONE PER ROW. The first version asked resample() for
+     a full SQUARE per destination row and kept only its first row,
+     which for a 1200x630 card is 630 square rasters of 1200x1200 to
+     produce 630 rows: nine hundred million pixel averages for a job
+     that needs seven hundred thousand. It completed, slowly, which is
+     the worst way for that kind of mistake to behave. resample takes
+     a destination height now. */
+  return resample(img, sx, sy, sw, sh, w, h)
+}
+
+/* THE ARTWORK TAKES THE MARK'S SHAPE.
+
+   mark.svg is a rounded plate: its corners are transparent, the
+   maskable variants sit inset on that plate, and apple-touch fills it
+   opaque because iOS ignores transparency and would composite onto
+   black otherwise. The painting is a hard-edged square with white
+   corners, so dropping it in unchanged made icons that were the right
+   picture and the wrong silhouette, sitting square where every other
+   size is rounded.
+
+   The radius is READ FROM mark.svg rather than repeated here, so the
+   vector mark and the painting can never disagree about the shape
+   they share. That is the whole reason the small and large icons
+   still look like one set.
+
+   Outside the radius: the plate colour when the icon must be opaque,
+   nothing when it must not. */
+export function roundPlate(rgba, size, mark, bg) {
+  const outer = mark.shapes.find(s => s.kind === 'fill' && s.w >= mark.w * 0.98)
+  const r = ((outer && outer.r) || 0) / mark.w * size
+  const bgc = bg ? colour(bg) : null
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const d = (y * size + x) * 4
+      if (bgc) {
+        /* source-over the artwork onto the plate, so a translucent
+           edge lands on paper rather than on nothing */
+        const a = rgba[d + 3] / 255
+        rgba[d] = rgba[d] * a + bgc[0] * (1 - a)
+        rgba[d + 1] = rgba[d + 1] * a + bgc[1] * (1 - a)
+        rgba[d + 2] = rgba[d + 2] * a + bgc[2] * (1 - a)
+        rgba[d + 3] = 255
+      }
+      if (!insideRR(x + 0.5, y + 0.5, { x: 0, y: 0, w: size, h: size, r })) {
+        if (bgc) { rgba[d] = bgc[0]; rgba[d + 1] = bgc[1]; rgba[d + 2] = bgc[2]; rgba[d + 3] = 255 }
+        else rgba[d + 3] = 0
+      }
+    }
+  }
+  return rgba
+}
+
+export function rasterIcon(img, size, opts = {}) {
+  const { frac, dy } = cropFor(size)
+  const s = Math.min(img.w, img.h) * frac
+  const sx = (img.w - s) / 2
+  const sy = (img.h - s) / 2 + img.h * dy
+  const rgba = resample(img, sx, sy, s, s, size)
+  /* Only the small ones. At 192px the wash IS the artwork and
+     flattening it would be vandalism. */
+  return size <= 64 && opts.sharp !== false ? sharpen(rgba) : rgba
+}
+
 export const ASSETS = [
   /* AT THE ROOT, not in assets/. The <link> below settles it for
      every browser, but /favicon.ico is still requested blind by
@@ -707,14 +951,59 @@ export function render(root = process.cwd()) {
   const bg = plate(mark)
   const out = []
 
+  /* TWO SOURCES, SPLIT BY SIZE, AND EACH DOES WHAT IT IS GOOD AT.
+
+     The studio logo is a wash painting: an enso around a brush V with
+     mountains, a pagoda, cloud scrollwork and a wordmark. Above about
+     64px that detail IS the brand and any redraw is a worse copy, so
+     large icons are the painting, untouched.
+
+     Below that it falls apart, and downscaling harder does not fix
+     it. Cropping to the V clips the arms; keeping the ring turns the
+     wordmark to dirt; sharpening the result makes both worse, loudly.
+     A 16px icon has 256 pixels and the painting needs thousands.
+
+     So the small sizes are mark.svg, which is the same enso and the
+     same V drawn as two bars and a ring: the logo's silhouette, with
+     edges that survive being 16 pixels wide. That is not a fallback
+     any more, it is the small-size mark, and the two agree because
+     one was drawn from the other.
+
+     The threshold is 64 because that is where the comparison sheet
+     showed the ring stops reading. */
+  const optional = file => {
+    try { return decodePNG(readFileSync(join(dir, file))) }
+    catch (e) { if (e.code !== 'ENOENT') throw e; return null }
+  }
+  const logo = optional('brand-logo.png')
+  const banner = optional('brand-banner.png')
+  const icon = (size, opts = {}) => {
+    if (iconSource(size, !!logo) === 'vector') return rasterize(mark, size, opts)
+    /* The painting, cut to the same plate the vector mark is. */
+    return roundPlate(rasterIcon(logo, size, opts), size, mark, opts.background || null)
+  }
+
   for (const a of ASSETS) {
     let buf
     if (a.ico) {
-      buf = encodeICO(a.ico.map(size => ({ size, rgba: rasterize(mark, size) })))
+      buf = encodeICO(a.ico.map(size => ({ size, rgba: icon(size) })))
     } else if (a.card) {
-      buf = encodePNG(renderCard(mark), CARD.w, CARD.h)
+      /* THE BANNER IS THE SHARE CARD when it exists. renderCard()
+         lays out type over a plate and does it well, and it is still
+         the fallback, but the studio's key art is a 2.5:1 ink
+         landscape with the wordmark already set in it. A drawn card
+         next to that is a placeholder next to the real thing.
+
+         Cropped, never squashed: the banner is wider than an OG card,
+         so the sides come off rather than the middle being
+         compressed. The wordmark sits centred in the art, which is
+         what makes a centre crop safe here and would not be safe for
+         a banner with the type off to one edge. */
+      buf = banner
+        ? encodePNG(cropTo(banner, CARD.w, CARD.h), CARD.w, CARD.h)
+        : encodePNG(renderCard(mark), CARD.w, CARD.h)
     } else {
-      buf = encodePNG(rasterize(mark, a.size, { inset: a.inset, background: a.plate ? bg : null }), a.size, a.size)
+      buf = encodePNG(icon(a.size, { inset: a.inset, background: a.plate ? bg : null }), a.size, a.size)
     }
     out.push({ file: a.root ? a.file : 'assets/' + a.file, buf })
   }
@@ -748,5 +1037,7 @@ if (import.meta.url === 'file://' + process.argv[1]) {
     console.log('  ' + w.file.padEnd(28) + (w.bytes / 1024).toFixed(1).padStart(7) + ' KB')
   }
   if (written.warning) console.log('\n  WARNING: ' + written.warning)
-  console.log('\n  ' + written.length + ' files rebuilt from public/assets/mark.svg\n')
+  console.log('\n  ' + written.length + ' files rebuilt from ' +
+    (existsSync(join(process.cwd(), 'public/assets/brand-logo.png'))
+      ? 'public/assets/brand-logo.png' : 'public/assets/mark.svg') + '\n')
 }
