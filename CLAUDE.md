@@ -566,6 +566,34 @@ proposal would have published **5 of 23 products** and nothing would have said
 so. Both that merchant and `rpgtabletops` (23 of 23 untyped) are published with
 `include: []`, which means everything.
 
+**Three more came out of the first live publish, which is the point of looking
+at the deployed shelf rather than the payload:**
+
+- **`row()` classified against RAW HTML.** It computed `cleanDesc(o.desc)` and
+  then built the blob from `o.desc` anyway, so every room decision was made
+  against markup: tags, style attributes, class names and entities. `&amp;`
+  contains "amp" bounded by two non-word characters, so the audio room's
+  `\bamp\b` matched **every product whose description contained an ampersand**,
+  and audio is tested before workshop. Eight 3D printer accessories were filed
+  under Audio. The blob is built from the cleaned text now.
+- **A bare `\bamp\b` is a unit of current at least as often as an amplifier.**
+  "Requires a 15 amp circuit" is a sentence every CNC and printer listing
+  eventually contains. The audio room names the amplifier now
+  (`tube|guitar|headphone|integrated|...` + `amp`), and the tests cover both
+  directions so a careless fix cannot quietly delete the Audio room.
+- **The registry had `customgamingchair` as Shopify and it is WooCommerce.**
+  Every Shopify strategy 404'd, the store shipped **0 products while reading as
+  published**, and the capture had said `woo-store-api` all along. Nobody had
+  compared the two. When a capture names a platform, check it against
+  `_stores.js` before clearing `pending`.
+
+**`roomMap` is the right tool for a merchant-specific reading, and a global
+regex is not.** 3D Printernational sells a resin curing box with an "Electric
+Turntable" in its title, and a turntable genuinely is Audio for any other
+merchant. Rather than bend the shared pattern for one product, that shop's own
+types are pinned: `3D Scanners`, `3D Printer Accessories` and `3d printer` all
+map to `workshop`.
+
 **So: read the `(none)` row before accepting any draft.** If it is a large share
 of the catalogue, the answer is almost always an empty `include`, not the
 proposed list. `analyse()` states the threshold it used; it does not know this.
@@ -946,7 +974,7 @@ before you trust it.
 
 ## 11. Verify before you merge
 
-1. `npm test` — 102 cases. The collector test parses the assembled program with
+1. `npm test` — 105 cases. The collector test parses the assembled program with
    `new Function`, which is the point of having it: a syntax error there does
    not fail locally, it fails silently on a stranger's website with no error
    event.

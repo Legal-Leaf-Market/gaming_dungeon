@@ -220,7 +220,7 @@ export const STORES = [
     note:'Gaming chairs. Best rate-plus-cookie combination on the AOV room.' },
 
   { key:'customgamingchair', name:'Custom Gaming Chair', room:'battlestation', domain:'www.customgamingchair.com',
-    platform:'shopify', ref:'irarpdcz', rate:'10%', cookie:30, tier:1,  },
+    platform:'woocommerce', ref:'irarpdcz', rate:'10%', cookie:30, tier:1,  },
 
   { key:'odingaming', name:'Odin Gaming', room:'battlestation', domain:'www.odinpc.com',
     platform:'shopify', ref:'', rate:'10%', cookie:30, tier:1, pending:true },

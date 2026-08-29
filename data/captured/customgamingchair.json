@@ -21,6 +21,7 @@
     "THE DRAFT'S PROPOSAL WAS WRONG HERE AND WOULD HAVE COST 18 OF 23 PRODUCTS. It proposed include: ['Custom Chair','Cyberpunk','Kawaii'] because analyse() never proposes the '(none)' bucket. But 18 of the 23 products are untyped, and a non-empty include list drops every untyped product. The shop would have shipped five chairs out of twenty-three and nothing would have said so.",
     "Empty include instead, so all 23 are carried and the classifier places them. 22 land in battlestation and one in arcade, which is fine: it is a chair themed on an arcade cabinet.",
     "One product short of the sitemap's 24. Whatever it is, the live scrape reads the shop directly rather than replaying this capture, so it will be picked up if it is still listed.",
-    "Every chair is 419 to 530 dollars. Worth knowing: this merchant will dominate the top of a price-sorted Battlestation shelf."
+    "Every chair is 419 to 530 dollars. Worth knowing: this merchant will dominate the top of a price-sorted Battlestation shelf.",
+    "REGISTRY HAD THE PLATFORM WRONG. It said shopify; the capture reached this shop through the Woo Store API, and the first live publish confirmed it: every Shopify strategy 404'd and the store shipped 0 products while reading as published. Corrected to woocommerce. The capture knew and nobody had compared the two."
   ]
 }

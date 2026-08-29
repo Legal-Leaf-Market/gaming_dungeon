@@ -220,3 +220,18 @@ test('an empty include means everything, not nothing', () => {
   assert.ok(/Array\.isArray\(rv\.include\) && rv\.include\.length/.test(src),
     'an absent or empty include must not filter everything out')
 })
+
+test('the classifier blob is built from cleaned text, never raw HTML', () => {
+  /* cleanDesc() was computed in row() and then the blob was built from
+     o.desc anyway, so every room decision was made against markup:
+     tags, style attributes, CSS class names and HTML entities. The
+     symptom was eight 3D printer accessories in the Audio room.
+
+     Asserted against the source because row() is not exported; the
+     behaviour itself is covered in scene.test.mjs and ingest.test.mjs. */
+  const src = raw
+  assert.match(src, /const blob = \[o\.title, o\.variant, o\.tags, desc\]/,
+    'row() must build the blob from the cleaned description, not o.desc')
+  assert.equal(/const blob = \[o\.title, o\.variant, o\.tags, o\.desc\]/.test(src), false,
+    'raw HTML is back in the classifier blob')
+})

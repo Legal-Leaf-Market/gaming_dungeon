@@ -268,8 +268,19 @@ function impactFault(st) {
    ============================================================ */
 
 function row(st, o) {
-  const blob = [o.title, o.variant, o.tags, o.desc].filter(Boolean).join(' ')
   const desc = cleanDesc(o.desc)
+  /* THE CLEANED DESCRIPTION, NOT THE RAW HTML. cleanDesc() was
+     computed here and then the blob was built from o.desc anyway, so
+     every classifier decision was made against markup: tags, style
+     attributes, CSS class names and HTML ENTITIES.
+
+     That is not theoretical. `&amp;` contains "amp" bounded by two
+     non-word characters, so the audio room's \bamp\b matched every
+     product whose description contained an ampersand -- and audio is
+     tested before workshop, so a 3D printer accessory whose blurb said
+     "bins &amp; cabinet" was filed under Audio. Eight of 3D
+     Printernational's products landed there on the first publish. */
+  const blob = [o.title, o.variant, o.tags, desc].filter(Boolean).join(' ')
   const variant = o.variant === 'Default Title' ? '' : (o.variant || '')
   const brand = o.brand || st.name
   const cur = o.currency || 'USD'

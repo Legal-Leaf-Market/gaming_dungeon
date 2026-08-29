@@ -145,7 +145,17 @@ const ROOMS = [
   ].join('|'), 'i')],
 
   ['audio', new RegExp([
-    '\\bamplifiers?\\b', '\\bamp\\b', '\\bdac\\b', 'phono (stage|preamp)', '\\bpreamp',
+    '\\bamplifiers?\\b',
+    /* NOT a bare \\bamp\\b. It was, and it matched two things that are
+       not amplifiers: the HTML entity `&amp;` (bounded by non-word
+       characters on both sides, so the word boundaries hold) and the
+       unit of current -- "requires a 15 amp circuit" is a sentence
+       every CNC machine and 3D printer listing eventually contains.
+       The entity is fixed at source now (row() cleans the HTML before
+       classifying), but the current is not, and both belong in the
+       Workshop rather than in Audio. Name the amplifier. */
+    '\\b(tube|valve|guitar|bass|headphone|integrated|stereo|power|class[- ]?d)\\s+amps?\\b',
+    '\\bdac\\b', 'phono (stage|preamp)', '\\bpreamp',
     'bookshelf speakers?', '\\bsubwoofers?\\b', '\\bstudio monitors?\\b',
     'headphones?', '\\bearbuds?\\b', '\\biems?\\b', '\\bin-?ear monitors?\\b',
     'gaming headset', '\\bheadsets?\\b', '\\bmicrophones?\\b', '\\bxlr\\b',

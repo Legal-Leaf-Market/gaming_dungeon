@@ -188,3 +188,33 @@ test('classify still works for callers that have no product_type', () => {
   assert.equal(classify(st, 'Gift Card', 'gift card'), '', 'the blob path must still refuse')
   assert.ok(classify(st, 'PLA Filament 1.75mm', 'filament spool'))
 })
+
+test('HTML entities in a description never decide a room', () => {
+  /* `&amp;` contains "amp" bounded by non-word characters on both
+     sides, so the audio room's old \bamp\b matched EVERY product whose
+     description contained an ampersand -- and audio is tested before
+     workshop. Eight of 3D Printernational's products were filed under
+     Audio on the first live publish because their blurbs said things
+     like "bins &amp; cabinet".
+
+     Fixed in two places, and both are asserted: row() now builds the
+     blob from the CLEANED description rather than the raw HTML, and
+     the audio room no longer matches a bare "amp". */
+  const st = { key: 'shop', room: 'workshop' }
+  assert.equal(classify(st, 'Mosaic Palette 3 Pro', 'Storage bins &amp; a cabinet', '3D Printer Accessories'),
+    'workshop', 'an ampersand entity must not send a product to Audio')
+})
+
+test('an amp of current is not an amplifier', () => {
+  /* "requires a 15 amp circuit" is a sentence every CNC machine and
+     3D printer listing eventually contains. */
+  const st = { key: 'shop', room: 'workshop' }
+  assert.equal(classify(st, 'CNC Router 3018', 'CNC Router requires a 15 amp circuit', 'CNC Router'),
+    'workshop')
+
+  /* And the room still has to work for actual amplifiers, which is
+     the half of this that a careless fix would break. */
+  assert.equal(classify(st, 'Fosi Audio BT20A Tube Amp', 'stereo tube amp', 'Amplifiers'), 'audio')
+  assert.equal(classify(st, 'Schiit Magni Headphone Amp', 'headphone amp', 'Amps'), 'audio')
+  assert.equal(classify(st, 'Cambridge Audio AXA35 Amplifier', 'integrated amplifier', ''), 'audio')
+})

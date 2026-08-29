@@ -38,7 +38,11 @@
     "Parts & Accesories",
     "3d printer"
   ],
-  "roomMap": {},
+  "roomMap": {
+    "3D Scanners": "workshop",
+    "3D Printer Accessories": "workshop",
+    "3d printer": "workshop"
+  },
   "review": [
     "WARRANTY AND SERVICE REMOVED, 100 PRODUCTS. 97 products of type 'Warranty' and 3 of type 'Service' were proposed for inclusion and had been classified into the Workshop, where they would have been the LARGEST category in the room: a shelf of warranty certificates with prices on them. They are not things anybody browses for.",
     "That was not only an include-list decision. It exposed a real bug: NONPRODUCT_TYPE in _scene.js was anchored ^...$ and tested against the whole blob (title, variant, tags and description joined), so it could only have matched a product whose entire text was the single word 'fee'. It had never fired, on any caller, since it was written. classify() now takes product_type as its own argument and 'warranty' and 'service' are in that list, so these are refused for every merchant, not just this one.",
@@ -47,6 +51,7 @@
     "'Gift Card' correctly refused, left out.",
     "SPELLING KEPT AS THE MERCHANT WRITES IT. '3D PRINTER', 'FILAMENT' and 'Parts & Accesories' (their typo) are listed as they appear. Matching is case-insensitive so the shouting variants are redundant, but the misspelling is not, and correcting it here would silently drop those products.",
     "HALF A CATALOGUE. 302 of 604 captured. The include list is drawn from 25 product types across that half and is the conservative direction to be wrong in: a type that appears only in the unread half will be dropped rather than published unseen. Worth a second capture before assuming the Workshop is complete.",
-    "Prices run from 1 dollar to 62,895. The top end is industrial CNC, which is real, but this merchant will own every price-descending sort on the site."
+    "Prices run from 1 dollar to 62,895. The top end is industrial CNC, which is real, but this merchant will own every price-descending sort on the site.",
+    "roomMap PINS THREE TYPES TO THE WORKSHOP, added after the first live publish put 8 products in the Audio room. Two causes, both now fixed at source: raw HTML in the classifier blob (`&amp;` matched the audio room's \\\\bamp\\\\b) and a bare \\\\bamp\\\\b matching the unit of current. But one title genuinely reads as audio on its own words -- a resin curing box with an 'Electric Turntable' -- and a turntable IS audio for any other merchant. The general regex should not be bent for one product, so this merchant's own types settle it: on THIS shop, scanners, printer accessories and anything typed '3d printer' are Workshop. That is what roomMap is for."
   ]
 }
