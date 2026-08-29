@@ -220,3 +220,39 @@ test('a non-Shopify merchant is told to use the bookmarklet, not left to fail', 
     assert.match(r.error, /bookmarklet/, 'it must name the way that does work')
   }
 })
+
+test('no admin-gated endpoint is left cacheable by the CDN', async () => {
+  /* CAUGHT IN PRODUCTION, ONE COMMIT AFTER SHIPPING. vercel.json
+     caches `/api/(.*)` for 600s at the edge, which is right for the
+     catalogue and wrong for everything else -- and the header a
+     handler sets in code does not win against the config. /api/capture
+     and /api/collector each carry an explicit no-store override;
+     /api/probe shipped without one, so a merchant's whole catalogue,
+     behind a passcode, was a CDN-cacheable response. The first symptom
+     was harmless and misleading: a cached 404 from before the endpoint
+     existed.
+
+     Written as a rule rather than a third hardcoded path, because the
+     next gated endpoint will have the same hole and nobody will
+     remember this one. Anything that reads x-gd-admin-token must be
+     no-store. */
+  const { readFileSync, readdirSync } = await import('node:fs')
+  const { fileURLToPath } = await import('node:url')
+  const { dirname, join } = await import('node:path')
+  const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
+
+  const cfg = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'))
+  const noStore = new Set(
+    (cfg.headers || [])
+      .filter(h => (h.headers || []).some(x => x.key === 'Cache-Control' && /no-store/.test(x.value)))
+      .map(h => h.source))
+
+  for (const f of readdirSync(join(ROOT, 'api')).filter(f => f.endsWith('.js') && !f.startsWith('_'))) {
+    const src = readFileSync(join(ROOT, 'api', f), 'utf8')
+    if (!/x-gd-admin-token/.test(src)) continue
+    const route = '/api/' + f.slice(0, -3)
+    assert.ok(noStore.has(route),
+      route + ' reads a passcode but vercel.json has no no-store rule for it, so its ' +
+      'responses are cacheable at the edge for 600s')
+  }
+})

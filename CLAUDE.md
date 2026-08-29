@@ -278,6 +278,16 @@ store proves it. A GET on a tracking link registers a real click against the
 owner's own conversion stats, which is the one class of bug that corrupts the
 evidence you would use to find it.
 
+**Every admin-gated endpoint needs an explicit `no-store` in `vercel.json`, and
+that is a config fact rather than a code one.** The `/api/(.*)` rule caches for
+600s at the edge, which is right for the catalogue and wrong for everything else,
+and a `Cache-Control` a handler sets in code does **not** win against the config.
+`/api/probe` shipped without one and was, for a commit, a CDN-cacheable response
+carrying a merchant's whole catalogue from behind a passcode. The first symptom
+was harmless and misleading: a cached 404 from before the endpoint existed. A
+test now derives the rule instead of listing the routes: anything whose source
+reads `x-gd-admin-token` must have a `no-store` entry.
+
 `offScenePct` is the number to read first. A merchant most of whose catalogue
 `_scene.js` refuses is a merchant to drop, **not** a reason to widen the
 classifier.
@@ -902,7 +912,7 @@ before you trust it.
 
 ## 11. Verify before you merge
 
-1. `npm test` — 97 cases. The collector test parses the assembled program with
+1. `npm test` — 98 cases. The collector test parses the assembled program with
    `new Function`, which is the point of having it: a syntax error there does
    not fail locally, it fails silently on a stranger's website with no error
    event.
@@ -956,6 +966,9 @@ before you trust it.
 - Do NOT open `robots.txt` before a real domain AND a published merchant, and
   do NOT forget to (§10b). Both failure directions are quiet.
 - Do NOT hand-edit `public/sitemap.xml`; run `npm run sitemap` (§10b).
+- Do NOT add an endpoint that reads `x-gd-admin-token` without a `no-store` rule
+  for it in `vercel.json`. The `/api/(.*)` cache rule wins over the handler's own
+  header (§4c).
 - Do NOT let `/api/probe` fill in `reviewedBy`, and do NOT add a mode that writes
   `data/captured/`. It is the shortest path from "nobody read this shop" to "this
   shop is on the shelf", and the blank field is what keeps a person on it (§4c).
