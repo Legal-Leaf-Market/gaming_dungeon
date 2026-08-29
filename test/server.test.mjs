@@ -97,7 +97,7 @@ test('room URLs from vercel.json all serve the dungeon', async () => {
     assert.equal(res.status, 200, path + ' should rewrite to the app')
     const html = await res.text()
     /* Fingerprint the SHOP, not the brand. This asserted on the word
-       "GAMING" and broke the day the site was renamed to Verda Store,
+       "GAMING" and broke the day the site was renamed to Verda Studio,
        which is a rename failing a routing test: the wrong thing was
        load-bearing. #doors is the map container, it exists on every
        rewrite target by definition, and it survives the next rename. */
@@ -299,7 +299,7 @@ test('the manifest serves as a manifest, not as a download', async () => {
   assert.ok(rule.headers.some(h => h.key === 'Content-Type' && /manifest\+json/.test(h.value)))
 
   const mf = await r.json()
-  assert.equal(mf.name, 'Verda Store')
+  assert.equal(mf.name, 'Verda Studio')
 })
 
 test('no heading is left standing over content that is hidden', async () => {

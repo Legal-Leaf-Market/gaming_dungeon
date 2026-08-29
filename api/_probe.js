@@ -34,7 +34,7 @@
    evidence you would use to find it.
    ============================================================ */
 
-const UA = 'VerdaStoreBot/1.0 (+catalogue review; contact via the site)'
+const UA = 'VerdaStudioBot/1.0 (+catalogue review; contact via the site)'
 const PAGE = 250          /* Shopify's hard cap; asking for more returns 250 */
 const MAX_PAGES = 12      /* 3000 products. Past that, read it in the browser. */
 

@@ -62,10 +62,10 @@
       "has": [
         {
           "type": "host",
-          "value": "verdastudio.store"
+          "value": "verdacultivation.store"
         }
       ],
-      "destination": "https://verdacultivation.store/$1",
+      "destination": "https://verdastudio.store/$1",
       "permanent": true
     },
     {

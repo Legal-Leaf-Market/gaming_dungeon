@@ -26,7 +26,7 @@
 import { CABINETS, configured, gameUrl } from './_games.js'
 import { kvGet, kvPut } from './_db.js'
 
-const UA = 'VerdaStoreHub/1.0 (+https://verdacultivation.store)'
+const UA = 'VerdaStudioHub/1.0 (+https://verdastudio.store)'
 const KEY = 'gd:roblox:v1'
 /* Player counts move; visit counts do not. Five minutes is short
    enough that "playing now" is not a lie and long enough that a busy

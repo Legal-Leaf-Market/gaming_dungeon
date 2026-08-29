@@ -95,6 +95,20 @@ export function parseMark(rawSvg) {
     }
   }
 
+  /* rotate(deg) or rotate(deg cx cy), shared by every shape. Stored
+     as radians plus a pivot; the renderer applies it by rotating the
+     SAMPLE POINT backwards, which is how you rotate a shape you are
+     hit-testing rather than drawing. */
+  function rotationOf(a, fallbackX, fallbackY) {
+    const t = /rotate\(\s*(-?[\d.]+)(?:[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+))?\s*\)/.exec(a.transform || '')
+    if (!t) return { rot: 0, rcx: fallbackX, rcy: fallbackY }
+    return {
+      rot: (Number(t[1]) * Math.PI) / 180,
+      rcx: t[2] !== undefined ? Number(t[2]) : fallbackX,
+      rcy: t[3] !== undefined ? Number(t[3]) : fallbackY,
+    }
+  }
+
   const shapes = []
   for (const m of svg.matchAll(/<rect\b[^>]*>/g)) {
     const a = attrs(m[0])
@@ -103,14 +117,19 @@ export function parseMark(rawSvg) {
     const r = Number(a.rx || a.ry || 0)
     const alpha = a.opacity === undefined ? 1 : Number(a.opacity)
     const fill = a.fill === undefined ? '#000000' : a.fill
+    /* ROTATED RECTS, because a brush stroke is a bar at an angle and
+       there is no other primitive here that makes one. Ellipses got
+       rotation first; rects doing it too is the same three fields and
+       the same unrotate(), not a second mechanism. */
+    const rt = rotationOf(a, x + rw / 2, y + rh / 2)
 
     if (fill && fill !== 'none') {
-      shapes.push({ kind: 'fill', x, y, w: rw, h: rh, r, rgb: colour(fill), alpha })
+      shapes.push({ kind: 'fill', x, y, w: rw, h: rh, r, rgb: colour(fill), alpha, ...rt })
     }
     if (a.stroke && a.stroke !== 'none') {
       const sw = Number(a['stroke-width'] || 1)
       shapes.push({
-        kind: 'ring', rgb: colour(a.stroke), alpha,
+        kind: 'ring', rgb: colour(a.stroke), alpha, ...rt,
         outer: { x: x - sw / 2, y: y - sw / 2, w: rw + sw, h: rh + sw, r: Math.max(0, r + sw / 2) },
         inner: { x: x + sw / 2, y: y + sw / 2, w: rw - sw, h: rh - sw, r: Math.max(0, r - sw / 2) },
       })
@@ -129,12 +148,7 @@ export function parseMark(rawSvg) {
     /* rotate(deg) or rotate(deg cx cy). Stored as radians and applied
        by rotating the SAMPLE POINT backwards, which is how you rotate
        a shape you are hit-testing rather than drawing. */
-    let rot = 0, rcx = cx, rcy = cy
-    const t = /rotate\(\s*(-?[\d.]+)(?:[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+))?\s*\)/.exec(a.transform || '')
-    if (t) {
-      rot = (Number(t[1]) * Math.PI) / 180
-      if (t[2] !== undefined) { rcx = Number(t[2]); rcy = Number(t[3]) }
-    }
+    const { rot, rcx, rcy } = rotationOf(a, cx, cy)
 
     if (fill && fill !== 'none') {
       shapes.push({ kind: 'ell', cx, cy, rx, ry, rot, rcx, rcy, rgb: colour(fill), alpha })
@@ -210,15 +224,15 @@ export function rasterize(mark, size, opts = {}) {
           if (bg) { r = bg[0]; g = bg[1]; b = bg[2]; a = 1 }
 
           for (const s of mark.shapes) {
+            /* One unrotate for every kind. It is a no-op when rot is
+               0, which is most shapes, so the common path costs a
+               single branch. */
+            const [px2, py2] = unrotate(ux, uy, s)
             let hit
-            if (s.kind === 'fill') hit = insideRR(ux, uy, s)
-            else if (s.kind === 'ring') hit = insideRR(ux, uy, s.outer) && !insideRR(ux, uy, s.inner)
-            else {
-              const [rx2, ry2] = unrotate(ux, uy, s)
-              hit = s.kind === 'ell'
-                ? insideEll(rx2, ry2, s)
-                : (insideEll(rx2, ry2, s.outer) && !insideEll(rx2, ry2, s.inner))
-            }
+            if (s.kind === 'fill') hit = insideRR(px2, py2, s)
+            else if (s.kind === 'ring') hit = insideRR(px2, py2, s.outer) && !insideRR(px2, py2, s.inner)
+            else if (s.kind === 'ell') hit = insideEll(px2, py2, s)
+            else hit = insideEll(px2, py2, s.outer) && !insideEll(px2, py2, s.inner)
             if (!hit) continue
             const sa = s.alpha
             /* source-over */
@@ -451,9 +465,9 @@ export function tokenBg(root = process.cwd()) {
 
 export function manifest(root = process.cwd()) {
   return {
-    name: 'Verda Store',
+    name: 'Verda Studio',
     /* 12 characters is where Android starts truncating under an icon. */
-    short_name: 'Verda',
+    short_name: 'Verda Studio',
     description: 'A room to wander. Retro, tabletop, battlestation, workshop, audio and the vault, ' +
       'from independent shops. Plus an arcade.',
     start_url: '/',

@@ -31,10 +31,17 @@ import { join } from 'node:path'
    is far more work to unpick than to prevent. verdastudio.store
    redirects to this one in vercel.json, so the pair never compete.
 
+   FLIPPED TO verdastudio.store once the brand artwork arrived: the
+   site is Verda Studio, so it belongs at the studio's address, and
+   verdacultivation.store is the game's. Costless to change right now
+   because robots.txt still blocks indexing, so no crawler has formed
+   an opinion about either host yet. It gets expensive the day
+   indexing opens; do it before then or not at all.
+
    To swap which is canonical, change this line and the redirect in
    vercel.json together, then re-run `npm run sitemap`. Changing one
    without the other creates a loop. */
-export const SITE = process.env.SITE_URL || 'https://verdacultivation.store'
+export const SITE = process.env.SITE_URL || 'https://verdastudio.store'
 
 export function routes(root = process.cwd()) {
   const out = new Set(['/'])

@@ -426,7 +426,7 @@ export const STORES = [
      THIS ROOM IS THE LITTLE SISTER'S TERRITORY AND THE OVERLAP IS
      DELIBERATE. Kawaii Katz already aggregates kawaii across eight
      Shopify vendors and it is the kid-friendly, gift-shaped one.
-     Verda Store is the grown-up sibling.
+     Verda Studio is the grown-up sibling.
 
      The two run SEPARATE registries and cross-link hard rather than
      sharing code, which was a decision rather than an accident:

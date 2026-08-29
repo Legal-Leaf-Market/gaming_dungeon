@@ -1,6 +1,6 @@
 {
-  "name": "Verda Store",
-  "short_name": "Verda",
+  "name": "Verda Studio",
+  "short_name": "Verda Studio",
   "description": "A room to wander. Retro, tabletop, battlestation, workshop, audio and the vault, from independent shops. Plus an arcade.",
   "start_url": "/",
   "scope": "/",

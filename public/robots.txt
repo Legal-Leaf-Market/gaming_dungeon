@@ -10,7 +10,7 @@
 #      impression on every one of these URLs to sell an empty shop.
 #
 #   2. THE DOMAINS LANDED, so this reason is now half spent.
-#      verdacultivation.store is canonical and verdastudio.store
+#      verdastudio.store is canonical and verdacultivation.store
 #      308s to it in vercel.json, which is the duplicate-content
 #      problem this clause was written to avoid, solved properly.
 #      What is left is reason 1: most rooms are still empty, and an

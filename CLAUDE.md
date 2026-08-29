@@ -1,4 +1,4 @@
-# CLAUDE.md — Operating guide for Verda Store
+# CLAUDE.md — Operating guide for Verda Studio
 
 Read this fully before editing. Sister project to **Legal-Leaf Market**,
 **Herbal Leaf Market**, **Nicotia Market** and **Kawaii Katz**. It copies their
@@ -688,7 +688,7 @@ link, which is the entire reason it is the connective tissue across the sites.
 
 **This site left the sister-site palette on 2026-08-29, on the owner's explicit
 call.** Legal-Leaf, Herbal-Leaf, Nicotia and Kawaii Katz still share the old dark
-family tokens; Verda Store does not. The cross-links in the footer visibly do
+family tokens; Verda Studio does not. The cross-links in the footer visibly do
 not match, and **that is the intended outcome, not drift.** Do not "fix" it by
 reverting to the family palette.
 
@@ -855,8 +855,9 @@ facts make it right today and both stop being true on the same day:
 1. **Nothing is published.** Every room says "nothing is stocked yet". Letting
    Google index that spends the first impression on every URL selling an empty
    shop.
-2. **The domains have landed.** `verdacultivation.store` is canonical;
-   `verdastudio.store` 308s to it via a host-matched redirect in
+2. **The domains have landed.** `verdastudio.store` is canonical, because
+   the site is Verda Studio; `verdacultivation.store` is the game's name and
+   308s to the studio via a host-matched redirect in
    `vercel.json`. The address is written down in ONE place,
    `SITE` in `tools/sitemap.mjs`; swapping which domain is canonical
    means changing that constant AND the redirect together, or you get

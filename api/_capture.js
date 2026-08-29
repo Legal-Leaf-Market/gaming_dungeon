@@ -13,7 +13,7 @@
    unread", Tokyo Tiger returned nothing at all and still does, and
    two vendors put 466 products up that earn nothing to this day.
 
-   Verda Store inverts it. A human opens the merchant in their
+   Verda Studio inverts it. A human opens the merchant in their
    own browser, runs the collector bookmarklet, and we read what is
    actually there BEFORE any scraper is pointed at it. Only then
    does a merchant get an `include` list, a room, and a cleared
