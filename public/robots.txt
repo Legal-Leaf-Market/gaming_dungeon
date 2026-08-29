@@ -9,11 +9,20 @@
 #      stocked yet". Letting Google index that costs us the first
 #      impression on every one of these URLs to sell an empty shop.
 #
-#   2. THIS IS A THROWAWAY ADDRESS. gaming-dungeon.vercel.app is a
-#      deploy URL, not the domain. If it gets indexed and a real
-#      domain lands later, the two compete: duplicate content, split
-#      signal, and a canonical mess that is far more work to unpick
-#      than it ever was to prevent.
+#   2. THE DOMAINS LANDED, so this reason is now half spent.
+#      verdacultivation.store is canonical and verdastudio.store
+#      308s to it in vercel.json, which is the duplicate-content
+#      problem this clause was written to avoid, solved properly.
+#      What is left is reason 1: most rooms are still empty, and an
+#      indexed empty room spends the first impression on that URL to
+#      sell nothing.
+#
+#      SO THIS FILE IS NOW THE ONLY THING HOLDING BACK INDEXING, and
+#      it should be opened room by room as they stock rather than all
+#      at once. Four rooms have inventory today: play, tabletop,
+#      battlestation and workshop. Opening those and the homepage is
+#      a deliberate decision about a live site, so it is left to the
+#      owner rather than slipped in with a domain change.
 #
 # Blocking now costs nothing, because there is nothing to index.
 #

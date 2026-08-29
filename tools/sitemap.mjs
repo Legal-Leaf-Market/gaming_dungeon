@@ -24,10 +24,17 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
-/* No domain is owned yet, so this is the deploy URL. It is the ONLY
-   place the site's public address is written down; change it here
-   when the domain lands and re-run. */
-export const SITE = process.env.SITE_URL || 'https://gaming-dungeon.vercel.app'
+/* THE SITE'S ADDRESS, WRITTEN DOWN ONCE. Two domains point here,
+   verdacultivation.store and verdastudio.store, and exactly one of
+   them can be canonical: two hostnames serving identical content is
+   duplicate content, split ranking signal and a canonical mess that
+   is far more work to unpick than to prevent. verdastudio.store
+   redirects to this one in vercel.json, so the pair never compete.
+
+   To swap which is canonical, change this line and the redirect in
+   vercel.json together, then re-run `npm run sitemap`. Changing one
+   without the other creates a loop. */
+export const SITE = process.env.SITE_URL || 'https://verdacultivation.store'
 
 export function routes(root = process.cwd()) {
   const out = new Set(['/'])

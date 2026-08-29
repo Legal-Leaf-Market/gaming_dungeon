@@ -855,7 +855,15 @@ facts make it right today and both stop being true on the same day:
 1. **Nothing is published.** Every room says "nothing is stocked yet". Letting
    Google index that spends the first impression on every URL selling an empty
    shop.
-2. **`gaming-dungeon.vercel.app` is a deploy URL, not a domain.** If it gets
+2. **The domains have landed.** `verdacultivation.store` is canonical;
+   `verdastudio.store` 308s to it via a host-matched redirect in
+   `vercel.json`. The address is written down in ONE place,
+   `SITE` in `tools/sitemap.mjs`; swapping which domain is canonical
+   means changing that constant AND the redirect together, or you get
+   a loop. The old note follows, kept because the reasoning still
+   applies to any future preview URL:
+
+   **`gaming-dungeon.vercel.app` is a deploy URL, not a domain.** If it gets
    indexed and a real domain lands later, the two compete — duplicate content,
    split signal, and a canonical mess far more work to unpick than to prevent.
 

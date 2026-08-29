@@ -413,3 +413,55 @@ test('no place id is ever invented', () => {
   }
   assert.match(games, /configured/, 'a cabinet without an id must be gated, not served')
 })
+
+/* ============================================================
+   TWO DOMAINS, ONE CANONICAL
+
+   verdacultivation.store and verdastudio.store both resolve here.
+   Exactly one may serve content; the other must redirect, or they
+   are duplicate content competing for the same ranking signal, which
+   robots.txt has carried a warning about since before either domain
+   existed.
+
+   The failure this guards is a HALF rename. The canonical address
+   lives in one constant and the redirect lives in vercel.json, and
+   changing one without the other either resurrects the duplicate or,
+   worse, points the redirect at itself and loops every request on
+   the live site.
+   ============================================================ */
+import { SITE as CANON_SITE } from '../tools/sitemap.mjs'
+
+test('the canonical host never redirects to itself', () => {
+  const cfg = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'))
+  const host = new URL(CANON_SITE).host
+  for (const r of cfg.redirects || []) {
+    const on = (r.has || []).find(h => h.type === 'host')
+    if (!on) continue
+    assert.notEqual(on.value, host,
+      'vercel.json redirects the canonical host ' + host + ' away from itself. ' +
+      'Every request on the live site would loop.')
+  }
+})
+
+test('every host-matched redirect lands on the canonical site', () => {
+  const cfg = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'))
+  const hostRules = (cfg.redirects || []).filter(r => (r.has || []).some(h => h.type === 'host'))
+  assert.ok(hostRules.length > 0,
+    'no host redirect at all: the alternate domain would serve a duplicate of the site')
+  for (const r of hostRules) {
+    assert.ok(r.destination.startsWith(CANON_SITE),
+      'a host redirect points at ' + r.destination + ' but the canonical site is ' +
+      CANON_SITE + '. Change SITE and the redirect together.')
+  }
+})
+
+test('no page still advertises the old deploy URL', () => {
+  /* og:url and the sitemap are what a crawler believes. One page left
+     on the deploy address is one page telling Google the site lives
+     somewhere else. */
+  for (const f of ['index.html', 'disclosure.html', 'privacy.html', 'terms.html', 'sitemap.xml']) {
+    const html = readFileSync(join(ROOT, 'public', f), 'utf8')
+    assert.ok(!html.includes('gaming-dungeon.vercel.app'),
+      f + ' still points at the old deploy URL')
+  }
+})
