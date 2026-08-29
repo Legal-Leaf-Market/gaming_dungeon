@@ -146,3 +146,45 @@ test('every room the registry can name has display metadata', async () => {
   for (const k of ROOM_ORDER) assert.ok(known.has(k), `ROOMS_META is missing "${k}"`)
   for (const s of STORES) assert.ok(known.has(s.room), `${s.key} sits in unknown room "${s.room}"`)
 })
+
+test('a non-product TYPE is refused, and the test actually fires', () => {
+  /* NONPRODUCT_TYPE HAD NEVER FIRED, ON ANY CALLER, SINCE IT WAS
+     WRITTEN. It is anchored ^...$ and was tested against the whole
+     blob -- title, variant, tags and description joined together --
+     so it could only ever have matched a product whose entire text
+     was the single word "fee".
+
+     Found on a real merchant: a 3D printing shop whose feed carries
+     97 products of type "Warranty" and 3 of type "Service". All 100
+     were being filed into the Workshop, where they would have been
+     the largest category in the room -- a shelf of warranty
+     certificates with prices on them.
+
+     classify() now takes product_type as its own argument. */
+  const st = { key: 'shop', room: 'workshop' }
+  for (const type of ['Warranty', 'warranty', 'Service', 'Gift Card', 'Fee', 'Shipping']) {
+    assert.equal(classify(st, 'Anything At All ' + type, type + ' Some Vendor', type), '',
+      'a product whose type is "' + type + '" must be refused')
+  }
+})
+
+test('warranty is refused on the TYPE and never on the description', () => {
+  /* THE BROAD-REGEX TRAP, which this repo has a standing rule about.
+     Half the printers in that catalogue mention a warranty in their
+     copy, so putting `warranty` in the description-reading NONPRODUCT
+     list would have hidden real machines while looking like a fix. */
+  const st = { key: 'shop', room: 'workshop' }
+  assert.equal(
+    classify(st, 'Bambu Lab X1 Carbon 3D Printer',
+      '3D Printer ships with a 1 year warranty included', '3D Printer'),
+    'workshop',
+    'a real printer whose description mentions a warranty must survive')
+})
+
+test('classify still works for callers that have no product_type', () => {
+  /* The argument is optional and the old behaviour is the fallback,
+     so a caller that only has a blob is not silently changed. */
+  const st = { key: 'shop', room: 'workshop' }
+  assert.equal(classify(st, 'Gift Card', 'gift card'), '', 'the blob path must still refuse')
+  assert.ok(classify(st, 'PLA Filament 1.75mm', 'filament spool'))
+})

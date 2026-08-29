@@ -1,0 +1,25 @@
+{
+  "key": "rpgtabletops",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /api/capture?draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "bookmarklet capture, 23 of 23 products, sitemap agreed",
+  "capture": {
+    "products": 23,
+    "claimedTotal": 23,
+    "partial": false,
+    "priceRange": {
+      "min": 9.95,
+      "max": 97,
+      "mean": 35.98
+    },
+    "unpriced": 0,
+    "withoutImage": 0
+  },
+  "include": [],
+  "roomMap": {},
+  "review": [
+    "EMPTY include IS THE DECISION, NOT A MISSING ONE. This merchant has no product_type taxonomy: all 23 products are untyped. An empty include means everything, and every one of the 23 classifies to `tabletop` with none refused, so the whole catalogue is carried and _scene.js places it.",
+    "A non-empty include list here would publish nothing at all, since no product carries a type to match.",
+    "NOT ATTRIBUTED. rpgtabletops has no affiliate code, so these 23 products link direct and earn nothing. That is deliberate per the brief (build the right site, not the site we are approved for) and is stated here so it is never a surprise."
+  ]
+}

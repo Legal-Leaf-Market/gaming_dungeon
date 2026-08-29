@@ -1,0 +1,52 @@
+{
+  "key": "3dprinternational",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /api/capture?draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "bookmarklet capture, 302 of 604 products (half the catalogue)",
+  "capture": {
+    "products": 302,
+    "claimedTotal": 604,
+    "partial": true,
+    "priceRange": {
+      "min": 1,
+      "max": 62895,
+      "mean": 1773.39
+    },
+    "unpriced": 0,
+    "withoutImage": 0
+  },
+  "include": [
+    "3D Printer Accessories",
+    "Filament",
+    "CNC Router",
+    "3D Printer",
+    "3D Printers",
+    "CNC Machine",
+    "3D Printing Materials",
+    "3D PRINTER",
+    "Accessories",
+    "Hotend",
+    "Nozzles",
+    "Replacement Parts",
+    "3D Scanners",
+    "FILAMENT",
+    "3D Printer filament",
+    "Extruder",
+    "3D Printed Part",
+    "Tools",
+    "Air Purifiers",
+    "Parts & Accesories",
+    "3d printer"
+  ],
+  "roomMap": {},
+  "review": [
+    "WARRANTY AND SERVICE REMOVED, 100 PRODUCTS. 97 products of type 'Warranty' and 3 of type 'Service' were proposed for inclusion and had been classified into the Workshop, where they would have been the LARGEST category in the room: a shelf of warranty certificates with prices on them. They are not things anybody browses for.",
+    "That was not only an include-list decision. It exposed a real bug: NONPRODUCT_TYPE in _scene.js was anchored ^...$ and tested against the whole blob (title, variant, tags and description joined), so it could only have matched a product whose entire text was the single word 'fee'. It had never fired, on any caller, since it was written. classify() now takes product_type as its own argument and 'warranty' and 'service' are in that list, so these are refused for every merchant, not just this one.",
+    "'warranty' is matched on the TYPE and deliberately NOT added to the description-reading NONPRODUCT list, because half the printers in this catalogue mention a warranty in their copy and matching the blob would have hidden real machines.",
+    "THE roomMap SENDING 3D PRINTERS TO THE AUDIO ROOM WAS DROPPED. The draft proposed {'3d printer': 'audio'} on the strength of one lowercase-typed product the classifier misread. One product does not move a category, and a 3D printer on the Audio shelf is a visible error. It falls through to workshop with the rest.",
+    "'Gift Card' correctly refused, left out.",
+    "SPELLING KEPT AS THE MERCHANT WRITES IT. '3D PRINTER', 'FILAMENT' and 'Parts & Accesories' (their typo) are listed as they appear. Matching is case-insensitive so the shouting variants are redundant, but the misspelling is not, and correcting it here would silently drop those products.",
+    "HALF A CATALOGUE. 302 of 604 captured. The include list is drawn from 25 product types across that half and is the conservative direction to be wrong in: a type that appears only in the unread half will be dropped rather than published unseen. Worth a second capture before assuming the Workshop is complete.",
+    "Prices run from 1 dollar to 62,895. The top end is industrial CNC, which is real, but this merchant will own every price-descending sort on the site."
+  ]
+}

@@ -538,6 +538,40 @@ checkout refuses to honour is the worst thing this kind of site can ship.
 
 ---
 
+## 5b. The first four merchants on the shelf, and what reviewing them found
+
+`awkwardgames`, `rpgtabletops`, `customgamingchair`, `3dprinternational`. Their
+summaries are in `data/captured/`, each carrying a `review` array saying what was
+decided and why. Two things came out of doing it for real:
+
+**`NONPRODUCT_TYPE` in `_scene.js` had never fired, on any caller, since it was
+written.** It is anchored `^...$` and was tested against the whole blob (title,
+variant, tags and description joined), so it could only ever have matched a
+product whose entire text was the single word "fee". 3D Printernational's feed
+carries **97 products of type `Warranty` and 3 of type `Service`**, all of which
+were being filed into the Workshop — where they would have been the largest
+category in the room, a shelf of warranty certificates with prices on them.
+`classify()` now takes `product_type` as its own fourth argument.
+
+`warranty` is matched on the **type** and deliberately NOT added to the
+description-reading `NONPRODUCT` list: half that catalogue's printers mention a
+warranty in their copy, so matching the blob would have hidden real machines
+while looking like a fix. That is the standing broad-regex rule (§14) applied.
+
+**An empty `include` is a decision, and `analyse()` cannot make it.** The draft
+generator never proposes the `(none)` bucket, so a merchant whose catalogue is
+mostly untyped gets an include list covering only its typed minority — and a
+non-empty include list drops every untyped product. On `customgamingchair` the
+proposal would have published **5 of 23 products** and nothing would have said
+so. Both that merchant and `rpgtabletops` (23 of 23 untyped) are published with
+`include: []`, which means everything.
+
+**So: read the `(none)` row before accepting any draft.** If it is a large share
+of the catalogue, the answer is almost always an empty `include`, not the
+proposed list. `analyse()` states the threshold it used; it does not know this.
+
+---
+
 ## 6. `_scene.js` — one rule, one file
 
 `classify()` returns a room key or `''`, and **`''` means we do not carry it.**
@@ -912,7 +946,7 @@ before you trust it.
 
 ## 11. Verify before you merge
 
-1. `npm test` — 98 cases. The collector test parses the assembled program with
+1. `npm test` — 102 cases. The collector test parses the assembled program with
    `new Function`, which is the point of having it: a syntax error there does
    not fail locally, it fails silently on a stranger's website with no error
    event.
@@ -966,6 +1000,11 @@ before you trust it.
 - Do NOT open `robots.txt` before a real domain AND a published merchant, and
   do NOT forget to (§10b). Both failure directions are quiet.
 - Do NOT hand-edit `public/sitemap.xml`; run `npm run sitemap` (§10b).
+- Do NOT accept a draft's `include` list without reading its `(none)` row. A
+  mostly-untyped catalogue needs `include: []`, and the proposal will instead
+  publish its typed minority silently (§5b).
+- Do NOT add `warranty` to `NONPRODUCT`; it belongs in `NONPRODUCT_TYPE`, matched
+  on the type alone (§5b).
 - Do NOT add an endpoint that reads `x-gd-admin-token` without a `no-store` rule
   for it in `vercel.json`. The `/api/(.*)` cache rule wins over the handler's own
   header (§4c).

@@ -164,7 +164,7 @@ export const STORES = [
     platform:'shopify', ref:'ctyumzte', rate:'15%', cookie:30, tier:1, pending:true },
 
   { key:'awkwardgames', name:'Awkward Games', room:'play', domain:'www.awkwardgames.com',
-    platform:'shopify', ref:'ykxibzlr', rate:'$10 flat', cookie:30, tier:1, pending:true,
+    platform:'shopify', ref:'ykxibzlr', rate:'$10 flat', cookie:30, tier:1, 
     note:'FLAT $10 per sale, not a percentage. The only one on the sheet like that, so any ' +
          'percentage-shaped earnings estimate is wrong for this store specifically.' },
 
@@ -192,7 +192,7 @@ export const STORES = [
     platform:'shopify', ref:'', rate:'10%', cookie:30, tier:1, pending:true },
 
   { key:'rpgtabletops', name:'RPG Tabletops', room:'tabletop', domain:'rpgtabletops.com',
-    platform:'shopify', ref:'', rate:'20%', cookie:7, tier:2, pending:true },
+    platform:'shopify', ref:'', rate:'20%', cookie:7, tier:2,  },
 
   { key:'tabletopitemshop', name:'Tabletop Itemshop', room:'tabletop', domain:'tabletop-itemshop.myshopify.com',
     platform:'shopify', ref:'yrsdhbqg', rate:'15%', cookie:7, tier:3, pending:true },
@@ -220,7 +220,7 @@ export const STORES = [
     note:'Gaming chairs. Best rate-plus-cookie combination on the AOV room.' },
 
   { key:'customgamingchair', name:'Custom Gaming Chair', room:'battlestation', domain:'www.customgamingchair.com',
-    platform:'shopify', ref:'irarpdcz', rate:'10%', cookie:30, tier:1, pending:true },
+    platform:'shopify', ref:'irarpdcz', rate:'10%', cookie:30, tier:1,  },
 
   { key:'odingaming', name:'Odin Gaming', room:'battlestation', domain:'www.odinpc.com',
     platform:'shopify', ref:'', rate:'10%', cookie:30, tier:1, pending:true },
@@ -304,7 +304,7 @@ export const STORES = [
     note:'Major 3D-printer brand, and the best name recognition in this room.' },
 
   { key:'3dprinternational', name:'3D Printernational', room:'workshop', domain:'www.3dprinternational.com',
-    platform:'shopify', ref:'hqvplmpo', rate:'5%', cookie:30, tier:1, pending:true },
+    platform:'shopify', ref:'hqvplmpo', rate:'5%', cookie:30, tier:1,  },
 
   /* ==========================================================
      AUDIO.

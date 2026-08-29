@@ -93,7 +93,7 @@ function publicStores() {
 /* ============================================================
    CLASSIFIERS
    ============================================================ */
-function classify(st, blob, name) {
+function classify(st, blob, name, ptype) {
   /* ONE RULE, ONE FILE. The body of this used to be ~110 lines of
      nicotine vocabulary. It is now a delegation, because the same
      question is asked by the ingest, by the probe and by the tests,
@@ -103,7 +103,7 @@ function classify(st, blob, name) {
 
      Returns '' for "we do not carry this", which callers must treat
      as a drop rather than as an unknown room. */
-  return classifyScene(st, name, blob)
+  return classifyScene(st, name, blob, ptype)
 }
 
 /* ============================================================
@@ -301,7 +301,7 @@ function row(st, o) {
 
   /* The store's own category knows better than a regex does. When a
      strategy supplies a room it wins outright. */
-  const room = (mapped && rv.roomMap[mapped]) || o.room || classify(st, blob, name)
+  const room = (mapped && rv.roomMap[mapped]) || o.room || classify(st, blob, name, ptype)
 
   /* '' MEANS WE DO NOT CARRY THIS, AND IT IS HONOURED HERE.
      _scene.js has always returned '' for a washing machine, a gift

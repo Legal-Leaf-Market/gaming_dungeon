@@ -409,7 +409,7 @@ export function analyse(rows, st, classify) {
     const e = types.get(t)
     e.n++
     const room = classify(st || { room: '' }, r.title || '',
-      [r.product_type, r.vendor].filter(Boolean).join(' '))
+      [r.product_type, r.vendor].filter(Boolean).join(' '), r.product_type || '')
     if (!room) e.refused++
     else e.rooms[room] = (e.rooms[room] || 0) + 1
   }
@@ -540,7 +540,7 @@ export async function previewItems(key, classify, storeFor) {
       ptype: r.product_type || undefined,
       oos: d.available === false ? 1 : undefined,
       room: classify
-        ? classify(st || { room: '' }, r.title || '', [r.product_type, r.vendor].filter(Boolean).join(' '))
+        ? classify(st || { room: '' }, r.title || '', [r.product_type, r.vendor].filter(Boolean).join(' '), r.product_type || '')
         : '',
     }
   })

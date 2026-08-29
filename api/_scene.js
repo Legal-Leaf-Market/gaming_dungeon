@@ -81,7 +81,25 @@ const NONPRODUCT = new RegExp([
   '^\\s*select \\d+ for', 'rewards? coupon', '\\bstore credit\\b',
 ].join('|'), 'i')
 
-const NONPRODUCT_TYPE = /^(fee|tax|shipping|insurance|service|gift card)$/i
+/* MATCHED AGAINST THE product_type ALONE, which is why classify()
+   takes it as its own argument rather than trusting it to be in the
+   blob. It was anchored ^...$ and tested against the whole blob --
+   title, variant, tags and description joined together -- so it could
+   only ever have fired on a product whose entire text was the single
+   word "fee". In other words it never fired at all, on any of the
+   three callers, since the day it was written.
+
+   Found on a real merchant: a 3D printing shop whose feed carries 97
+   products of type "Warranty" and 3 of type "Service". All 100 were
+   being filed in the Workshop, where they would have been the largest
+   category in the room -- a shelf of warranties with prices on them.
+
+   `warranty` is HERE and deliberately not in NONPRODUCT, because
+   NONPRODUCT reads the description too and half the printers in that
+   catalogue mention a warranty in their copy. Refusing on the type is
+   exact; refusing on the blob would have hidden real machines. That is
+   the broad-regex trap this repo has a standing rule about. */
+const NONPRODUCT_TYPE = /^(fee|tax|shipping|insurance|service|service plan|warranty|extended warranty|gift ?cards?)$/i
 
 /* ---- 2. off-scene goods -------------------------------------
    The Best Buy problem in reverse. Several registry merchants are
@@ -229,17 +247,24 @@ const ROOMS = [
  *                      separately from `name` because the title is
  *                      the stronger signal and a long description
  *                      full of cross-sell links is the weakest.
+ * @param {string} [ptype]  the merchant's own product_type, ALONE.
+ *                      Passed separately because the non-product test
+ *                      is anchored and cannot work against a blob.
  * @returns {string} a room key, or '' meaning do not carry it.
  */
-export function classify(st, name, blob = '') {
+export function classify(st, name, blob = '', ptype = '') {
   const title = String(name == null ? '' : name)
   const rest = String(blob == null ? '' : blob)
+  const type = String(ptype == null ? '' : ptype).trim()
   const both = title + ' ' + rest
 
   /* Refuse first. See the ordering note at the top. */
   if (!title.trim()) return ''
   if (NONPRODUCT.test(both)) return ''
-  if (NONPRODUCT_TYPE.test(rest.trim())) return ''
+  /* The type, on its own. Callers that have it pass it; the ones that
+     do not fall back to the blob, which is what every caller was
+     effectively doing before and is why this test never fired. */
+  if (NONPRODUCT_TYPE.test(type || rest.trim())) return ''
   if (OFF_SCENE.test(both)) return ''
 
   /* THE TITLE GETS ITS OWN PASS BEFORE THE BLOB DOES, and this is

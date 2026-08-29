@@ -1,0 +1,35 @@
+{
+  "key": "awkwardgames",
+  "reviewedBy": "Claude (Opus 5), session 57b768fe, reading the /api/capture?draft output with Jacob Kennedy",
+  "reviewedOn": "2026-08-29",
+  "source": "bookmarklet capture, 11 of 11 products, sitemap agreed",
+  "capture": {
+    "products": 11,
+    "claimedTotal": 11,
+    "partial": false,
+    "priceRange": {
+      "min": 10,
+      "max": 40,
+      "mean": 23.54
+    },
+    "unpriced": 0,
+    "withoutImage": 0
+  },
+  "include": [
+    "card game",
+    "Bucket Hat",
+    "Shirts & Tops",
+    "Hats"
+  ],
+  "roomMap": {
+    "Bucket Hat": "wardrobe",
+    "Shirts & Tops": "wardrobe",
+    "Hats": "wardrobe"
+  },
+  "review": [
+    "A small, coherent shop: five card games and four garments. Complete capture, everything priced, everything has an image. Published whole.",
+    "The feed types the same thing two ways, 'card game' and 'Card Game'. Listed ONCE: row() compares include entries case-insensitively, so the second spelling is covered and listing it again would only imply the matching is case-sensitive.",
+    "The garments carry the store's own types and the store's default room is `play`, so roomMap sends them to the Wardrobe. Without it four products would be filed under Play.",
+    "COSTS TWO PRODUCTS, KNOWINGLY. Two items have no product_type at all, and a non-empty include list drops every untyped product because the empty string matches no entry. One of the two was refused by the classifier anyway; the other is a garment. Losing one real product is the price of keeping the include list honest here, and it is the safe direction to fail in."
+  ]
+}
