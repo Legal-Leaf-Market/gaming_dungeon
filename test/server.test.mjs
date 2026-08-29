@@ -510,3 +510,86 @@ test('the title card plays once a session and never under reduced motion', () =>
   assert.ok(/prefers-reduced-motion/.test(script),
     'no reduced-motion check: a full-screen wipe is exactly what that setting is for')
 })
+
+/* ============================================================
+   THE PAINTED-SCENE CONTRACT
+
+   Four filenames are the entire integration: vale.js probes them,
+   vale.css styles them, and docs/SCENE_ART_BRIEF.md tells the
+   painter what to produce. Three copies of one list, in three
+   files, two of them code and one of them instructions leaving the
+   repo entirely — which is the exact shape of thing that drifts.
+   A brief that asks for `village.webp` while the code probes
+   `town.webp` fails with no error anywhere: the artist delivers,
+   the file is committed, and nothing changes on the site.
+   ============================================================ */
+const PAINT_LAYERS = ['crag', 'far', 'mid', 'near', 'bough']
+
+test('city.js probes exactly the painted layers the contract names', () => {
+  const src = readFileSync(join(ROOT, 'public', 'js', 'city.js'), 'utf8')
+  const m = /var PAINT = \[([^\]]+)\]/.exec(src)
+  assert.ok(m, 'city.js no longer declares the PAINT list')
+  const probed = m[1].match(/'([a-z]+)'/g).map(s => s.slice(1, -1))
+  assert.deepEqual(probed, PAINT_LAYERS)
+})
+
+test('city.css styles every painted layer, and no others', () => {
+  const css = readFileSync(join(ROOT, 'public', 'css', 'city.css'), 'utf8')
+  const styled = [...css.matchAll(/\.city\.painted-([a-z]+)/g)].map(m => m[1])
+  assert.deepEqual([...new Set(styled)].sort(), [...PAINT_LAYERS].sort())
+  for (const name of PAINT_LAYERS) {
+    assert.ok(css.includes('assets/paint/' + name + '.webp'),
+      'city.css never points the ' + name + ' layer at its painted file')
+  }
+})
+
+test('the brief the painter receives names the same files', () => {
+  const brief = readFileSync(join(ROOT, 'docs', 'SCENE_ART_BRIEF.md'), 'utf8')
+  for (const name of PAINT_LAYERS) {
+    assert.ok(brief.includes('`' + name + '.webp`'),
+      'the brief never names ' + name + '.webp: the painter would deliver files the site ignores')
+  }
+  assert.ok(brief.includes('public/assets/paint/'),
+    'the brief must say where the files go, or delivery stalls on a question')
+})
+
+/* ============================================================
+   THE ASPECT TABLE IS A THIRD COPY OF A NUMBER
+
+   city.js has to know each plate's aspect ratio to compute the drift
+   loop, because a browser will not report the rendered size of a
+   background image. So the ratio lives in three places: the
+   generator that draws the plate, the plate's own viewBox, and that
+   table.
+
+   Getting it wrong does not error. The band pans by slightly the
+   wrong distance and jumps back once every few minutes, which is the
+   kind of fault that survives a ten second look and then annoys a
+   real visitor for months. So the table is checked against the
+   committed SVGs, which are the artefact that actually ships.
+
+   The brief hands the same ratios to whoever paints a replacement
+   plate, so it is checked too: a painted plate delivered at the
+   wrong aspect fails in exactly the same invisible way.
+   ============================================================ */
+test('the drift table matches the plates it is drifting', () => {
+  const js = readFileSync(join(ROOT, 'public', 'js', 'city.js'), 'utf8')
+  const table = /var ASPECT = \{([^}]+)\}/.exec(js)
+  assert.ok(table, 'city.js no longer declares the ASPECT table')
+
+  const brief = readFileSync(join(ROOT, 'docs', 'SCENE_ART_BRIEF.md'), 'utf8')
+  const entries = [...table[1].matchAll(/([a-z]+):\s*(\d+)\s*\/\s*(\d+)/g)]
+  assert.equal(entries.length, 4, 'the four tiling bands each need a ratio')
+
+  for (const [, name, w, h] of entries) {
+    const svg = readFileSync(join(ROOT, 'public', 'assets', 'city-' + name + '.svg'), 'utf8')
+    const box = /viewBox="0 0 (\d+) (\d+)"/.exec(svg)
+    assert.ok(box, 'city-' + name + '.svg has no viewBox to check against')
+    assert.equal(box[1] + 'x' + box[2], w + 'x' + h,
+      'city.js thinks ' + name + ' is ' + w + 'x' + h + ' and the plate is ' +
+      box[1] + 'x' + box[2] + ': the band will jump once per drift cycle')
+    assert.ok(brief.includes(w + ' x ' + h),
+      'the brief never states the ' + name + ' plate ratio ' + w + ' x ' + h +
+      ', so a painted replacement would be delivered at the wrong shape')
+  }
+})

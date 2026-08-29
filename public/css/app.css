@@ -1,229 +1,607 @@
 /* ============================================================
-   app.css — components, in the game's ink-and-paper language.
-   ------------------------------------------------------------
-   Every value reaches for a token. The shapes here are ports of
-   UiKit.luau's constructors, one CSS rule per Lua function:
+   app.css — the whole interface
 
-     UiKit.frame   -> .panel      paper, 5px, 1.8px ink border
-     UiKit.window  -> .window     .panel + an ink banner
-     UiKit.button  -> button      ink fill, paper text, 4px
-     UiKit.bar     -> .bar        inset track, round, ink border
-     UiKit.scroll  -> .inset      paperDim well
-     UiKit.label   -> type scale  Garamond, Merriweather for bold
+   ONE FILE NOW. This used to be app.css plus ink.css, where ink.css
+   existed to overlay a paper texture and then quietly re-specified
+   half of app.css underneath it. Two files describing the same
+   button is how a redesign takes six commits instead of one, and
+   this repo has already paid for that lesson once: a stylesheet
+   that claims to match another file and does not is worse than one
+   that never claimed it.
 
-   THE STROKE RULE, ported verbatim from their header comment: a
-   stroke belongs on the BORDER of a box and never on the glyphs of
-   text. They lost time to text that "read blobby" before writing
-   that down. So: borders on containers, no text-stroke on copy. The
-   ONE exception is the label inside a filled bar, which the game
-   also strokes, because paper-on-colour needs it to stay readable.
+   WHAT MADE THE OLD BUILD READ AS CLUNKY, since the fix is only
+   legible next to the fault. Four things, and none of them was the
+   colour:
+
+     1. `3px 3px 0` hard offset shadows on every card, door and
+        link. A solid displaced block is the most dated thing an
+        interface can wear.
+     2. One typeface at five sizes. Headings, nav, counts, prices
+        and body were all Garamond, so nothing had a different
+        voice and therefore nothing had emphasis.
+     3. 5px radii and 1.8px borders everywhere: every element was a
+        box with a drawn edge, so the page was a page of boxes.
+     4. No air. Sections sat 24px apart and the hero reserved 172px
+        of padding for ridges that had been deleted, so the copy
+        huddled in the top-left of a hole.
+
+   The fixes, in order: layered soft elevation, a sans for
+   everything functional, hairlines instead of borders, and a space
+   scale whose section gap is over 100px on a wide screen.
    ============================================================ */
 
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
+/* ------------------------------------------------------------
+   BASE
+   ------------------------------------------------------------ */
+*,*::before,*::after{ box-sizing:border-box }
+html{ -webkit-text-size-adjust:100% }
+html,body{ margin:0; padding:0 }
 
 body{
-  background:var(--paper);
+  background:var(--night);
   color:var(--text);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.6;
   min-height:100vh;
-  font:17px/1.6 var(--serif);
-  /* Paper, not a flat fill. Two barely-there washes so the ground
-     has some tooth without becoming a texture image. */
-  background-image:
-    radial-gradient(60rem 40rem at 12% -10%, rgba(168,130,42,.07), transparent 60%),
-    radial-gradient(52rem 34rem at 92% 4%, rgba(59,125,216,.05), transparent 58%);
-  background-attachment:fixed;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
 }
-a{color:inherit;text-decoration:none}
-:focus-visible{outline:2px solid var(--qi);outline-offset:2px}
-main{max-width:1120px;margin:0 auto;padding:0 18px 72px}
 
-/* ---- the paper panel, UiKit.frame ---- */
+a{ color:inherit; text-decoration:none }
+img{ max-width:100%; display:block }
+::selection{ background:rgba(var(--jade-rgb),.26); color:var(--text) }
+
+/* The game's one hard rule, and it holds on a dark ground too:
+   strokes go on the BORDER of a box, never on the glyphs of text.
+   This is a ring around the element, not a halo on the letters. */
+:focus-visible{
+  outline:2px solid var(--jade);
+  outline-offset:3px;
+  border-radius:4px;
+}
+
+main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
+
+/* ------------------------------------------------------------
+   THE GROUND
+
+   Everything below the hero rides on this. It is very nearly
+   opaque, not fully: the top 340px let the city's lantern glow
+   bleed up behind the first section, so the page reads as standing
+   IN the scene rather than as a panel dropped over a wallpaper.
+
+   Fully transparent was tried and copy over a moving background is
+   unreadable at any contrast. This is the compromise that keeps
+   both, and the gradient is doing all of the work.
+   ------------------------------------------------------------ */
+.ground{
+  position:relative;
+  background:linear-gradient(180deg,
+    rgba(8,13,22,0) 0,
+    rgba(8,13,22,.72) 90px,
+    rgba(8,13,22,.94) 240px,
+    var(--night) 420px);
+}
+
+/* ------------------------------------------------------------
+   HEADER
+
+   Sticky, and its background is a scrim rather than a panel: dark
+   at the very top where it sits over open sky, gone by 100%. Over
+   the ground below it is invisible, which is the point. No border,
+   no bar, nothing to make the top of the page feel like a lid.
+   ------------------------------------------------------------ */
+.top{
+  position:sticky; top:0; z-index:40;
+  display:flex; align-items:center; gap:16px;
+  max-width:var(--page); margin:0 auto;
+  padding:18px var(--pad);
+}
+.top::before{
+  content:''; position:absolute; inset:-40px 0 auto; height:150px;
+  background:linear-gradient(180deg, rgba(4,7,13,.66) 0, rgba(4,7,13,.28) 52%, transparent 100%);
+  pointer-events:none; z-index:-1;
+}
+
+.brand{ display:flex; align-items:center; gap:11px; position:relative }
+.brand-mark{
+  width:30px; height:30px; flex:none;
+  background:url(/assets/mark.svg) center/contain no-repeat;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));
+}
+.brand-name{
+  font-family:var(--sans); font-weight:600; font-size:13px;
+  letter-spacing:.19em; color:var(--text);
+  text-shadow:0 1px 12px rgba(0,0,0,.6);
+}
+
+.top-nav{ margin-left:auto; display:flex; align-items:center; gap:8px }
+.top-nav a{
+  font-family:var(--sans); font-weight:600; font-size:11.5px;
+  letter-spacing:.15em; color:var(--text-dim);
+  padding:9px 15px; border-radius:var(--r-pill);
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  transition:color var(--fast), border-color var(--fast), background var(--fast);
+}
+.top-nav a:hover{
+  color:var(--jade-lit);
+  border-color:rgba(var(--jade-rgb),.42);
+  background:rgba(var(--jade-rgb),.09);
+}
+
+/* ------------------------------------------------------------
+   THE HERO
+
+   Full bleed, and it holds the city rather than sitting on top of
+   it: the section itself is transparent and .city is fixed behind
+   the whole document.
+
+   It is a FLOOR-anchored composition. The copy sits at the bottom
+   left, above the near rooftops, because that is where a person
+   standing on a terrace would be. Centring it would put the words
+   over the sky, which is where nothing is.
+   ------------------------------------------------------------ */
+.ink-hero{
+  position:relative;
+  width:100%;
+  min-height:min(90vh,780px);
+  display:flex; align-items:flex-end;
+  padding:120px 0 clamp(40px,7vh,88px);
+}
+/* THE SCRIM, and the hero is full bleed so that this can be.
+
+   Copy over a city with lanterns in it is legible in a screenshot
+   and marginal in motion: every petal and every lit window that
+   passes behind a word costs a little contrast. A directional wash,
+   heavy on the left where the copy is and gone by two thirds
+   across, buys all of the legibility back and costs none of the
+   view. Text shadows alone were tried first and they only thicken
+   the letters. */
+.ink-hero::before{
+  content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:linear-gradient(100deg,
+    rgba(4,8,14,.76) 0%, rgba(4,8,14,.56) 22%,
+    rgba(4,8,14,.24) 46%, rgba(4,8,14,0) 66%);
+}
+/* the inner rail, so the copy lines up with everything in main */
+.hero-in{
+  position:relative; z-index:2; width:100%;
+  max-width:var(--page); margin:0 auto; padding:0 var(--pad);
+}
+.hero-body{ max-width:min(56ch,640px) }
+
+.ink-hero h1{
+  font-family:var(--display); font-weight:500;
+  font-size:clamp(44px,7.4vw,92px);
+  line-height:1.01; letter-spacing:-.017em;
+  margin:0 0 22px; color:#fff;
+  /* Two shadows: a tight one for legibility against a busy band,
+     and a wide faint one that reads as the title being lit. */
+  text-shadow:0 2px 22px rgba(0,0,0,.62), 0 1px 3px rgba(0,0,0,.5);
+}
+.ink-hero h1 em{
+  font-style:italic; color:var(--jade-lit);
+  text-shadow:0 2px 26px rgba(var(--jade-rgb),.34), 0 2px 18px rgba(0,0,0,.6);
+}
+
+.lede{
+  color:var(--text-dim); font-size:clamp(16px,1.35vw,19px);
+  line-height:1.68; margin:0; max-width:56ch;
+}
+.ink-hero .lede{
+  color:#c6d4e2; max-width:50ch;
+  text-shadow:0 1px 14px rgba(0,0,0,.72);
+}
+
+/* --- the two doors out of the hero ------------------------- */
+.hero-acts{ display:flex; flex-wrap:wrap; gap:12px; margin-top:30px }
+.cta{
+  display:inline-flex; align-items:center; gap:9px;
+  font-family:var(--sans); font-weight:600; font-size:13.5px;
+  letter-spacing:.02em;
+  padding:13px 22px; border-radius:var(--r-pill);
+  border:1px solid transparent;
+  transition:transform var(--fast), box-shadow var(--fast),
+             background var(--fast), border-color var(--fast), color var(--fast);
+}
+.cta-1{
+  background:var(--jade); color:#04211a;
+  box-shadow:0 2px 10px rgba(0,0,0,.34), 0 10px 34px rgba(var(--jade-rgb),.22);
+}
+.cta-1:hover{ background:var(--jade-lit); transform:translateY(-2px);
+  box-shadow:0 3px 12px rgba(0,0,0,.38), 0 16px 46px rgba(var(--jade-rgb),.30) }
+.cta-2{
+  color:var(--text); border-color:var(--line-2);
+  background:rgba(9,15,24,.5);
+  backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
+}
+.cta-2:hover{ border-color:var(--line-3); background:rgba(20,30,44,.62); transform:translateY(-2px) }
+.cta:active{ transform:translateY(0) }
+
+/* The seal, bottom right of the hero: the twelfth realm's name,
+   the one this site never hands to a shelf. It is a signature, so
+   it is small, it is off in the corner, and it is quiet. */
+.seal{
+  position:absolute; right:var(--pad); bottom:0;
+  display:flex; flex-direction:column; align-items:center; gap:1px;
+  padding:11px 13px; border-radius:var(--r-sm);
+  border:1px solid rgba(var(--jade-rgb),.30);
+  background:rgba(4,10,16,.42);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  color:var(--jade); font-family:var(--display);
+  line-height:1.1; letter-spacing:.06em; z-index:2;
+}
+.seal i{ font-style:italic; font-size:12px; opacity:.85 }
+.seal b{ font-size:13px; font-weight:500 }
+@media (max-width:820px){ .seal{ display:none } }
+
+/* ------------------------------------------------------------
+   SECTIONS
+   ------------------------------------------------------------ */
+.map,.sisters,.allshelf,.room{ padding-top:var(--gap-section) }
+
+.sec{
+  display:flex; align-items:center; gap:14px;
+  font-family:var(--sans); font-weight:600; font-size:11px;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--text-faint); margin:0 0 20px;
+}
+/* A jade tick before the label and a hairline that fades out after
+   it. A full-width rule cuts the page in half; a fading one just
+   points along it. */
+.sec::before{
+  content:''; width:14px; height:1px; flex:none;
+  background:var(--jade); opacity:.8;
+}
+.sec::after{
+  content:''; flex:1; height:1px;
+  background:linear-gradient(90deg, var(--line-2), transparent);
+}
+
+.map-lore{ max-width:64ch; margin:0 0 26px; font-size:15.5px; color:var(--text-dim) }
+
+/* ------------------------------------------------------------
+   THE DOORS
+
+   The card language for the whole site, and everything else here is
+   a variation on it. Four parts, and each one replaces something
+   that used to be drawn as a hard edge:
+
+     surface  a top-lit gradient, lighter at the top, because light
+              in this scene comes from the sky
+     hairline a light border, never a dark one: a dark border on a
+              dark surface reads as a gap
+     lift     two shadows, contact and air
+     band     the realm colour, as a streak of light along the top
+              edge and a glow bleeding down from it, instead of the
+              old 7px painted stripe
+   ------------------------------------------------------------ */
+.doors{
+  display:grid; gap:var(--gap);
+  grid-template-columns:repeat(auto-fill,minmax(264px,1fr));
+}
+
+.door{
+  position:relative; isolation:isolate; overflow:hidden;
+  display:flex; flex-direction:column; gap:7px;
+  padding:22px 20px 20px;
+  border-radius:var(--r);
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.012));
+  box-shadow:var(--lift-1);
+  transition:transform var(--fast), box-shadow var(--fast), border-color var(--fast);
+}
+/* the streak of light along the top edge */
+.door::before{
+  content:''; position:absolute; inset:0 0 auto; height:1.5px; z-index:2;
+  background:linear-gradient(90deg, transparent, var(--band,var(--realm-1)) 24%,
+             var(--band,var(--realm-1)) 76%, transparent);
+  opacity:.85;
+}
+/* and the glow it casts down into the card */
+.door::after{
+  content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:radial-gradient(130% 74% at 50% 0%,
+    color-mix(in srgb, var(--band,var(--realm-1)) 20%, transparent) 0, transparent 68%);
+  opacity:.75; transition:opacity var(--fast);
+}
+.door:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--lift-2);
+  border-color:var(--line-2);
+}
+.door:hover::after{ opacity:1 }
+.door:active{ transform:translateY(-1px) }
+
+.door h3{
+  font-family:var(--sans); font-weight:600; font-size:16px;
+  letter-spacing:.005em; margin:2px 0 0; color:var(--text);
+}
+/* The epithet carries the realm colour IN THE TEXT, which is the
+   one line that makes the coloured band mean something without a
+   caption. Mixed toward the dim text colour so a pale realm does
+   not shout and a dark one is still legible. */
+.door .epithet{
+  margin:0; font-family:var(--display); font-style:italic; font-size:15.5px;
+  color:color-mix(in srgb, var(--band,var(--realm-1)) 68%, var(--text-dim));
+}
+.door p{ margin:4px 0 0; color:var(--text-dim); font-size:14.5px; line-height:1.55 }
+.door .count{
+  margin-top:12px; font-family:var(--sans); font-weight:600;
+  font-size:10.5px; letter-spacing:.15em; text-transform:uppercase;
+  color:var(--jade);
+}
+.door .count.shut{ color:var(--text-faint); font-weight:500 }
+
+/* The arcade door sells nothing, so it is the one that glows warm
+   rather than jade. */
+.door.cabinet .count{ color:var(--lantern) }
+
+/* ------------------------------------------------------------
+   ROOM VIEW
+   ------------------------------------------------------------ */
+.room-head{ max-width:64ch }
+.room-head h2{
+  font-family:var(--display); font-weight:500;
+  font-size:clamp(30px,4.4vw,46px); line-height:1.08;
+  letter-spacing:-.012em; margin:10px 0 12px; color:var(--text);
+}
+.back{
+  display:inline-flex; align-items:center; gap:7px;
+  font-family:var(--sans); font-weight:600; font-size:11px;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--text-faint);
+  transition:color var(--fast);
+}
+.back:hover{ color:var(--jade) }
+
+.empty,.loading{
+  color:var(--text-dim);
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+  border:1px solid var(--line); border-radius:var(--r);
+  padding:26px 24px; margin:0; font-size:15px;
+}
+.empty strong{ color:var(--text) }
+.empty code,.doc code{
+  font-family:var(--mono); font-size:.86em;
+  background:rgba(var(--jade-rgb),.10); color:var(--jade-lit);
+  border:1px solid rgba(var(--jade-rgb),.20);
+  padding:1px 6px; border-radius:5px;
+}
+
+/* ------------------------------------------------------------
+   THE SHELF
+
+   grid.js renders these; the facet bar and the cards are the only
+   two components on the site with real density, so they get tighter
+   type and smaller radii than the doors do.
+   ------------------------------------------------------------ */
+.g-bar{
+  display:flex; gap:22px; align-items:flex-end; flex-wrap:wrap;
+  margin:0 0 20px;
+}
+.g-facets{ flex:1; min-width:0; display:flex; flex-direction:column; gap:10px }
+.g-row{ display:flex; gap:7px; align-items:center; flex-wrap:wrap }
+.g-rowlab{
+  font-family:var(--sans); font-weight:600; font-size:10px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--text-faint);
+  min-width:58px;
+}
+.g-chip{
+  display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+  font-family:var(--sans); font-size:12.5px; color:var(--text-dim);
+  padding:6px 13px; border-radius:var(--r-pill);
+  border:1px solid var(--line); background:rgba(255,255,255,.03);
+  transition:color var(--fast), border-color var(--fast), background var(--fast);
+}
+.g-chip:hover{ color:var(--text); border-color:var(--line-2); background:rgba(255,255,255,.06) }
+.g-chip.on{
+  color:var(--jade-lit); border-color:rgba(var(--jade-rgb),.44);
+  background:rgba(var(--jade-rgb),.13);
+}
+.g-n{ font-variant-numeric:tabular-nums; font-size:11px; opacity:.6 }
+.g-chip.on .g-n{ opacity:.85 }
+
+.g-sort{ display:flex; flex-direction:column; gap:6px }
+.g-sort select{
+  font-family:var(--sans); font-size:13px; color:var(--text);
+  background:var(--surface-2); border:1px solid var(--line);
+  border-radius:var(--r-sm); padding:8px 12px;
+}
+.g-count{
+  font-family:var(--sans); font-weight:600; font-size:10px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--text-faint);
+}
+
+.g-grid{
+  display:grid; gap:var(--gap);
+  grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+}
+
+.g-card{
+  position:relative; display:flex; flex-direction:column; overflow:hidden;
+  border-radius:var(--r);
+  border:1px solid var(--line);
+  /* RARITY IS STILL THE CARD'S LEFT EDGE, which is a convention
+     this site documented and shoppers learn without being told. It
+     is 3px now instead of 6: on a dark card a wide colour bar reads
+     as a tab, and the grade is a footnote, not a category. */
+  border-left:3px solid var(--rar,var(--common));
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.012));
+  box-shadow:var(--lift-1);
+  transition:transform var(--fast), box-shadow var(--fast), border-color var(--fast);
+}
+.g-card:hover{ transform:translateY(-3px); box-shadow:var(--lift-2); border-color:var(--line-2) }
+.g-card:hover .g-shot img{ transform:scale(1.045) }
+a.g-card:active{ transform:translateY(-1px) }
+
+.g-shot{
+  position:relative; aspect-ratio:1; overflow:hidden;
+  background:linear-gradient(155deg, var(--surface-3), var(--surface));
+}
+.g-shot img{
+  width:100%; height:100%; object-fit:cover;
+  transition:transform var(--slow);
+}
+.g-noimg{
+  position:absolute; inset:0; display:grid; place-items:center;
+  font-family:var(--display); font-style:italic; font-size:30px;
+  color:var(--text-faint); opacity:.5;
+}
+.g-oos{
+  position:absolute; left:0; right:0; bottom:0;
+  background:rgba(4,7,13,.82); color:var(--text-dim);
+  font-family:var(--sans); font-weight:600; font-size:9.5px;
+  letter-spacing:.15em; text-transform:uppercase;
+  padding:6px 10px; text-align:center;
+  backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+}
+.g-live{
+  position:absolute; left:0; bottom:0; background:var(--red); color:#fff;
+  font-family:var(--sans); font-weight:600; font-size:9px;
+  letter-spacing:.14em; text-transform:uppercase; padding:4px 9px;
+}
+
+.g-body{ padding:13px 14px 15px; display:flex; flex-direction:column; gap:9px; flex:1 }
+.g-title{
+  font-size:14.5px; line-height:1.38; color:var(--text); margin:0;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.g-blurb{ color:var(--text-dim); font-size:13px; line-height:1.5 }
+.g-foot{ margin-top:auto; display:flex; align-items:baseline; justify-content:space-between; gap:9px }
+.g-shop{
+  color:var(--text-faint); font-size:12.5px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* Money is lantern coloured, and only money is. Jade is us, amber
+   is the world; a jade price is a category error. */
+.g-price{
+  font-family:var(--sans); font-weight:600; font-size:14px;
+  color:var(--lantern); flex:none; font-variant-numeric:tabular-nums;
+}
+.g-rar{
+  font-family:var(--sans); font-weight:600; font-size:9px;
+  letter-spacing:.15em; text-transform:uppercase;
+  color:var(--rar,var(--common)); opacity:.9;
+}
+.g-empty,.g-more{
+  grid-column:1/-1; color:var(--text-faint); text-align:center;
+  padding:34px 16px; font-size:14px;
+}
+
+.allshelf{ }
+.hub-sec{ margin-top:var(--gap-section) }
+
+/* ------------------------------------------------------------
+   DOORS OUT
+   ------------------------------------------------------------ */
+.sis-row{ display:grid; gap:var(--gap); grid-template-columns:repeat(auto-fit,minmax(258px,1fr)) }
+.sis{
+  position:relative; display:flex; flex-direction:column; gap:7px;
+  padding:20px 22px; border-radius:var(--r);
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.008));
+  box-shadow:var(--lift-1);
+  transition:transform var(--fast), box-shadow var(--fast), border-color var(--fast);
+}
+.sis:hover{ transform:translateY(-3px); box-shadow:var(--lift-2); border-color:var(--line-2) }
+.sis strong{ font-family:var(--sans); font-weight:600; font-size:15.5px; color:var(--text) }
+.sis span{ color:var(--text-dim); font-size:14.5px; line-height:1.55 }
+/* an arrow that only exists on approach */
+.sis::after{
+  content:'\2192'; position:absolute; top:18px; right:20px;
+  color:var(--jade); opacity:0; transform:translateX(-5px);
+  transition:opacity var(--fast), transform var(--fast);
+}
+.sis:hover::after{ opacity:1; transform:translateX(0) }
+
+/* ------------------------------------------------------------
+   FOOTER
+   ------------------------------------------------------------ */
+.foot{
+  position:relative;
+  max-width:var(--page); margin:0 auto;
+  padding:36px var(--pad) 72px;
+  color:var(--text-faint); font-size:13.5px; line-height:1.65;
+}
+.foot::before{
+  content:''; position:absolute; top:0; left:var(--pad); right:var(--pad); height:1px;
+  background:linear-gradient(90deg, transparent, var(--line-2) 22%, var(--line-2) 78%, transparent);
+}
+.foot p{ margin:0 0 8px; max-width:74ch }
+.foot a{ color:var(--text-dim); border-bottom:1px solid transparent; transition:color var(--fast), border-color var(--fast) }
+.foot a:hover{ color:var(--jade); border-bottom-color:rgba(var(--jade-rgb),.5) }
+.fine{ margin-top:12px; font-size:12.5px }
+
+/* ------------------------------------------------------------
+   DOCUMENT PAGES  (disclosure, privacy, terms)
+   ------------------------------------------------------------ */
+/* The measure goes on the CHILDREN, not on <main class="doc">.
+   Putting 74ch on main itself let its own `margin:0 auto` centre the
+   whole column, so every policy page started 270px right of the
+   header above it and read as a different site. */
+.doc{ padding-top:var(--gap-section) }
+.doc > *{ max-width:74ch }
+.doc h1{
+  font-family:var(--display); font-weight:500;
+  font-size:clamp(32px,4.6vw,50px); line-height:1.08;
+  letter-spacing:-.012em; margin:0 0 18px;
+}
+.doc h2{
+  font-family:var(--sans); font-weight:600; font-size:12px;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--jade);
+  margin:38px 0 12px;
+}
+.doc p,.doc li{ color:var(--text-dim); font-size:15.5px; line-height:1.72 }
+.doc a{ color:var(--jade); border-bottom:1px solid rgba(var(--jade-rgb),.35) }
+.doc ul{ padding-left:20px }
+
+/* Generic surfaces some pages still ask for by name. */
 .panel{
-  background:var(--paper);
-  border:var(--stroke) solid var(--ink);
-  border-radius:var(--radius);
+  border:1px solid var(--line); border-radius:var(--r);
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+  box-shadow:var(--lift-1); padding:20px 22px;
 }
 .inset{
-  background:var(--paper-dim);
-  border:var(--stroke-xs) solid var(--ink);
-  border-radius:var(--radius-sm);
+  border:1px solid var(--line); border-radius:var(--r-sm);
+  background:rgba(0,0,0,.24); padding:14px 16px;
 }
 
-/* ---- chrome ---- */
-.top{max-width:1120px;margin:0 auto;padding:22px 18px 10px;
-  display:flex;align-items:center;gap:16px}
-.brand{display:flex;align-items:center;gap:11px}
-.brand-mark{width:30px;height:30px;
-  background:url(/assets/mark.svg) center/contain no-repeat}
-.brand-name{font-family:var(--bold);font-weight:700;font-size:17px;
-  letter-spacing:.02em;color:var(--ink)}
-.top-nav{margin-left:auto;display:flex;gap:8px}
-/* UiKit.button: ink fill, paper text, small radius, ink border. */
-.top-nav a{font-family:var(--bold);font-weight:700;font-size:12px;
-  color:var(--paper);background:var(--ink);
-  border:var(--stroke-sm) solid var(--ink);border-radius:var(--radius-sm);
-  padding:8px 14px}
-.top-nav a:hover{background:var(--accent-dk)}
-
-/* ---- hero ---- */
-.hero{padding:46px 0 30px;max-width:62ch}
-.hero h1{font-family:var(--display);font-weight:600;font-size:44px;
-  line-height:1.15;margin:0 0 14px;color:var(--ink);letter-spacing:-.01em}
-.lede{color:var(--text-dim);font-size:19px;line-height:1.65;margin:0}
-
-/* A section rule that reads as a woodblock header rather than a
-   label: small caps, ink, with a hairline running off to the right. */
-.sec{font-family:var(--bold);font-weight:700;font-size:12px;
-  text-transform:uppercase;letter-spacing:.14em;color:var(--ink);
-  margin:40px 0 16px;display:flex;align-items:center;gap:14px}
-.sec::after{content:'';flex:1;height:1px;background:var(--line)}
-
-/* ---- the map: one door per room, flying its realm's band ---- */
-.doors{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px}
-.door{display:flex;flex-direction:column;gap:8px;
-  padding:0 0 16px;overflow:hidden;
-  background:var(--paper);
-  border:var(--stroke) solid var(--ink);border-radius:var(--radius);
-  transition:transform .09s,box-shadow .12s}
-/* The realm band. Realms.MAJORS[n].color, set per door in app.js. */
-.door::before{content:'';display:block;height:7px;background:var(--band,var(--realm-1))}
-.door>*{padding-left:16px;padding-right:16px}
-.door:hover{transform:translateY(-2px);box-shadow:3px 3px 0 var(--ink)}
-.door:active{transform:translateY(0);box-shadow:none}
-.door h3{font-family:var(--bold);font-weight:700;font-size:16px;margin:14px 0 0;color:var(--ink)}
-/* The realm epithet: one line of flavour, exactly as the game shows
-   on breakthrough. Italic serif, dim, never more than a line. */
-.door .epithet{margin:0;color:var(--text-dim);font-style:italic;font-size:14px}
-.door p{margin:0;color:var(--text-dim);font-size:15px;line-height:1.5}
-.door .count{font-family:var(--bold);font-weight:700;font-size:11px;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-top:auto;padding-top:10px}
-.door .count.shut{color:var(--text-dim);font-weight:400}
-.door.cabinet{background:linear-gradient(180deg,rgba(168,130,42,.10),var(--paper))}
-
-/* ---- room head ---- */
-.room-head{padding:28px 0 18px;max-width:62ch}
-.room-head h2{font-family:var(--display);font-weight:600;font-size:34px;
-  line-height:1.2;margin:10px 0 8px;color:var(--ink)}
-.back{font-family:var(--bold);font-weight:700;font-size:11px;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
-.back:hover{color:var(--ink)}
-
-/* ---- honest empty states ---- */
-.empty,.loading{color:var(--text-dim);background:var(--paper-dim);
-  border:var(--stroke-xs) dashed var(--ink);border-radius:var(--radius-sm);
-  padding:20px 22px;line-height:1.65;max-width:68ch}
-.empty strong{color:var(--ink)}
-.empty code,.doc code{font-family:ui-monospace,monospace;font-size:.86em;
-  background:var(--inset);border:1px solid var(--line);border-radius:3px;padding:1px 5px}
-
-/* ---- doors out ---- */
-.sis-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
-.sis{display:flex;flex-direction:column;gap:6px;padding:16px 18px;
-  background:var(--paper-dim);
-  border:var(--stroke-sm) solid var(--ink);border-radius:var(--radius-sm)}
-.sis:hover{background:var(--paper);box-shadow:3px 3px 0 var(--ink)}
-.sis strong{font-family:var(--bold);font-weight:700;font-size:16px;color:var(--ink)}
-.sis span{color:var(--text-dim);font-size:15px;line-height:1.5}
-
-/* ---- foot ---- */
-.foot{max-width:1120px;margin:0 auto;padding:26px 18px 60px;
-  border-top:1px solid var(--line);color:var(--text-dim);font-size:15px;line-height:1.65}
-.foot a{color:var(--ink);text-decoration:underline;text-underline-offset:2px}
-.fine{margin-top:10px;max-width:70ch}
-
-@media (max-width:560px){
-  .hero h1{font-size:30px}
-  .hero{padding:30px 0 22px}
-  body{font-size:16px}
+/* ------------------------------------------------------------
+   NARROW
+   ------------------------------------------------------------ */
+@media (max-width:640px){
+  main{ padding-bottom:64px }
+  .ink-hero{ min-height:min(86vh,660px); padding-top:96px }
+  .doors,.g-grid,.sis-row{ gap:12px }
+  .g-grid{ grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) }
+  .g-rowlab{ min-width:0; width:100% }
+  .top{ padding-left:16px; padding-right:16px }
 }
 
-/* ============================================================
-   grid.js — the shelf. One renderer, two callers, so /collect's
-   operator preview gets the identical shelf with no branch.
-   ============================================================ */
-.g-bar{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;margin:6px 0 4px}
-.g-facets{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
-.g-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
-.g-rowlab{font-family:var(--bold);font-weight:700;font-size:10px;
-  letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-right:2px;flex:none}
+/* ------------------------------------------------------------
+   ENTRANCE
 
-/* Facet chips are UiKit buttons at rest and ink-filled when on. */
-.g-chip{display:inline-flex;align-items:center;gap:7px;cursor:pointer;
-  background:var(--paper);color:var(--text);
-  border:var(--stroke-sm) solid var(--ink);border-radius:var(--radius-pill);
-  padding:6px 13px;font:inherit;font-size:15px;
-  transition:background .12s,color .12s}
-.g-chip:hover{background:var(--paper-dim)}
-.g-chip.on{color:var(--paper);background:var(--ink)}
-.g-n{font-family:var(--bold);font-weight:700;font-size:11px;opacity:.65}
-.g-chip.on .g-n{opacity:.8}
-
-.g-sort{display:flex;flex-direction:column;gap:5px;
-  font-family:var(--bold);font-weight:700;font-size:10px;
-  letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);flex:none}
-.g-sort select{background:var(--paper);color:var(--text);
-  border:var(--stroke-sm) solid var(--ink);border-radius:var(--radius-sm);
-  padding:7px 10px;font:inherit;font-family:var(--serif);font-size:15px;
-  letter-spacing:normal;text-transform:none}
-
-.g-count{font-family:var(--bold);font-weight:700;font-size:10px;
-  letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);
-  margin:16px 0 12px;min-height:12px}
-
-.g-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:14px}
-
-/* THE ITEM CARD. Items.luau grades everything common | fine | rare |
-   precious, and a price-sorted shelf is a rarity ladder whether or
-   not anybody says so, so the card says so: the rarity is the left
-   edge, which is the one place it can be read at a glance down a
-   column without becoming decoration. */
-.g-card{display:flex;flex-direction:column;background:var(--paper);
-  border:var(--stroke-sm) solid var(--ink);border-radius:var(--radius-sm);
-  border-left:5px solid var(--rar,var(--common));
-  overflow:hidden;transition:transform .09s,box-shadow .12s}
-.g-card:hover{transform:translateY(-2px);box-shadow:3px 3px 0 var(--ink)}
-a.g-card:active{transform:translateY(0);box-shadow:none}
-.g-shot{position:relative;aspect-ratio:1;background:var(--paper-dim);
-  display:grid;place-items:center;overflow:hidden;
-  border-bottom:1px solid var(--line)}
-.g-shot img{width:100%;height:100%;object-fit:cover}
-.g-noimg{font-family:var(--display);font-size:30px;color:var(--text-dim);opacity:.45}
-.g-oos{position:absolute;left:0;right:0;bottom:0;background:var(--ink);
-  color:var(--paper);font-family:var(--bold);font-weight:700;font-size:9px;
-  letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:5px 4px}
-.g-body{padding:11px 12px 13px;display:flex;flex-direction:column;gap:8px;flex:1}
-.g-title{font-size:15px;line-height:1.35;
-  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.g-foot{margin-top:auto;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.g-shop{color:var(--text-dim);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.g-price{font-family:var(--bold);font-weight:700;font-size:14px;color:var(--gold);flex:none}
-/* The rarity word, spelled out under the price on hover-free devices
-   too. Small, ink-dim, never coloured: the left edge already carries
-   the colour and repeating it turns a card into a paint chart. */
-.g-rar{font-family:var(--bold);font-weight:700;font-size:9px;
-  letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim)}
-
-.g-empty,.g-more{grid-column:1/-1;color:var(--text-dim);text-align:center;
-  padding:26px 10px;font-size:16px}
-.allshelf{margin-top:36px}
-
-@media (max-width:560px){
-  .g-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-  .g-bar{gap:10px}
+   Cards fade up once, staggered by --i, which grid.js and app.js
+   set as they build. It is 320ms and it is the only thing on the
+   page that animates on load: a shelf that assembles itself reads
+   as a place opening, and a shelf that assembles itself twice reads
+   as a bug, so nothing here repeats.
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion:no-preference){
+  /* DOORS AND SISTER LINKS ONLY, deliberately not the shelf cards.
+     The shelf re-renders every time a facet chip is pressed, and an
+     entrance animation there fires again on every filter, which
+     reads as the page flinching rather than as the shelf arriving.
+     A hundred cards would also stagger into a five second queue. */
+  .door,.sis{
+    animation:riseIn .42s var(--ease) both;
+    animation-delay:calc(var(--i,0) * 26ms);
+  }
+  @keyframes riseIn{
+    from{ opacity:0; transform:translateY(10px) }
+    to  { opacity:1; transform:none }
+  }
 }
-
-/* The one line that explains the realm bands. Sits under THE MAP
-   heading, sized down from the hero lede so it reads as a caption on
-   the map rather than as a second introduction. */
-.map-lore{max-width:64ch;margin:0 0 16px;font-size:15px;line-height:1.6;color:var(--text);
-  /* A PANEL, NOT A STROKE. This read fine over the old muted olive
-     background and became unreadable the moment the world went to
-     Azure City colour: dark text over vivid pink blossom and green
-     bamboo is the one place body copy cannot survive on its own.
-     Body copy never gets a text stroke here, so it gets something to
-     sit on instead, the same answer the arcade page needed. */
-  background:rgba(246,243,233,.82);border:1px solid var(--line);
-  border-radius:var(--radius);padding:12px 16px;
-  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
-.sec{position:relative}

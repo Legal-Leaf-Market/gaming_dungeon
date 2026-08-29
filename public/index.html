@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Verda Studio</title>
 <meta name="description" content="A room to wander. Retro, tabletop, battlestation, workshop, audio and the vault, from independent shops. Plus an arcade."/>
-<meta name="theme-color" content="#f6f3e9"/>
-<meta name="color-scheme" content="light"/>
+<meta name="theme-color" content="#080d16"/>
+<meta name="color-scheme" content="dark"/>
 <link rel="icon" href="/favicon.ico" sizes="32x32"/>
 <link rel="icon" href="/assets/mark.svg" type="image/svg+xml"/>
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"/>
@@ -28,22 +28,22 @@
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="stylesheet" href="/css/tokens.css"/>
 <link rel="stylesheet" href="/css/app.css"/>
-<link rel="stylesheet" href="/css/ink.css"/>
-<!-- GENERATED, and it must load BEFORE vale.css, which consumes
-     its custom properties. Run `node tools/vale.mjs` to rebuild. -->
-<link rel="stylesheet" href="/css/vale-sky.css"/>
-<link rel="stylesheet" href="/css/vale.css"/>
+<!-- GENERATED, and it must load BEFORE city.css, which consumes its
+     custom properties. Run `node tools/city.mjs` to rebuild both it
+     and the five plates the scene is drawn from. -->
+<link rel="stylesheet" href="/css/city-sky.css"/>
+<link rel="stylesheet" href="/css/city.css"/>
 <link rel="stylesheet" href="/css/hud.css"/>
 <link rel="stylesheet" href="/css/boot.css"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<!-- EB Garamond and Merriweather are the two faces the game uses:
-     UiKit.luau sets TITLE_FONT and BODY_FONT to Garamond and
-     BOLD_FONT to Merriweather. EB Garamond is the open,
-     metric-compatible Garamond, so this is the same type rather
-     than a lookalike. NO Press Start 2P: the pixel face was the
-     old CRT theme and this interface is brush and woodblock. -->
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:wght@700&display=swap" rel="stylesheet"/>
+<!-- ONE WEB FACE, not two. EB Garamond carries the display type
+     and nothing else; every functional label, count, price and
+     button is the system sans, which costs no bytes and paints on
+     the first frame. Merriweather was dropped in the redesign: it
+     was the game's BOLD_FONT and at 11px on a dark ground it is a
+     slab of texture rather than a label. -->
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet"/>
 </head>
 <body>
 
@@ -108,32 +108,34 @@
 </script>
 
 <!-- ===========================================================
-     THE AZURE VALE, and it is the game's own landform rather than a
-     picture of one. tools/vale.mjs ports Terrain.heightAt() out of
-     Legal-Leaf-Market/roblox-game, stands a camera in the meadow
-     south-east of the village, looks north at Heavenpillar and
-     traces the horizon it actually sees. The two ridge plates are
-     that trace; the snowcap is on Heavenpillar because Heavenpillar
-     is the only thing in the vale that passes 235 studs, which is
-     where Terrain.build() starts laying snow.
+     THE LANTERN QUARTER.
 
-     There is no third ridge. A near band was traced and came back a
-     flat slab, twice, because inside 150 studs the vale floor really
-     is a rolling meadow that varies by four studs. So the foreground
-     is the bamboo grove instead, drawn from Flora.luau's own
-     bambooClump() numbers. Faking relief in the meadow would have
-     been the first invented thing in the scene.
+     A city that does not exist, drawn by tools/city.mjs. The scene
+     it replaced was a trace of the game's own terrain, accurate and
+     wrong: the brief is now "something that feels like a city in
+     that game, but don't emulate the game, come up with your own."
+
+     Five plates, all flat silhouette, no shading anywhere. Depth is
+     atmospheric perspective plus haze BETWEEN the bands plus the
+     lantern bloom baked into the plates. Two attempts to give the
+     vectors painted surfaces (a lighting filter, then a grain pass)
+     were both reverted after being judged against the flat version:
+     multiply-blended noise over flat fill reads as dirt, not paint.
+
+     ORDER IS BACK TO FRONT and the haze sits BETWEEN bands, not
+     over them. That ordering is the composition; shuffling it
+     flattens the scene even though every layer is still present.
 
      FIRST IN THE BODY AND ARIA-HIDDEN. It is scenery: it carries no
-     information, so a screen reader should walk straight past it,
-     and it is first so that nothing on the page has to out-stack it.
+     information, so a screen reader walks straight past it, and it
+     is first so nothing on the page has to out-stack it.
      =========================================================== -->
 <!-- ===========================================================
      THE INK SET: one drawn object per room.
 
      Outline only, no fill, stroke on currentColor, so a glyph takes
      its colour from whatever it sits in: the room's own band on a
-     card, the vale's haze in the background. One drawing, two jobs,
+     card, the city's haze in the background. One drawing, two jobs,
      and never a second copy to keep in step.
 
      DRAWN, NOT PICKED FROM AN ICON FONT. The rule the game's UiKit
@@ -290,17 +292,20 @@
   </symbol>
 </svg>
 
-<div class="vale" aria-hidden="true">
-  <i class="rays"></i>
-  <i class="sun"></i>
-  <i class="far"></i>
+<div class="city" aria-hidden="true">
+  <i class="stars"></i>
+  <i class="moon"></i>
+  <i class="band crag"></i>
+  <i class="haze haze-a"></i>
+  <i class="band far"></i>
   <i class="mist mist-3"></i>
-  <i class="mid"></i>
+  <i class="haze haze-b"></i>
+  <i class="band mid"></i>
   <i class="mist mist-1"></i>
-  <i class="wash"></i>
-  <i class="village"></i>
-  <i class="grove"></i>
+  <i class="haze haze-c"></i>
+  <i class="band near"></i>
   <i class="mist mist-2"></i>
+  <i class="bough"></i>
 </div>
 
 <!-- ===========================================================
@@ -324,64 +329,65 @@
   </nav>
 </header>
 
-<main>
-  <!-- ===========================================================
-       THE HERO. A painted band, not a headline on a page: three ink
-       ridges at the foot, mist drifting above them, the title in the
-       clear middle, and a red seal in the corner the way a xianxia
-       page signs itself.
+<!-- ===========================================================
+     THE HERO. Not a headline on a page: a window onto the quarter.
 
-       The ridges are inline SVG rather than an image file for two
-       reasons that both matter: they inherit --ink so they follow the
-       palette with no second place to update, and a 4KB path beats a
-       raster that has to load before the top of the page stops
-       looking wrong.
+     It sits OUTSIDE the main element and outside .ground, so the city
+     behind it is unobstructed, and it is FLOOR ANCHORED: the copy
+     sits at the bottom left, above the near rooftops, because that
+     is where someone standing on a terrace would be. Centred type
+     would put the words over open sky, which is where nothing is.
 
-       Everything in here is decoration and carries no information, so
-       it is aria-hidden and every animation is behind
-       prefers-reduced-motion. A visitor who asked for stillness gets a
-       complete page, not one with the good bits missing.
-       =========================================================== -->
-  <section class="ink-hero">
-    <span class="wash" aria-hidden="true"></span>
+     The old hero reserved 172px of bottom padding for three ink
+     ridges that had been deleted long before, so the copy huddled
+     in the top-left of a 430px box with a third of its height held
+     for nothing. That hole was most of what read as clunky here. It
+     was not the styling.
 
-    <div class="hero-body">
-      <h1>A room to wander.</h1>
-      <!-- THE PLACE TALKS, and it still says the true thing. The old
-           lede was an essay explaining the site's own design theory
-           to a stranger who had been here four seconds. This is the
-           same three facts (browse rather than search, sorted into
-           rooms, an arcade that sells nothing) told as arrival.
-
-           The last sentence is the affiliate disclosure doing double
-           duty as scene-setting: every door really does open onto the
-           maker's own shop, and saying so in voice is better than
-           saying it in a footnote nobody reads. -->
-      <p class="lede">
-        You came up the valley road. The village is behind you, the mountain
-        ahead, and this is where the makers set out what they carry. Nine rooms,
-        each flying the colour of a realm, and an arcade in the corner that is
-        not selling you anything. Nothing here takes your money: every door
-        opens onto the maker's own shop.
-      </p>
+     Everything decorative in here is aria-hidden and every
+     animation is behind prefers-reduced-motion. A visitor who asked
+     for stillness gets a complete page, not one with the good bits
+     missing.
+     =========================================================== -->
+<section class="ink-hero">
+  <div class="hero-in">
+  <div class="hero-body">
+    <h1>A room to <em>wander</em>.</h1>
+    <!-- THE PLACE TALKS, and it still says the true thing. The last
+         sentence is the affiliate disclosure doing double duty as
+         scene setting: every door really does open onto the maker's
+         own shop, and saying so in voice beats saying it in a
+         footnote nobody reads. -->
+    <p class="lede">
+      You came up the valley road at dusk. The lanterns are lit, the makers
+      have set out what they carry, and there is an arcade in the corner that
+      is not selling you anything. Nothing here takes your money: every door
+      opens onto the maker's own shop.
+    </p>
+    <div class="hero-acts">
+      <a class="cta cta-1" href="#map">Walk the map</a>
+      <a class="cta cta-2" href="/arcade">The arcade</a>
     </div>
+  </div>
 
-    <!-- The seal: the twelfth realm's name, which is the one this
-         site does not hand out to any shelf. -->
-    <span class="seal" aria-hidden="true"><i>True</i><b>Immortal</b></span>
+  <!-- The seal: the twelfth realm's name, the one this site does
+       not hand out to any shelf. -->
+  <span class="seal" aria-hidden="true"><i>True</i><b>Immortal</b></span>
+  </div><!-- /.hero-in -->
+</section>
 
-    <!-- THE HERO'S OWN RIDGES ARE GONE, and the reason is that the
-         real ones arrived. This block drew three hand-authored ink
-         mountain silhouettes across the foot of the hero; behind it
-         now sits .vale, which is the game's actual terrain traced
-         from Terrain.heightAt(). Two ranges at two scales in the same
-         frame read as a mistake, and of the two the drawn one is the
-         one with nothing behind it. If a hero ever needs its own
-         landform again, generate it from tools/vale.mjs with a
-         different camera rather than drawing it: the file already
-         takes a bearing and a band. -->
-  </section>
+<!-- ===========================================================
+     THE GROUND. Everything below the hero rides on this: a nearly
+     opaque plate whose first 340px are a gradient, so the city's
+     lantern glow bleeds up behind the first section instead of the
+     page ending at a hard edge over a wallpaper.
 
+     Fully transparent was tried. Copy over a moving background is
+     unreadable at any contrast, and the gradient is the compromise
+     that keeps both the legibility and the scene.
+     =========================================================== -->
+<div class="ground">
+<main>
   <!-- The map. Rooms are doors; counts are real or the door says so. -->
   <section class="map" id="map" aria-label="The rooms">
     <h2 class="sec">THE MAP</h2>
@@ -435,16 +441,16 @@
   <section class="sisters" aria-label="Sister sites">
     <h2 class="sec">DOORS OUT</h2>
     <div class="sis-row">
-      <a class="sis" href="https://www.kawaiikatz.com" rel="noopener">
+      <a class="sis" href="https://www.kawaiikatz.com" rel="noopener" style="--i:0">
         <strong>Kawaii Katz</strong>
         <span>The little sister. Kawaii, gifts, kid-safe. Everything here that
         is cute rather than loud lives over there.</span>
       </a>
-      <a class="sis" href="https://nicotiamarket.com" rel="noopener">
+      <a class="sis" href="https://nicotiamarket.com" rel="noopener" style="--i:1">
         <strong>Nicotia Market</strong>
         <span>Pouches and vapour, priced by the unit. 21+.</span>
       </a>
-      <a class="sis" href="https://herballeafmarket.com" rel="noopener">
+      <a class="sis" href="https://herballeafmarket.com" rel="noopener" style="--i:2">
         <strong>Herbal Leaf Market</strong>
         <span>CBD, herbal smokes, tea and botanicals. 21+.</span>
       </a>
@@ -456,8 +462,8 @@
   <p>
     Verda Studio is an affiliate storefront. We never take an order: every
     checkout is a hand-off to the shop's own site. Some of those links pay us
-    and <a href="#" id="disclosureLink">many currently do not</a> &mdash;
-    <a href="/disclosure">the whole story is here</a>.
+    and <a href="#" id="disclosureLink">many currently do not</a>.
+    <a href="/disclosure">The whole story is here</a>.
   </p>
   <p class="fine">
     <a href="/disclosure">Affiliate disclosure</a> &middot;
@@ -473,8 +479,10 @@
   </p>
 </footer>
 
+</div><!-- /.ground -->
+
 <script src="/js/grid.js"></script>
 <script src="/js/app.js"></script>
-<script src="/js/vale.js" defer></script>
+<script src="/js/city.js" defer></script>
 </body>
 </html>

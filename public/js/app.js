@@ -120,7 +120,12 @@
          inlined at the top of index.html. It takes currentColor, so
          the card sets the colour and the drawing follows: one file,
          two contexts, nothing to keep in step. */
-      return '<a class="door slot" href="' + r.path + '" style="--band:' + esc(r.band) + '">' +
+      /* --i is the entrance stagger, read by the riseIn animation in
+         app.css. Set from the render index rather than by an
+         :nth-child rule so the arcade door below, which is appended
+         separately, keeps the same sequence. */
+      return '<a class="door slot" href="' + r.path + '" style="--band:' + esc(r.band) +
+        ';--i:' + i + '">' +
         '<span class="n">' + (i + 1) + '</span>' +
         '<svg class="door-ico" viewBox="0 0 64 64" aria-hidden="true">' +
           '<use href="#ico-' + esc(r.key) + '"></use>' +
@@ -139,7 +144,8 @@
     /* Immortal Ascension, the eleventh realm, is the one high band
        spent anywhere on this site -- on the room that sells nothing.
        "The last stair has no rail." */
-    html += '<a class="door slot cabinet" href="/arcade" style="--band:#ffe2a0">' +
+    html += '<a class="door slot cabinet" href="/arcade" style="--band:#ffe2a0;--i:' +
+      ROOMS.length + '">' +
       '<span class="n">' + (ROOMS.length + 1) + '</span>' +
       '<svg class="door-ico" viewBox="0 0 64 64" aria-hidden="true">' +
         '<use href="#ico-arcade-stick"></use>' +

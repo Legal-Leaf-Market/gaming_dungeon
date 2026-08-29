@@ -692,19 +692,43 @@ export function manifestIcons() {
    ============================================================ */
 export function tokenBg(root = process.cwd()) {
   const css = readFileSync(join(root, 'public', 'css', 'tokens.css'), 'utf8')
-  /* THE GROUND TOKEN, IN ORDER OF TRUTH. This read `--bg` and only
-     `--bg`, and threw the day the palette moved to ink-and-paper and
-     `--bg` became an alias (`--bg:var(--paper)`) rather than a hex.
-     Throwing was correct -- a manifest that silently kept painting
-     the old splash colour is the failure this function exists to
-     prevent -- but the fix is to ask for the real ground first.
-     `--paper` is what the interface is actually drawn on; `--bg` stays
-     as a fallback for the sister sites' shape. */
-  for (const name of ['--paper', '--bg']) {
-    const m = new RegExp(name + '\\s*:\\s*(#[0-9a-f]{6})', 'i').exec(css)
-    if (m) return m[1]
+
+  /* THE GROUND TOKEN, IN ORDER OF TRUTH, AND IT NOW FOLLOWS ALIASES.
+
+     This has broken twice, both times on a palette move, and both
+     times for the same reason: it matched a literal hex against one
+     hard-coded token name. First `--bg` became `var(--paper)` and it
+     threw; then the redesign made the site dark, `--paper` became an
+     alias too, and it threw again.
+
+     Throwing is the right failure -- a manifest that quietly keeps
+     painting the old splash colour is exactly what this guards -- but
+     asking for a name that happens to hold a hex today is a trap that
+     resets every time somebody reorganises the tokens. So it resolves
+     one name to another through var() until it finds a colour.
+
+     The names are in order of truth, not preference: --night is what
+     the interface is drawn on now, and the two after it are the
+     shapes earlier palettes and the sister sites use. */
+  const NAMES = ['--night', '--bg', '--paper']
+  const read = (name) => {
+    const m = new RegExp(name + '\\s*:\\s*([^;]+);', 'i').exec(css)
+    return m ? m[1].trim() : null
   }
-  throw new Error('branding: tokens.css has no --paper or --bg hex; the manifest needs a real ground colour')
+  for (const name of NAMES) {
+    let value = read(name)
+    /* Depth capped rather than trusted: a cycle in the tokens would
+       otherwise hang the build rather than fail it. */
+    for (let hop = 0; hop < 6 && value; hop++) {
+      const hex = /^#[0-9a-f]{6}$/i.exec(value)
+      if (hex) return value.toLowerCase()
+      const ref = /^var\(\s*(--[a-z0-9-]+)\s*\)$/i.exec(value)
+      if (!ref) break
+      value = read(ref[1])
+    }
+  }
+  throw new Error('branding: tokens.css has no ' + NAMES.join(' / ') +
+    ' resolving to a hex; the manifest needs a real ground colour')
 }
 
 export function manifest(root = process.cwd()) {
@@ -1013,11 +1037,25 @@ export function render(root = process.cwd()) {
   /* Said out loud rather than left for somebody to notice: the icon
      plate and the site ground live in two different files and nothing
      forces them to agree. If they drift, the installed splash screen
-     flashes one colour and the icon on it is another. */
+     flashes one colour and the icon sitting on it is another.
+
+     BUT ONLY WHEN THEY ARE THE SAME KIND OF COLOUR. A light icon
+     plate on a dark ground is not drift, it is a light icon on a dark
+     splash, which is what every dark app looks like and what this
+     site now is. Comparing the hexes flagged that as a fault and
+     cried wolf on every build; comparing their LIGHTNESS only fires
+     on the case the warning was written for, two nearly-alike
+     colours that were meant to be one. */
   const ground = tokenBg(root)
-  if (bg.toLowerCase() !== ground.toLowerCase()) {
-    out.warning = "mark.svg's plate is " + bg + ' but tokens.css --bg is ' + ground +
-      ' -- the installed splash screen will not match the icon.'
+  const lum = (hex) => {
+    const v = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map(c => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)))
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]
+  }
+  const a = lum(bg), b = lum(ground)
+  if (bg.toLowerCase() !== ground.toLowerCase() && (a > 0.18) === (b > 0.18)) {
+    out.warning = "mark.svg's plate is " + bg + ' and the site ground is ' + ground +
+      ' -- close enough to look like a mistake on the installed splash screen.'
   }
   return out
 }

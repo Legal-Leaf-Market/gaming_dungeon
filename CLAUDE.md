@@ -684,87 +684,140 @@ link, which is the entire reason it is the connective tissue across the sites.
 
 ---
 
-## 8. The design system: Heavenpillar's ink and paper
+## 8. The design system: the Lantern Quarter
 
-**This site left the sister-site palette on 2026-08-29, on the owner's explicit
-call.** Legal-Leaf, Herbal-Leaf, Nicotia and Kawaii Katz still share the old dark
-family tokens; Verda Studio does not. The cross-links in the footer visibly do
-not match, and **that is the intended outcome, not drift.** Do not "fix" it by
-reverting to the family palette.
+**This site has been redesigned twice in two days and the second one is a
+clean break.** On 2026-08-29 the owner looked at the ink-and-paper build and
+said, in full: complete redesign, *"something that feels like a city in that
+game, but don't try to emulate the game. Come up with your own and just do
+it."* That instruction is the whole brief and it overrides the rule this
+section used to open with.
 
-### Where the design comes from
+**Do not restore the paper palette, and do not re-derive anything from the
+game's UiKit.** The previous version of this section said a colour that
+drifted from the game was worse than one that never matched. That was true of
+the site it described. It is the thing that was asked to stop.
 
-`Legal-Leaf-Market/roblox-game` — **Heavenpillar**, the owner's own Roblox
-cultivation MMORPG. Every value in `tokens.css` is lifted from two files there:
+### What the site is now
 
-| Source | What it gives |
+A night city. Deep blue-black ground, jade for the interface, lantern amber
+for the world, and a five-plate silhouette skyline behind everything.
+
+| | |
 |---|---|
-| `src/client/Modules/UiKit.luau` | the palette, the two faces, the radii and stroke widths, and every component shape |
-| `src/shared/Realms.luau` | the twelve major realms: band colours and epithets |
-| `src/shared/Items.luau` | the rarity grades: `common / fine / rare / precious` |
+| ground | `--night #080d16`, rising through three surfaces to `--surface-3` |
+| edges | light hairlines (`rgba(146,180,214,.13)`), never a dark border |
+| interface | `--jade #7fdcb8`. Anything you can press, and the studio itself |
+| the world | `--lantern #ffb86b`. Money, warmth, the city's own light |
+| display type | EB Garamond, headings only |
+| everything else | the system sans stack |
 
-UiKit's own header states the language in one line: **"the ink-and-paper
-interface language: paper panels, ink text, serif faces, brush-stroke bars."**
-Read that file before changing anything here. A colour that drifts from the game
-is worse than one that never matched, because the point is that a player who
-finds this site recognises it.
+**Jade is us, amber is the world.** A jade price or an amber button is a
+category error and looks like one.
 
-**It is LIGHT.** Paper `#f6f3e9`, ink `#1b1815`. The old site was violet on
-near-black; nothing about that survives. `--pixel` resolves to the bold serif so
-that any stale rule asking for Press Start 2P degrades to type rather than to a
-missing face.
+### What survived, and it is only the data
 
-**Type is EB Garamond + Merriweather** — the game's Garamond and Merriweather.
-EB Garamond is the open metric-compatible Garamond, so this is the same type
-rather than a lookalike. The Google Fonts request is **no longer byte-identical
-to the sisters'**; that cache-hit optimisation was traded for the redesign
-knowingly.
+- **The twelve realm colours** (`Realms.luau`). Rooms fly realms, that mapping
+  is still a claim about meaning, and it still lives in `ROOMS_META`
+  (`api/_scene.js`) mirrored in `public/js/app.js`. **The two must agree.**
+  Realms 10 to 12 are still unspent except the arcade door, which flies
+  Immortal Ascension because it is the room that sells nothing: *"the last
+  stair has no rail."*
+- **The four rarity grades** (`Items.luau`), still the card's left edge, now
+  3px rather than 6. `rarityOf()` still exists twice, in `api/_scene.js` and
+  `public/js/grid.js`, and they must agree.
+- **EB Garamond**, still the display face.
+- **The one hard rule, and it holds on any ground:** strokes go on the BORDER
+  of a box, never on the glyphs of text. No `-webkit-text-stroke`, no shadow
+  ring on body copy. It makes everything read blobby.
 
-### The one hard rule, ported verbatim
+### What did not survive, and why each one had to go
 
-UiKit's header records it as a costly lesson: **every stroke goes on the BORDER
-of a box, never on the glyphs of text**, or "everything reads blobby". In Roblox
-that is `ApplyStrokeMode.Border`; here it is `border` on a container and never
-`-webkit-text-stroke` or a shadow ring on body copy. The one exception is the
-label inside a filled bar, which the game also strokes.
+These four were what "clunky" actually meant. None of them was the colour.
 
-### Rooms are realms
+1. **`3px 3px 0` hard offset shadows**, on every card, door and sister link. A
+   solid displaced block is the most dated thing an interface can wear.
+   Replaced by `--lift-1/2/3`: a tight contact shadow plus a wide soft one.
+2. **One typeface at five sizes.** `--sans`, `--bold` and `--pixel` all
+   resolved to Garamond, so nothing had a different voice and therefore
+   nothing had emphasis.
+3. **5px radii and 1.8px borders** on everything, so the page was a page of
+   boxes. Now 8/14/20 and hairlines.
+4. **No air.** Sections sat 24px apart and `.ink-hero` reserved 172px of
+   bottom padding for ink ridges deleted long before, so the copy huddled in
+   the top-left of a 430px hole. `--gap-section` is now over 100px wide.
 
-Each room flies one of the twelve major realms — its band colour and its
-epithet, both verbatim. The mapping is by meaning and each row is a claim you can
-argue with; it lives in `ROOMS_META` (`api/_scene.js`) with the reasoning, and is
-mirrored in `public/js/app.js` because that one ships to a browser. **The two must
-agree.**
+Merriweather is gone with them: it was the game's BOLD_FONT and at 11px on a
+dark ground it is a slab of texture rather than a label.
 
-**Realms 10 to 12 are deliberately unspent** — Tribulation Transcendence,
-Immortal Ascension, True Immortal. They are the top of the game's ladder and no
-shelf here earns them. The single exception is the arcade door, which flies
-Immortal Ascension because it is the one room that sells nothing: *"the last
-stair has no rail."*
+### The scene: `tools/city.mjs`
 
-### Rarity is the card's left edge
+The background was a trace of the game's own `Terrain.heightAt()`. It was
+accurate and it was not what was wanted. It is now a city that does not
+exist, generated into five flat silhouettes plus `public/css/city-sky.css`.
 
-`Items.luau` grades every item `common | fine | rare | precious`, and a
-price-sorted shelf is a rarity ladder whether or not anybody says so. The
-thresholds are **ours, not the game's** — it grades by what a thing IS and we
-only know what it costs — and they are set against this catalogue's real spread
-($1 to $62,895). Unpriced is `common`, never blank: a card with no grade reads
-as a bug.
+**The lesson that carried over, and it is the expensive one.** Two attempts
+were made to give the vector scene painted surfaces: an `feDiffuseLighting`
+pass and a multiplied fractal grain. Both were built, judged on screenshots
+against the flat version, and reverted. Multiply-blended noise over flat
+colour does not read as paint, it reads as dirt. **Vectors are bad at paint
+and excellent at silhouette**, so nothing in the scene is shaded and all the
+depth comes from three things a browser does well: a value ladder between
+bands, haze BETWEEN them rather than over them, and emitted light.
 
-`rarityOf()` exists twice, in `api/_scene.js` and in `public/js/grid.js`, because
-one ships to a browser and the other does not. They must agree.
+Four traps in that file, all of them found by rendering rather than by
+reading, all of them written up in place:
 
-### arcade.html is FORKED now
+- **One winding direction, every shape.** The whole silhouette is one
+  `<path>` and SVG fills with the nonzero rule, so subpaths wound opposite
+  ways cancel and leave holes. Roofs read counter-clockwise; a rectangle
+  written the natural way reads clockwise. Mixing them looks fine on every
+  band except the one with large overlaps, which comes out full of pale
+  almond gaps.
+- **Bands are staged by lifting the IMAGE, not the element.** Every plate is
+  solid to its own bottom edge, so an element floated off the floor cuts that
+  solid mass in mid-air and rules a line across the picture. Each band
+  reaches the floor and carries a second flat background layer, `--lift`
+  tall, continuing its base down.
+- **Haze must be tall and faint.** Three short slabs at a quarter strength
+  each stack into visible steps. If you can point at where the haze starts,
+  it is too short or too strong.
+- **The value ladder does the depth, not the haze.** Each band sits about 40%
+  of the way from the one in front toward the SKY. Step them 8 levels apart
+  and you get four dark bands reading as one dark mass.
 
-It was byte-identical across all four sister sites and it no longer is. The other
-three keep the shared dark copy; this one carries the paper palette. Do not
-copy it back over a sister site, and do not expect changes there to arrive here.
+`public/js/city.js` does only what CSS cannot: the drift loop distance (one
+rendered tile, measured, or the band jumps once a cycle), the scroll offset,
+and the petals. Everything it does is motion, so it is optional by
+construction and the scene is complete without it.
 
-A note earned on Legal-Leaf and still true: **a stylesheet that claims in its own
-header to match another file, and does not, is worse than one that never claimed
-it.** Its market pages were recoloured and `tokens.css` was not, so `/library`
-painted itself in the old palette for weeks. Nothing errored. Recolour in one
-commit.
+### The painted upgrade path
+
+Drawn geometry has a ceiling and the two failed filter experiments are the
+evidence. So each of the five plates can be replaced by a painting: commit
+`public/assets/paint/<name>.webp` and city.js probes it, adds
+`painted-<name>`, and city.css swaps that layer alone. Nothing to configure.
+`docs/SCENE_ART_BRIEF.md` is what the painter (or an image model) is handed,
+and `test/` holds the probe list, the stylesheet and that document to the
+same five names plus the same aspect ratios.
+
+### arcade.html is FORKED, and it was silently broken by the redesign
+
+It was byte-identical across all four sister sites and it no longer is. Do
+not copy it back over a sister site.
+
+Three of its rules broke on 2026-08-29 and all three the same way: **a rule
+that hard-coded the answer instead of asking for the token.** Its lede and
+footnote were given a near-white paper plate to sit on; `.ar-top h1` asked
+for `--ink`, which is now the darkest thing on a dark page; and `.ar-cab`
+reached for `--hud-slot/--hud-ink/--hud-cream`, which hud.css no longer
+defines, so every cabinet fell back to its hard-coded browns.
+
+A rule with a literal fallback does not fail when the palette moves, it
+drifts, and drift is invisible in review. A note earned on Legal-Leaf and
+still true: **a stylesheet that claims in its own header to match another
+file, and does not, is worse than one that never claimed it.** Recolour in
+one commit.
 
 ---
 

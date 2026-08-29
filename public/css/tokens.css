@@ -1,131 +1,224 @@
 /* ============================================================
-   tokens.css — Heavenpillar's ink-and-paper language, on the web
+   tokens.css — the Lantern Quarter
+
+   THE REDESIGN, AND THE INSTRUCTION BEHIND IT (owner, 2026-08-29)
    ------------------------------------------------------------
-   PORTED FROM THE GAME, NOT INVENTED HERE. Every value below is
-   lifted from `src/client/Modules/UiKit.luau` and
-   `src/shared/Realms.luau` in Legal-Leaf-Market/roblox-game, whose
-   own header states the language in one line:
+   This file used to open by saying every value in it was lifted
+   from the game's UiKit.luau, and that a colour which drifted from
+   the game was worse than one that never matched. That was true of
+   the site it described. It is not the brief any more.
 
-     "The ink-and-paper interface language: paper panels, ink text,
-      serif faces, brush-stroke bars."
+   The owner looked at the ink-and-paper build twice and said it
+   "looks nothing like what I want", then "our site is clunky right
+   now, it's got the bones, but it really needs help", and finally,
+   in full: complete redesign, "something that feels like a city in
+   that game, but don't try to emulate the game. Come up with your
+   own and just do it."
 
-   Read that file before changing anything here. A colour that drifts
-   from the game is worse than one that never matched, because the
-   whole point is that a player who finds this site recognises it.
+   So this palette is NOT ported. It is a night city, and it is
+   ours. Do not "restore" it to the game's paper values: that is
+   the thing that was asked to stop.
 
-   THIS SITE HAS LEFT THE SISTER-SITE PALETTE ON PURPOSE (owner's
-   call, 2026-08-29). Legal-Leaf, Herbal-Leaf, Nicotia and Kawaii Katz
-   still share the old dark family tokens; Verda Studio does not,
-   and the cross-links in the footer will visibly not match. That is
-   the intended outcome, not drift. Do not "fix" it by reverting.
+   WHAT DID SURVIVE, because it is data rather than decoration:
+     - the twelve realm colours (Realms.luau). Rooms fly realms and
+       that mapping is still true, so the hues stay; only the ground
+       under them changed.
+     - the four rarity grades (Items.luau).
+     - EB Garamond, still the display face.
+   WHAT DID NOT:
+     - the paper ground, the ink text, the 5px radii, the hard
+       offset shadows, and Merriweather. All four of them are the
+       things that read as clunky.
 
-   THE ONE HARD RULE THE GAME LEARNED THE EXPENSIVE WAY, and it
-   transfers directly: strokes go on the BORDER of a box, never on
-   the glyphs of text. In Roblox that is
-   `ApplyStrokeMode.Border`; here it is `border`/`outline` on a
-   container and NEVER `-webkit-text-stroke` or a text-shadow ring on
-   body copy. Their comment says it makes "everything read blobby",
-   and it does.
+   WHY DARK. Every reference the owner has ever approved is a lit
+   scene in low light: lanterns, mist, a glow on the underside of
+   the air. You cannot put that on a page whose ground is #f6f3e9,
+   because there is no headroom for light above white. Dark ground
+   is not a style choice here, it is the requirement for the one
+   effect the whole site is built on.
+
+   THE ONE RULE THAT DID CARRY OVER, and it is the game's own hard
+   lesson: strokes go on the BORDER of a box, never on the glyphs of
+   text. No -webkit-text-stroke, no shadow ring on body copy. It
+   makes everything read blobby. Still true on a dark ground.
    ============================================================ */
 
 :root{
-  /* --- ink and paper ----------------------------------------
-     UiKit.Colors, converted from Color3.fromRGB. These six carry
-     the entire interface; everything else is an accent. */
-  --ink:#1b1815;
-  --paper:#f6f3e9;
-  --paper-dim:#e9e4d6;
-  --inset:#ded8c8;
-  --text:#26221e;
-  --text-dim:#6e665c;
+  /* --- the ground ------------------------------------------
+     Five steps, and the gaps between them are small on purpose.
+     A dark interface goes muddy when its surfaces are far apart:
+     you get "black thing on grey thing" instead of one material
+     catching more or less light. --night deliberately matches the
+     near band of the city art, so the skyline dissolves into the
+     page instead of ending at a visible edge. */
+  --void:#04070d;
+  --night:#080d16;
+  --surface:#0e1622;
+  --surface-2:#131e2c;
+  --surface-3:#1a2635;
 
-  /* --- the stat colours -------------------------------------
-     In the game these are health, qi, stamina, xp. Here they are
-     the only saturated colours on the page, so they are spent
-     carefully: qi on links and focus, gold on prices, health on
-     nothing but genuine warnings. */
-  --health:#c23b2e;
-  --qi:#3b7dd8;
-  --stamina:#e08a2e;
-  --xp:#967ac8;
-  --gold:#a8822a;
-  --danger:#b22c26;
+  /* Hairlines. Light-on-dark, never a darker line: a dark border on
+     a dark surface reads as a gap, and a light one reads as an edge
+     catching the sky. That difference is most of what separates a
+     lit interface from a flat one. */
+  --line:rgba(146,180,214,.13);
+  --line-2:rgba(146,180,214,.24);
+  --line-3:rgba(146,180,214,.40);
+
+  /* --- text ------------------------------------------------
+     Not white. #e9eef6 is a hair cool and a hair down from pure,
+     which stops long copy vibrating on a dark ground. */
+  --text:#e9eef6;
+  --text-dim:#9dafc4;
+  --text-faint:#65788e;
+
+  /* --- the light -------------------------------------------
+     Two sources and they mean different things, which is the whole
+     colour logic of the site:
+       JADE    is us. The studio, the interface, anything you can
+               press. Verda is green; this is the green.
+       LANTERN is the world. Money, warmth, the city's own light.
+     A jade price or an amber button is a category error and looks
+     like one. */
+  --jade:#7fdcb8;
+  --jade-lit:#a5ecd0;
+  --jade-deep:#2f8f6d;
+  --jade-rgb:127,220,184;
+
+  --lantern:#ffb86b;
+  --lantern-hot:#ffe0ac;
+  --blossom:#e88ab0;
 
   /* --- the twelve major realms ------------------------------
-     Realms.MAJORS, in ladder order. Each room on this site flies
-     one realm's band colour, which is how a shelf gets a sense of
-     altitude without a single extra asset. */
-  --realm-1:#9b948a;   /* Body Tempering            */
+     Realms.luau, unchanged: rooms fly realms and the mapping in
+     api/_scene.js is a claim about meaning, not about colour. They
+     were picked to sit on paper and they happen to sit on night
+     better, because every one of them is mid-value or above. */
+  --realm-1:#a8a196;   /* Body Tempering            */
   --realm-2:#78aadc;   /* Qi Gathering              */
   --realm-3:#60b496;   /* Foundation Establishment  */
   --realm-4:#5896eb;   /* Core Formation            */
   --realm-5:#e8be50;   /* Golden Core               */
   --realm-6:#be82eb;   /* Nascent Soul              */
   --realm-7:#e278b4;   /* Soul Transformation       */
-  --realm-8:#6e6ea0;   /* Void Refinement           */
+  --realm-8:#8a8ac4;   /* Void Refinement           */
   --realm-9:#8cdcdc;   /* Dao Integration           */
   --realm-10:#f0f0fa;  /* Tribulation Transcendence */
   --realm-11:#ffe2a0;  /* Immortal Ascension        */
   --realm-12:#fffaeb;  /* True Immortal             */
 
   /* --- item rarity ------------------------------------------
-     Items.luau grades everything common | fine | rare | precious.
-     A price-sorted shelf is a rarity ladder whether or not anybody
-     says so out loud, so the cards say so. */
-  --common:#8a8378;
-  --fine:#4f8f6a;
-  --rare:#3b7dd8;
-  --precious:#a8822a;
+     Items.luau's four grades, lifted a step so they read as light
+     rather than as pigment. */
+  --common:#93a3b5;
+  --fine:#6fc79a;
+  --rare:#6fa8f0;
+  --precious:#e8be50;
 
-  /* --- the accent slot --------------------------------------
-     Kept, because shared components still reach for --accent and a
-     component file should not need editing to move between sites.
-     On this site it is ink: the interface is drawn, not lit. */
-  --accent:var(--ink);
-  --accent-dk:#0f0d0b;
-  --accent-rgb:27,24,21;
+  /* --- elevation -------------------------------------------
+     THE HARD OFFSET SHADOW IS GONE. `3px 3px 0 var(--ink)` was on
+     every card, door and sister link, and a solid displaced block
+     is the single most dated thing an interface can wear: it says
+     zine, and the brief says cinema.
 
-  /* Compatibility aliases. Older markup on this site asked for
-     these by the sister sites' names; they resolve into the new
-     language rather than being hunted down one at a time. */
-  --bg:var(--paper);
-  --bg2:var(--paper-dim);
-  --panel:var(--paper);
-  --panel2:var(--paper-dim);
-  --line:#cfc8b6;
-  --chip:var(--inset);
-  --muted:var(--text-dim);
-  --dim:var(--text-dim);
-  --red:var(--health);
-  --amber:var(--stamina);
-  --leaf:var(--qi);
-  --sage:var(--qi);
-  --arcade:var(--ink);
+     These are layered instead: a tight contact shadow that says the
+     thing is touching something, and a wide soft one that says
+     there is air under it. Both are pure black at low alpha, never
+     a tinted shadow, because a tinted shadow on a coloured ground
+     goes muddy the moment the ground changes. */
+  --lift-1:0 1px 2px rgba(0,0,0,.36), 0 4px 14px rgba(0,0,0,.28);
+  --lift-2:0 2px 4px rgba(0,0,0,.40), 0 12px 34px rgba(0,0,0,.42);
+  --lift-3:0 4px 8px rgba(0,0,0,.44), 0 28px 68px rgba(0,0,0,.52);
+  /* what a thing wears when it is lit rather than raised */
+  --glow-jade:0 0 0 1px rgba(var(--jade-rgb),.34), 0 6px 26px rgba(var(--jade-rgb),.16);
 
   /* --- type -------------------------------------------------
-     TITLE_FONT and BODY_FONT are Garamond, BOLD_FONT is
-     Merriweather. Both are on Google Fonts, so the web build uses
-     the same two faces rather than a lookalike: EB Garamond is the
-     open metric-compatible Garamond.
+     TWO FACES DOING TWO JOBS, and this is a deliberate reversal.
+     The old build set every token, including --sans, to Garamond,
+     so headings, buttons, counts, prices and nav were all the same
+     serif at different sizes. That is exactly what "clunky" was:
+     nothing had a different voice, so nothing had emphasis.
 
-     NO PIXEL FONT. Press Start 2P was the old site's texture and it
-     is wrong here -- this interface is brush and woodblock, not a
-     CRT. Anything still asking for --pixel gets the bold serif. */
-  --serif:'EB Garamond',Garamond,Georgia,'Times New Roman',serif;
-  --display:'EB Garamond',Garamond,Georgia,serif;
-  --bold:'Merriweather',Georgia,serif;
-  --sans:'EB Garamond',Garamond,Georgia,serif;
-  --pixel:'Merriweather',Georgia,serif;
+     Now the serif carries only what is meant to feel written, and
+     everything functional is a system sans. The system stack also
+     costs no bytes and paints on the first frame, so the interface
+     is never mid-swap while the display face loads.
+
+     Merriweather is gone. It was the game's BOLD_FONT and at small
+     sizes on a dark ground it is a slab of texture. */
+  --display:'EB Garamond',Garamond,Georgia,'Times New Roman',serif;
+  --serif:var(--display);
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,
+         'Helvetica Neue',Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  /* Anything still asking for these by the old names lands
+     somewhere sane rather than on a missing face. */
+  --bold:var(--sans);
+  --pixel:var(--sans);
 
   /* --- geometry ---------------------------------------------
-     UiKit: frames 5px, buttons and inputs 4px, bars fully round.
-     Strokes 1.8 on frames, 1.4 on buttons and bars, 1.2 on inputs.
-     Small radii and visible borders are most of why the game reads
-     as paper rather than as glass. */
-  --radius:5px;
-  --radius-sm:4px;
-  --radius-pill:999px;
-  --stroke:1.8px;
-  --stroke-sm:1.4px;
-  --stroke-xs:1.2px;
+     5px radii were the game's, and at 5px a card looks like a box
+     someone forgot to round. 14 and 18 are the difference between
+     a panel and a plate. */
+  --r-sm:8px;
+  --r:14px;
+  --r-lg:20px;
+  --r-pill:999px;
+
+  /* --- rhythm ------------------------------------------------
+     One scale, used everywhere, so that space between things is a
+     decision made once. --gap-section is the big one and it is
+     large on purpose: air is the cheapest thing on this list and
+     it is the thing the old build had none of. */
+  --gap-section:clamp(56px,8vw,104px);
+  --gap:18px;
+  --gap-sm:10px;
+  --page:1180px;
+  --pad:clamp(18px,4vw,34px);
+
+  /* --- motion ----------------------------------------------- */
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --fast:.16s var(--ease);
+  --slow:.42s var(--ease);
+
+  /* --- compatibility ---------------------------------------
+     Older markup on this site and the forked arcade page still ask
+     for the sister sites' names. They resolve into the new language
+     rather than being hunted down one at a time, which is what let
+     this redesign land in one commit instead of six. */
+  --bg:var(--night);
+  --bg2:var(--surface);
+  --panel:var(--surface);
+  --panel2:var(--surface-2);
+  --ink:var(--void);
+  --paper:var(--surface);
+  --paper-dim:var(--surface-2);
+  --inset:var(--surface-3);
+  --chip:var(--surface-2);
+  --muted:var(--text-dim);
+  --dim:var(--text-faint);
+  --accent:var(--jade);
+  --accent-dk:var(--jade-deep);
+  --accent-rgb:var(--jade-rgb);
+  --gold:var(--lantern);
+  --red:#e8695c;
+  --amber:var(--lantern);
+  --leaf:var(--jade);
+  --sage:var(--jade);
+  --qi:#6fa8f0;
+  --health:#e8695c;
+  --stamina:var(--lantern);
+  --xp:#b39ce0;
+  --danger:#e8695c;
+  --arcade:var(--jade);
+  --radius:var(--r);
+  --radius-sm:var(--r-sm);
+  --radius-pill:var(--r-pill);
+  --stroke:1px;
+  --stroke-sm:1px;
+  --stroke-xs:1px;
 }
+
+/* The page is dark and says so, so form controls, scrollbars and
+   the flash before first paint all come up dark too. */
+:root{ color-scheme:dark }
