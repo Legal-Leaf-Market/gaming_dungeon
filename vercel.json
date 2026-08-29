@@ -7,7 +7,8 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "functions": {
-    "api/products.js": { "maxDuration": 60 }
+    "api/products.js": { "maxDuration": 60 },
+    "api/probe.js": { "maxDuration": 60 }
   },
   "rewrites": [
     { "source": "/arcade-floor",  "destination": "/" },

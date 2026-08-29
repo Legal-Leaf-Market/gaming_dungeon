@@ -145,7 +145,15 @@ ships.</p>
   <label style="margin-left:8px">Passcode <input id="pvToken" type="password" placeholder="ADMIN_PASSCODE"/></label>
   <p><button id="pvGo">Show the shelf</button>
      <button id="pvDraft" style="background:none;color:var(--accent);border:1px solid var(--accent)">Draft the capture file</button>
+     <button id="pvProbe" style="background:none;color:var(--gold);border:1px solid var(--gold)">Read the live feed</button>
      <span id="pvMsg" class="build"></span></p>
+  <p style="font-size:13px;margin:8px 0 0;color:var(--dim)"><strong>Read the live feed</strong> skips
+  the walk entirely: the server reads the shop&rsquo;s own <code>products.json</code> and drafts the
+  same file. 53 of the 54 merchants here are Shopify, and Shopify publishes that endpoint so that
+  machines can read it, so for those a hand walk is ceremony rather than diligence. It still
+  publishes nothing &mdash; <code>reviewedBy</code> comes back blank like every other draft. Use the
+  bookmarklet when a feed is switched off at the edge, or when you want to see the shop the way a
+  shopper does.</p>
 </div>
 <div id="pvGrid"></div>
 <div class="card" id="pvDraftBox" hidden>
@@ -309,6 +317,44 @@ earning the day it is reviewed.</p>
         document.getElementById('pvDraftJson').value = JSON.stringify(o.j.file, null, 2);
         document.getElementById('pvDraftBox').hidden = false;
       }).catch(function () { msg.textContent = 'Draft failed.'; });
+  };
+
+  /* ---- read the live feed -------------------------------------------
+     Same destination as the draft above, different instrument: this
+     one reads the merchant's products.json server-side instead of
+     replaying a capture somebody walked. The gate does not move --
+     what comes back still has a blank reviewedBy and still has to be
+     committed by a person. */
+  document.getElementById('pvProbe').onclick = function () {
+    var msg = document.getElementById('pvMsg');
+    var key = document.getElementById('pvKey').value.trim();
+    var token = document.getElementById('pvToken').value.trim();
+    if (!key) { msg.textContent = 'Which merchant?'; return; }
+    if (!token) { msg.textContent = 'Passcode first.'; return; }
+    msg.textContent = 'reading the feed… (a big catalogue takes a few seconds)';
+
+    fetch('/api/probe?draft&key=' + encodeURIComponent(key), {
+      headers: { 'x-gd-admin-token': token }
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (o) {
+        if (!o.ok) { msg.textContent = 'Refused: ' + (o.j.error || 'unknown'); return; }
+        var res = (o.j.results || [])[0];
+        if (!res) { msg.textContent = 'Nothing came back.'; return; }
+        if (!res.ok) {
+          /* A feed that is off is a real answer and the panel says
+             which one, because "it failed" sends people to check their
+             own code first. */
+          msg.textContent = 'No feed: ' + res.error + (res.hint ? '  ' + res.hint : '');
+          return;
+        }
+        msg.textContent = res.products + ' products, ' + res.inStock + ' in stock, ' +
+          res.offScenePct + '% off scene';
+        var d = (o.j.drafts || [])[0];
+        if (!d) return;
+        document.getElementById('pvPath').textContent = d.path;
+        document.getElementById('pvDraftJson').value = JSON.stringify(d.file, null, 2);
+        document.getElementById('pvDraftBox').hidden = false;
+      }).catch(function () { msg.textContent = 'The read failed.'; });
   };
 
   document.getElementById('pvCopyDraft').onclick = function () {

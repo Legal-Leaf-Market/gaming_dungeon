@@ -229,6 +229,61 @@ against the owner's own conversion stats.
 
 ---
 
+## 4c. `/api/probe` — reading a Shopify feed server-side
+
+```
+GET /api/probe?key=<key>          what this merchant stocks
+GET /api/probe?key=<key>&draft    ...plus the data/captured/<key>.json to commit
+GET /api/probe?keys=a,b,c         several, under a 50s budget
+```
+Admin-gated, `x-gd-admin-token`, fails closed with `ADMIN_PASSCODE` unset. There
+is a **Read the live feed** button on `/collect` beside the other two.
+
+**Every sister site has one of these and this repo did not.** Herbal Leaf's guide
+names `scripts/vendor_probe.py` in its hard "do not" list: never clear a store's
+`pending` flag without running it and writing the `include` list from what the
+feed actually holds. Guessing fails in both directions, and both look plausible.
+
+**This does not undo the capture-first inversion (§4).** That inversion is about
+the ORDER: read a merchant's catalogue and have a human review it before anything
+of theirs reaches a shelf. It is not about the browser being the only instrument.
+**53 of the 54 merchants here are Shopify**, and Shopify publishes
+`products.json` precisely so machines can read it, so for those a hand walk is
+ceremony rather than diligence. The gate has not moved: a committed
+`data/captured/<key>.json` with a name in `reviewedBy` is still the only thing
+that puts a product on a shelf, and `draftFile()` ships `reviewedBy: ''` with a
+test that fails if it ever arrives pre-signed.
+
+**Use the bookmarklet instead** for the one non-Shopify merchant, for any shop
+whose feed is off at the edge (403, or HTML instead of JSON — the probe says
+which and names the bookmarklet), and whenever you want to see a shop the way a
+shopper does.
+
+**`analyse()` was extracted from `_capture.js` so both readers share it.** A
+catalogue arrives two ways and the decision made from it must not depend on
+which; two copies of that arithmetic would drift, and invisibly — the same
+merchant would get a different `include` list on a Tuesday than on a Wednesday
+and nothing would say so. A test feeds the same rows through both shapes and
+asserts the proposals are identical.
+
+**It pages until a short page comes back.** Shopify caps `products.json` at 250
+and truncates silently, so a single request reports a 289-product vendor as a
+250-product one and nothing looks wrong (Herbal Leaf found that with a real
+merchant). The 12-page runaway guard is **reported when it trips**: a silent cap
+is the same bug wearing a different hat, and the note says in words that the read
+is a sample.
+
+**No URL it builds ever carries `?ref=`**, and a test with an attributed fixture
+store proves it. A GET on a tracking link registers a real click against the
+owner's own conversion stats, which is the one class of bug that corrupts the
+evidence you would use to find it.
+
+`offScenePct` is the number to read first. A merchant most of whose catalogue
+`_scene.js` refuses is a merchant to drop, **not** a reason to widen the
+classifier.
+
+---
+
 ## 4b. "Scan everything" is a DIFFERENT ACT, and the code says so
 
 `api/_scan.js`. Read it before changing it.
@@ -847,7 +902,7 @@ before you trust it.
 
 ## 11. Verify before you merge
 
-1. `npm test` — 85 cases. The collector test parses the assembled program with
+1. `npm test` — 97 cases. The collector test parses the assembled program with
    `new Function`, which is the point of having it: a syntax error there does
    not fail locally, it fails silently on a stranger's website with no error
    event.
@@ -901,6 +956,11 @@ before you trust it.
 - Do NOT open `robots.txt` before a real domain AND a published merchant, and
   do NOT forget to (§10b). Both failure directions are quiet.
 - Do NOT hand-edit `public/sitemap.xml`; run `npm run sitemap` (§10b).
+- Do NOT let `/api/probe` fill in `reviewedBy`, and do NOT add a mode that writes
+  `data/captured/`. It is the shortest path from "nobody read this shop" to "this
+  shop is on the shelf", and the blank field is what keeps a person on it (§4c).
+- Do NOT re-implement the `include`/`roomMap` arithmetic for a second reader;
+  call `analyse()` (§4c).
 - Do NOT hand-edit a PNG, the `.ico` or `manifest.webmanifest`; edit
   `public/assets/mark.svg` and run `npm run branding` (§10c).
 - Do NOT add a `<path>`, gradient or text to `mark.svg` without teaching

@@ -385,18 +385,23 @@ export async function report(key) {
  * Returns the object to write to data/captured/<key>.json, or null
  * when there is no capture to draft from.
  */
-export async function draft(key, classify, storeFor) {
-  if (!dbConfigured()) return null
-
-  const rows = await q(s => s`
-    SELECT title, price, product_type, vendor, data
-    FROM capture_products WHERE merchant_key = ${key}`)
-  if (!rows || !rows.length) return null
-
-  const st = storeFor ? storeFor(key) : null
-  const rep = await report(key)
-
-  /* Per product_type: how many, which rooms, how many refused. */
+/**
+ * THE ANALYSER, SHARED BY BOTH WAYS OF READING A MERCHANT.
+ *
+ * A catalogue reaches us two ways -- walked in a browser with the
+ * bookmarklet, or read server-side from the shop's own products.json
+ * -- and the DECISION made from it must not depend on which. Two
+ * copies of this arithmetic would drift, and they would drift
+ * invisibly: the same merchant would get a different include list on
+ * a Tuesday than on a Wednesday and nothing would say so.
+ *
+ * So it takes rows and returns proposals, and knows nothing about
+ * where the rows came from.
+ *
+ * Rows need `title`, `product_type` and `vendor`. Anything else is
+ * ignored here.
+ */
+export function analyse(rows, st, classify) {
   const types = new Map()
   for (const r of rows) {
     const t = (r.product_type || '').trim() || '(none)'
@@ -435,6 +440,35 @@ export async function draft(key, classify, storeFor) {
   const roomMap = {}
   for (const a of analysis) if (a.propose === 'include' && a.suggestRoom) roomMap[a.type] = a.suggestRoom
 
+  return { analysis, include, roomMap }
+}
+
+/* The four lines every summary file carries, so the instructions do
+   not fork between the two readers either. */
+export function reviewNotes(coverageNote) {
+  return [
+    coverageNote || 'Coverage looks complete for the pages read.',
+    'include and roomMap are PROPOSALS from the numbers above, not answers. ' +
+      'A type is proposed for inclusion when 60% or more of its products land in a real room.',
+    'Fill in reviewedBy. A summary with an empty reviewedBy publishes nothing — ' +
+      'that is deliberate, and it is what stops this generator becoming a rubber stamp.',
+    'Then clear `pending` in api/_stores.js and commit both together.',
+  ]
+}
+
+export async function draft(key, classify, storeFor) {
+  if (!dbConfigured()) return null
+
+  const rows = await q(s => s`
+    SELECT title, price, product_type, vendor, data
+    FROM capture_products WHERE merchant_key = ${key}`)
+  if (!rows || !rows.length) return null
+
+  const st = storeFor ? storeFor(key) : null
+  const rep = await report(key)
+
+  const { analysis, include, roomMap } = analyse(rows, st, classify)
+
   return {
     key,
     /* EMPTY ON PURPOSE. publishable() refuses a blank one. */
@@ -457,15 +491,7 @@ export async function draft(key, classify, storeFor) {
     productTypes: analysis,
     include,
     roomMap,
-    readThisBeforeCommitting: [
-      rep.coverageNote ||
-        'Coverage looks complete for the pages captured.',
-      'include and roomMap are PROPOSALS from the numbers above, not answers. ' +
-        'A type is proposed for inclusion when 60% or more of its products land in a real room.',
-      'Fill in reviewedBy. A summary with an empty reviewedBy publishes nothing — ' +
-        'that is deliberate, and it is what stops this generator becoming a rubber stamp.',
-      'Then clear `pending` in api/_stores.js and commit both together.',
-    ],
+    readThisBeforeCommitting: reviewNotes(rep.coverageNote),
   }
 }
 
