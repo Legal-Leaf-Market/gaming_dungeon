@@ -594,9 +594,43 @@ merchant. Rather than bend the shared pattern for one product, that shop's own
 types are pinned: `3D Scanners`, `3D Printer Accessories` and `3d printer` all
 map to `workshop`.
 
-**So: read the `(none)` row before accepting any draft.** If it is a large share
-of the catalogue, the answer is almost always an empty `include`, not the
-proposed list. `analyse()` states the threshold it used; it does not know this.
+**`analyse()` does this itself now, and that is the point.** The first fix was a
+rule — "read the `(none)` row before accepting any draft" — which puts the burden
+on whoever reviews the next fifty. The arithmetic does it instead: when untyped
+products are **25% or more** of a catalogue, the proposal is an empty `include`
+with a note saying how many products a list would have dropped. Every draft also
+carries a `coverage` block (`products`, `untyped`, `wouldPublish`, `wouldDrop`,
+`pct`), because "the include list looks sensible" and "the include list keeps
+most of the shop" are different claims and only the second is checkable.
+
+Both directions are mutation-tested. A version that always proposed `[]` would
+be just as broken — the review step would stop excluding anything — so a
+properly typed catalogue is asserted to still get a real list.
+
+---
+
+## 5c. Triage before review, when there are 50 shops to read
+
+```
+GET /api/probe?keys=a,b,c&brief     one line each
+/collect  "Triage every unread shop"  walks all of them in batches of five
+```
+
+The full probe response for 50 merchants is tens of thousands of lines, and **a
+review nobody can physically read is the same as no review**. Triage answers what
+decides most shops in one block: products, in stock, priced, off-scene share,
+**untyped count**, price range, the type histogram with the room each type lands
+in, and three sample titles. Pick from that, then draft only the survivors — the
+Merchant key box takes a comma-separated list, so a triage result becomes drafts
+without retyping.
+
+`untyped` is on the triage line rather than three levels down because of §5b: it
+is the single number that catches a catalogue an include list would gut.
+
+Brief mode is tested to be actually brief. If it grows back into the full payload
+it has stopped doing its job while still passing a "does it return rows" test, so
+the test asserts the heavy fields are **absent**, and that brief never returns
+committable files.
 
 ---
 
@@ -974,7 +1008,7 @@ before you trust it.
 
 ## 11. Verify before you merge
 
-1. `npm test` — 105 cases. The collector test parses the assembled program with
+1. `npm test` — 109 cases. The collector test parses the assembled program with
    `new Function`, which is the point of having it: a syntax error there does
    not fail locally, it fails silently on a stranger's website with no error
    event.

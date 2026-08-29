@@ -314,3 +314,57 @@ test('the untyped count is surfaced in triage, because it decides the include li
     { ADMIN_PASSCODE: 'secret' })
   assert.equal(payload.rows[0].untyped, 2, 'an untyped majority must be visible at triage')
 })
+
+test('a mostly-untyped catalogue proposes an EMPTY include, by arithmetic', async () => {
+  /* THE TRAP THAT COST 18 OF 23 PRODUCTS, now defused in code rather
+     than in a rule somebody has to remember.
+
+     An include list can only name types, and an untyped product
+     matches no name, so a non-empty include drops every one of them.
+     customgamingchair has 23 products, 18 untyped; the old proposal
+     covered the other 5 and publishing it would have shipped five
+     chairs out of twenty-three, silently.
+
+     Fixing that as "read the (none) row first" put the burden on
+     whoever reviews the next fifty drafts. The arithmetic does it. */
+  serve([[
+    product(1, '', 'Untyped Chair One'),
+    product(2, '', 'Untyped Chair Two'),
+    product(3, '', 'Untyped Chair Three'),
+    product(4, 'Custom Chair', 'A Typed One'),
+  ]])
+  const { payload } = await call(
+    { keys: 'goretrogame', draft: '' },
+    { 'x-gd-admin-token': 'secret' },
+    { ADMIN_PASSCODE: 'secret' })
+
+  const file = payload.drafts[0].file
+  assert.deepEqual(file.include, [],
+    'a catalogue that is 75% untyped must propose an empty include, not its typed minority')
+  assert.match(file.coverage.note, /no product_type/,
+    'and it must say in words why, with the count')
+  assert.equal(file.coverage.wouldPublish, 4, 'an empty include publishes everything')
+  assert.equal(file.coverage.wouldDrop, 0)
+})
+
+test('a properly typed catalogue still gets a real include list', async () => {
+  /* The other direction, which a careless version of the fix breaks:
+     if every catalogue proposed [] the review step would stop
+     excluding anything at all. */
+  serve([[
+    product(1, 'Cabinets', 'Arcade Cabinet'),
+    product(2, 'Cabinets', 'Second Cabinet'),
+    product(3, 'Cabinets', 'Third Cabinet'),
+    product(4, 'Gift Cards', 'Gift Card'),
+  ]])
+  const { payload } = await call(
+    { keys: 'goretrogame', draft: '' },
+    { 'x-gd-admin-token': 'secret' },
+    { ADMIN_PASSCODE: 'secret' })
+
+  const file = payload.drafts[0].file
+  assert.deepEqual(file.include, ['Cabinets'], 'a typed catalogue must still be filtered')
+  assert.equal(file.coverage.note, null, 'and must not carry the untyped warning')
+  assert.equal(file.coverage.wouldDrop, 1, 'the gift card is the one it drops')
+  assert.equal(file.coverage.pct, 75)
+})

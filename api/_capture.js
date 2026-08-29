@@ -436,11 +436,68 @@ export function analyse(rows, st, classify) {
     }
   })
 
-  const include = analysis.filter(a => a.propose === 'include' && a.type !== '(none)').map(a => a.type)
   const roomMap = {}
   for (const a of analysis) if (a.propose === 'include' && a.suggestRoom) roomMap[a.type] = a.suggestRoom
 
-  return { analysis, include, roomMap }
+  /* ---- THE UNTYPED TRAP -------------------------------------
+     An include list can only name types, and a product with no
+     product_type matches no name, so a NON-EMPTY include list drops
+     every untyped product in the catalogue. The proposal below used
+     to be built from the typed rows alone and say nothing about it.
+
+     That is not a hypothetical. customgamingchair has 23 products, 18
+     of them untyped; the proposed list covered the other 5, and
+     publishing it would have shipped five chairs out of twenty-three
+     with nothing anywhere saying so. It was caught by hand, once, and
+     the fix was written up as "remember to read the (none) row" --
+     which is exactly the kind of rule this repo does not trust,
+     because the next fifty drafts each need somebody to remember it.
+
+     So the arithmetic does it. When untyped products are a large
+     enough share that an include list would throw a real part of the
+     catalogue away, the proposal becomes an EMPTY include, which
+     means everything and lets the classifier place each product. That
+     is not a fudge: it is the correct answer for a merchant with no
+     taxonomy, and it is what both such merchants were published with.
+
+     A quarter is the line. Stated here rather than buried, and
+     reported in `coverage` either way so the number is visible even
+     when it does not trip. */
+  const total = rows.length || 1
+  const untyped = (types.get('(none)') || { n: 0 }).n
+  const untypedShare = untyped / total
+
+  let include = analysis.filter(a => a.propose === 'include' && a.type !== '(none)').map(a => a.type)
+  let untypedNote = null
+
+  if (untypedShare >= 0.25) {
+    untypedNote =
+      untyped + ' of ' + total + ' products (' + Math.round(untypedShare * 100) + '%) have no ' +
+      'product_type. An include list can only name types, so a non-empty one would drop every ' +
+      'single one of them. Proposing an EMPTY include, which means everything and lets _scene.js ' +
+      'place each product. If you replace it with a list, you are choosing to drop those ' +
+      untyped + ' products.'
+    include = []
+  }
+
+  /* How much of the catalogue the proposal actually publishes.
+     Reported always, because "the include list looks sensible" and
+     "the include list keeps most of the shop" are different claims
+     and only the second one is checkable. */
+  const kept = include.length
+    ? analysis.filter(a => include.some(t => t.toLowerCase() === a.type.toLowerCase()))
+        .reduce((n, a) => n + a.n, 0)
+    : total
+  const coverage = {
+    products: total,
+    untyped,
+    wouldPublish: kept,
+    wouldDrop: total - kept,
+    pct: Math.round((kept / total) * 100),
+    note: untypedNote,
+  }
+
+  return { analysis, include, roomMap, coverage }
 }
 
 /* The four lines every summary file carries, so the instructions do
@@ -467,7 +524,7 @@ export async function draft(key, classify, storeFor) {
   const st = storeFor ? storeFor(key) : null
   const rep = await report(key)
 
-  const { analysis, include, roomMap } = analyse(rows, st, classify)
+  const { analysis, include, roomMap, coverage } = analyse(rows, st, classify)
 
   return {
     key,
@@ -489,6 +546,7 @@ export async function draft(key, classify, storeFor) {
        the committed file so that in six months "why these four types"
        has an answer next to the code that acts on it. */
     productTypes: analysis,
+    coverage,
     include,
     roomMap,
     readThisBeforeCommitting: reviewNotes(rep.coverageNote),

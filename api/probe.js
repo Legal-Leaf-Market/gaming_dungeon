@@ -62,7 +62,7 @@ async function probeOne(st, deadline) {
   }
 
   const rep = summarise(read.rows)
-  const { analysis, include, roomMap } = analyse(read.rows, st, classify)
+  const { analysis, include, roomMap, coverage } = analyse(read.rows, st, classify)
   const refused = analysis.reduce((n, a) => n + a.refused, 0)
 
   return {
@@ -77,6 +77,7 @@ async function probeOne(st, deadline) {
     offScene: refused,
     offScenePct: read.rows.length ? Math.round((refused / read.rows.length) * 100) : 0,
     productTypeAnalysis: analysis,
+    coverage,
     proposed: { include, roomMap },
     alreadyReviewed: !!readReviewed(st.key),
     notes: [...rep.notes, ...read.notes],
@@ -104,6 +105,7 @@ function draftFile(p) {
       notes: p.notes,
     },
     productTypes: p.productTypeAnalysis,
+    coverage: p.coverage,
     include: p.proposed.include,
     roomMap: p.proposed.roomMap,
     readThisBeforeCommitting: reviewNotes(
@@ -178,6 +180,7 @@ export default async function handler(req, res) {
         products: r.products, inStock: r.inStock, priced: r.priced,
         offScenePct: r.offScenePct,
         untyped: (r.productTypeAnalysis.find(a => a.type === '(none)') || {}).n || 0,
+        coverage: r.coverage,
         types: r.productTypeAnalysis.slice(0, 10).map(a => {
           const top = Object.keys(a.rooms)[0] || 'REFUSED'
           return a.type + ' x' + a.n + ' -> ' + top + (a.refused ? ' (' + a.refused + ' refused)' : '')
