@@ -93,7 +93,14 @@
      roofs stay dark. The village is the thing that makes this the
      game's vale rather than a mountain range, so it does not get
      dissolved into the paper with the ridges behind it. */
-  height: 66vh; min-height: 330px;
+  /* TALLER THAN THE RIDGES BEHIND IT, which looks wrong written
+     down and is right on screen. The plate is bottom-anchored, so
+     its height decides how far UP the canopies reach: at 66vh the
+     trees grew into the card row and the only part of a cherry
+     anybody saw was its trunk. The grove has to have its crowns in
+     the open band between the hero and the map, because the crowns
+     are the whole point of a cherry. */
+  height: 88vh; min-height: 460px;
   background-image: url(../assets/vale-village.svg);
   opacity: .96;
   -webkit-mask-image: linear-gradient(180deg, #000 74%, transparent 99%);
@@ -266,3 +273,41 @@
   .vale .mist, .vale .leaf { animation: none }
   .vale i { transform: none }
 }
+
+/* ------------------------------------------------------------
+   THE GUST
+   ------------------------------------------------------------
+   Every half minute or so a breath goes through the grove: petals
+   lift off, travel mostly SIDEWAYS rather than down, and settle. It
+   is the one moment the background moves with intent, and the whole
+   design of it is restraint. A gust you notice every time is weather
+   on a shop page; a gust you catch once and then wait for is the
+   grove being alive.
+
+   Horizontal-biased on purpose. Falling petals already drift; what
+   makes a gust read as WIND rather than as more falling is that the
+   travel is across the frame and the rise beats the fall for the
+   first half of the trip.
+   ------------------------------------------------------------ */
+.vale .gustpetal {
+  left: var(--l, -5%);
+  top: var(--t, 60%);
+  bottom: auto;
+  width: var(--sz, 9px);
+  height: calc(var(--sz, 9px) * .58);
+  border-radius: 60% 60% 60% 12%;
+  background: var(--hue, #dd91b4);
+  opacity: 0;
+  animation: valeGust var(--dur, 6s) cubic-bezier(.3, .05, .5, 1) forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes valeGust {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0 }
+  12%  { opacity: var(--op, .55) }
+  45%  { transform: translate3d(46vw, -12vh, 0) rotate(420deg) }
+  78%  { opacity: var(--op, .55) }
+  100% { transform: translate3d(104vw, 6vh, 0) rotate(900deg); opacity: 0 }
+}
+
+@media (prefers-reduced-motion: reduce) { .vale .gustpetal { display: none } }

@@ -686,92 +686,182 @@ function village() {
      where the canopy shades itself, mid pink through the body, near
      white only on the top left where the light is.
      --------------------------------------------------------- */
-  function cherry(x, groundY, scale) {
-    const trunkH = 88 * scale
+  /* =========================================================
+     SIX CHERRIES, NOT ONE CHERRY AT SIX SCALES
+
+     One generator scaled between 0.62 and 1.15 gave a row of trees
+     with the same silhouette at different sizes, which the eye reads
+     as one asset repeated, because it is. Real variation is in the
+     PROPORTIONS: an ancient tree is not a big young tree, it is a
+     different shape, squat and broad with a trunk far thicker than
+     its height would suggest.
+
+     So the species table below varies trunk mass, canopy aspect,
+     limb count, limb angle and blossom density independently, and
+     scale is then applied on top as a small jitter rather than as
+     the source of variety. Six profiles, one species: the tone range
+     and the mark shapes stay shared, so they read as a grove rather
+     than as a catalogue.
+     ========================================================= */
+  const SPECIES = {
+    /* trunkH is in plate units before scale; trunkW is a RATIO of
+       trunkH, which is what actually encodes age: a young cherry is
+       about 1:14, an ancient one nearer 1:6. */
+    ancient: { trunkH: 96, trunkW: 0.165, canopyW: 168, canopyH: 74, limbs: 6,
+               rise: 0.34, clusters: 40, roots: 6, weep: 0.15, lean: 0.05 },
+    mature:  { trunkH: 92, trunkW: 0.105, canopyW: 118, canopyH: 58, limbs: 5,
+               rise: 0.46, clusters: 28, roots: 4, weep: 0.2,  lean: 0.07 },
+    tall:    { trunkH: 128, trunkW: 0.072, canopyW: 88, canopyH: 50, limbs: 4,
+               rise: 0.6,  clusters: 22, roots: 3, weep: 0.1,  lean: 0.05 },
+    wide:    { trunkH: 66, trunkW: 0.13,  canopyW: 176, canopyH: 44, limbs: 6,
+               rise: 0.3,  clusters: 32, roots: 5, weep: 0.25, lean: 0.09 },
+    weeping: { trunkH: 82, trunkW: 0.095, canopyW: 96, canopyH: 46, limbs: 5,
+               rise: 0.42, clusters: 24, roots: 3, weep: 1,    lean: 0.06 },
+    young:   { trunkH: 52, trunkW: 0.062, canopyW: 54, canopyH: 30, limbs: 3,
+               rise: 0.5,  clusters: 11, roots: 2, weep: 0,    lean: 0.11 },
+  }
+
+  const bark = at(GAME.bark, 80)
+  const barkLit = at([96, 74, 62], 80)
+  const barkDark = at([34, 25, 21], 80)
+  const soil = at([58, 48, 38], 70)
+
+  /* A TAPERING LIMB. Everything woody here is this: a quadratic
+     spine with a width that shrinks along it, drawn as a closed
+     shape rather than a stroke so the taper is real geometry. A
+     stroked path has one width for its whole length, which is why
+     stroked branches always read as wire. */
+  function limb(x0, y0, x1, y1, cx, cy, w0, w1, fill) {
+    const nx0 = -(cy - y0), ny0 = (cx - x0)
+    const l0 = Math.hypot(nx0, ny0) || 1
+    const nx1 = -(y1 - cy), ny1 = (x1 - cx)
+    const l1 = Math.hypot(nx1, ny1) || 1
+    const ax = (nx0 / l0) * w0, ay = (ny0 / l0) * w0
+    const bx = (nx1 / l1) * w1, by = (ny1 / l1) * w1
+    parts.push('<path d="M' + n2(x0 - ax) + ' ' + n2(y0 - ay) +
+      ' Q' + n2(cx - (ax + bx) / 2) + ' ' + n2(cy - (ay + by) / 2) +
+      ' ' + n2(x1 - bx) + ' ' + n2(y1 - by) +
+      ' L' + n2(x1 + bx) + ' ' + n2(y1 + by) +
+      ' Q' + n2(cx + (ax + bx) / 2) + ' ' + n2(cy + (ay + by) / 2) +
+      ' ' + n2(x0 + ax) + ' ' + n2(y0 + ay) +
+      ' Z" fill="' + fill + '"/>')
+  }
+
+  function cherry(x, groundY, kind, scale) {
+    const sp = SPECIES[kind]
+    const trunkH = sp.trunkH * scale
+    const bw = sp.trunkH * sp.trunkW * scale
+    const lean = r(-sp.lean, sp.lean)
     const top = groundY - trunkH
-    const bw = 9.5 * scale
-    const bark = at(GAME.bark, 80)
-    const barkLit = at([88, 68, 58], 80)
+    const topX = x + lean * trunkH
 
-    /* trunk, flaring at the foot */
-    parts.push('<path d="M' + n2(x - bw * 1.6) + ' ' + n2(groundY) +
-      ' Q' + n2(x - bw * 0.85) + ' ' + n2(groundY - trunkH * 0.5) +
-      ' ' + n2(x - bw * 0.42) + ' ' + n2(top) +
-      ' L' + n2(x + bw * 0.42) + ' ' + n2(top) +
-      ' Q' + n2(x + bw * 0.85) + ' ' + n2(groundY - trunkH * 0.5) +
-      ' ' + n2(x + bw * 1.6) + ' ' + n2(groundY) +
-      ' Z" fill="' + bark + '"/>')
+    /* ---- ROOTS, and they are what plants the tree.
+       Without them a trunk stops at the ground the way a sticker
+       stops at paper. Each root is a limb that starts thick at the
+       trunk, ends thin, and finishes BELOW the ground line so the
+       tip is buried rather than cut off. */
+    for (let i = 0; i < sp.roots; i++) {
+      const side = i % 2 ? 1 : -1
+      const reach = bw * r(2.4, 5.2) * side
+      const dip = r(2, 7) * scale
+      limb(x + side * bw * 0.5, groundY - bw * 0.7,
+        x + reach, groundY + dip,
+        x + reach * 0.45, groundY - bw * 0.25,
+        bw * 0.42, bw * 0.1, i % 3 === 0 ? barkDark : bark)
+    }
+    /* the soil the roots go into, so the tips do not just stop */
+    parts.push('<ellipse cx="' + n2(x) + '" cy="' + n2(groundY + 2) +
+      '" rx="' + n2(bw * 5) + '" ry="' + n2(bw * 0.9) +
+      '" fill="' + soil + '" opacity="0.5"/>')
 
-    /* THE ARMATURE. Limbs from the fork, twigs from the limbs, and
-       the twigs reach past where the blossom will sit so the canopy
-       has something to hang on. */
-    const twigTips = []
-    const limbs = 4 + Math.floor(rng() * 2)
-    for (let i = 0; i < limbs; i++) {
-      const spread = (i / (limbs - 1) - 0.5) * 2
-      const lx = x + spread * 62 * scale + r(-8, 8) * scale
-      const ly = top - r(30, 52) * scale + Math.abs(spread) * 10 * scale
-      const t = 4.2 * scale
-      parts.push('<path d="M' + n2(x - t) + ' ' + n2(top + 5) +
-        ' Q' + n2(x + spread * 22 * scale) + ' ' + n2(top - 20 * scale) +
-        ' ' + n2(lx) + ' ' + n2(ly) +
-        ' L' + n2(lx + t * 1.2) + ' ' + n2(ly + t * 0.9) +
-        ' Q' + n2(x + spread * 22 * scale + t) + ' ' + n2(top - 18 * scale) +
-        ' ' + n2(x + t) + ' ' + n2(top + 5) +
-        ' Z" fill="' + bark + '"/>')
+    /* ---- TRUNK. Flared at the foot, tapering as it rises, with a
+       slight S rather than a straight line: a trunk that is the same
+       width top and bottom is the other half of what made the old
+       ones read as cylinders. */
+    limb(x, groundY, topX, top, x + lean * trunkH * 0.35, groundY - trunkH * 0.55,
+      bw * 1.5, bw * 0.42, bark)
 
-      const twigs = 2 + Math.floor(rng() * 3)
-      for (let k = 0; k < twigs; k++) {
-        const tx = lx + r(-46, 46) * scale
-        const ty = ly - r(6, 44) * scale
-        parts.push('<path d="M' + n2(lx) + ' ' + n2(ly) +
-          ' Q' + n2((lx + tx) / 2 + r(-10, 10) * scale) + ' ' + n2((ly + ty) / 2) +
-          ' ' + n2(tx) + ' ' + n2(ty) + '" fill="none" stroke="' + barkLit +
-          '" stroke-width="' + n2(1.9 * scale) + '" stroke-linecap="round"/>')
-        twigTips.push([tx, ty])
+    /* ---- BARK. Vertical grooves following the trunk's own curve,
+       dark in the crevice and light on the ridge beside it. Count
+       scales with trunk width, so an ancient trunk carries visibly
+       more of it than a young one, which is the cheapest way to make
+       age read. */
+    const grooves = Math.max(2, Math.round(bw * 1.05))
+    for (let g = 0; g < grooves; g++) {
+      const u = (g + 0.5) / grooves - 0.5
+      const gx = x + u * bw * 2.1
+      const gTop = top + r(4, 22) * scale
+      const gBot = groundY - r(2, 16) * scale
+      limb(gx, gBot, gx + lean * trunkH * 0.9 + r(-2, 2) * scale, gTop,
+        gx + lean * trunkH * 0.3, (gTop + gBot) / 2,
+        bw * 0.1, bw * 0.045, g % 2 ? barkDark : barkLit)
+    }
+    /* a knot or two on the older trees */
+    if (sp.trunkW > 0.09) {
+      for (let k = 0; k < (kind === 'ancient' ? 3 : 1); k++) {
+        parts.push('<ellipse cx="' + n2(x + r(-bw, bw)) +
+          '" cy="' + n2(groundY - trunkH * r(0.25, 0.75)) +
+          '" rx="' + n2(bw * r(0.16, 0.3)) + '" ry="' + n2(bw * r(0.1, 0.2)) +
+          '" fill="' + barkDark + '"/>')
       }
     }
 
-    /* CLUSTER CENTRES, biased onto the twig tips so the blossom
-       grows where the wood is. */
-    const cw = 118 * scale, ch = 58 * scale
-    const cy = top - 48 * scale
+    /* ---- THE ARMATURE: limbs off the trunk, secondaries off those,
+       twigs off the secondaries, each generation thinner and
+       shorter. Real trees divide; they do not sprout. */
+    const twigTips = []
+    for (let i = 0; i < sp.limbs; i++) {
+      /* uneven, not fanned: the offset is jittered per limb so no
+         two are mirror images and the gaps between them differ */
+      const spread = (i / (sp.limbs - 1) - 0.5) * 2 + r(-0.22, 0.22)
+      const forkY = top + trunkH * r(0.02, 0.16)
+      const lx = topX + spread * sp.canopyW * 0.42 * scale
+      const ly = forkY - sp.canopyH * sp.rise * scale * r(0.7, 1.3)
+      limb(topX, forkY, lx, ly, topX + spread * sp.canopyW * 0.16 * scale,
+        forkY - sp.canopyH * 0.3 * scale, bw * 0.42, bw * 0.17, bark)
+
+      const secs = 2 + Math.floor(rng() * 3)
+      for (let k = 0; k < secs; k++) {
+        const t = 0.45 + rng() * 0.5
+        const bx0 = topX + (lx - topX) * t
+        const by0 = forkY + (ly - forkY) * t
+        const sx = bx0 + r(-0.55, 0.55) * sp.canopyW * 0.4 * scale
+        const sy = by0 - r(0.1, 0.85) * sp.canopyH * 0.7 * scale
+        limb(bx0, by0, sx, sy, (bx0 + sx) / 2 + r(-6, 6) * scale,
+          (by0 + sy) / 2, bw * 0.17, bw * 0.07, bark)
+        twigTips.push([sx, sy])
+
+        for (let j = 0; j < 2; j++) {
+          const tx = sx + r(-0.4, 0.4) * sp.canopyW * 0.3 * scale
+          const ty = sy - r(0, 0.5) * sp.canopyH * 0.5 * scale
+          limb(sx, sy, tx, ty, (sx + tx) / 2, (sy + ty) / 2,
+            bw * 0.07, bw * 0.028, barkLit)
+          twigTips.push([tx, ty])
+        }
+      }
+    }
+
+    /* ---- CANOPY. Clusters seeded on the twig tips, so blossom
+       grows where wood is, with a minority scattered to break the
+       outline. The canopy centre is OFFSET from the trunk by the
+       lean and a jitter, because a canopy centred on its trunk is
+       the last thing that reads as machine-made. */
+    const cw = sp.canopyW * 0.5 * scale
+    const ch = sp.canopyH * 0.5 * scale
+    const cy = ly0(top, sp, scale) + r(-6, 6) * scale
+    const cxc = topX + r(-0.12, 0.12) * cw
+
     const centres = []
-    for (let i = 0; i < 26; i++) {
-      if (twigTips.length && rng() < 0.6) {
+    for (let i = 0; i < sp.clusters; i++) {
+      if (twigTips.length && rng() < 0.72) {
         const tip = twigTips[Math.floor(rng() * twigTips.length)]
-        centres.push([tip[0] + r(-18, 18) * scale, tip[1] + r(-14, 14) * scale])
+        centres.push([tip[0] + r(-10, 10) * scale, tip[1] + r(-9, 9) * scale])
       } else {
         const a = rng() * Math.PI * 2, rad = Math.sqrt(rng())
-        centres.push([x + Math.cos(a) * rad * cw, cy + Math.sin(a) * rad * ch])
+        centres.push([cxc + Math.cos(a) * rad * cw, cy + Math.sin(a) * rad * ch])
       }
     }
 
-    /* THE MARKS.
-
-       FOUR HUNDRED <use> ELEMENTS A TREE IS AFFORDABLE ONLY IF EACH
-       ONE IS SHORT. The first working version wrote a full transform
-       on every mark, `translate(123.4 456.7) rotate(215) scale(0.62)`,
-       and the file came out at 369KB, which is not a background, it
-       is a download. Three changes got it to a fifth of that with
-       the same number of marks on screen:
-
-         The whole mark layer sits in ONE group carrying the tree's
-         position and scale, so marks are written in local
-         coordinates and integers, and per-mark scale disappears.
-
-         Blossom uses <use x= y=> with no transform at all. A
-         five-lobed rosette is near enough rotationally symmetric
-         that rotating it buys nothing, and three pre-sized rosettes
-         in <defs> cover the size variation that rotation was
-         standing in for.
-
-         Opacity is quantised to two values, so there are a handful
-         of fill groups rather than one per mark.
-
-       Leaves keep a rotation, because a leaf is a pointed thing and
-       a field of them all lying the same way is instantly wrong.
-       They are one mark in six, so the cost is small. */
     const buckets = new Map()
     const put = (colour, mark, mx, my, rot, op) => {
       const key = colour + '|' + op
@@ -789,16 +879,15 @@ function village() {
     const SIZES = ['b1', 'b2', 'b3']
 
     for (const [ccx, ccy] of centres) {
-      const n = 12 + Math.floor(rng() * 8)
+      const n = 11 + Math.floor(rng() * 8)
       for (let i = 0; i < n; i++) {
         const a = rng() * Math.PI * 2
-        const rad = Math.sqrt(rng()) * (17 + rng() * 13) * scale
-        /* local coordinates: the group below carries x and scale */
-        const mx = (ccx + Math.cos(a) * rad - x) / scale
-        const my = (ccy + Math.sin(a) * rad * 0.82 - groundY) / scale
-        /* tone by height in the canopy, with noise so the boundary
-           between tones is not a horizon line */
-        const h = ((ccy + Math.sin(a) * rad * 0.82) - (cy - ch)) / (ch * 2) + r(-0.16, 0.16)
+        const rad = Math.sqrt(rng()) * (15 + rng() * 13) * scale
+        const wx = ccx + Math.cos(a) * rad
+        const wy = ccy + Math.sin(a) * rad * 0.82
+        const mx = (wx - x) / scale
+        const my = (wy - groundY) / scale
+        const h = (wy - (cy - ch)) / (ch * 2) + r(-0.16, 0.16)
         if (rng() < 0.16) {
           put(leafGreen, 'lf', mx, my, rng() * 360, rng() < 0.5 ? '.9' : '1')
         } else {
@@ -808,6 +897,30 @@ function village() {
       }
     }
 
+    /* ---- WEEPING STRANDS, per species rather than at random. On
+       the weeping cherry they are the silhouette; on the others they
+       are an occasional fall of blossom off a long limb. */
+    const strands = Math.round(sp.weep * (kind === 'weeping' ? 12 : 5))
+    for (let i = 0; i < strands; i++) {
+      const side = rng() < 0.5 ? -1 : 1
+      const sx = cxc + side * (0.45 + rng() * 0.55) * cw
+      const len = (30 + rng() * 52) * scale * (kind === 'weeping' ? 1.5 : 1)
+      for (let k = 0; k < 6; k++) {
+        const t = k / 5
+        const wy = cy + 12 * scale + t * len
+        put(t > 0.55 ? deep : mid, k % 3 === 0 ? 'b2' : 'b1',
+          (sx + side * t * 10 * scale - x) / scale, (wy - groundY) / scale,
+          null, t > 0.7 ? '.85' : '1')
+      }
+    }
+
+    /* ONE GROUP CARRIES THE TREE'S POSITION AND SCALE, and dropping
+       it is how the canopies ended up in the corner of the plate.
+       Marks are written in LOCAL integer coordinates so a <use> can
+       be short; that only works if something puts them back where
+       the tree is. The branches above are in absolute coordinates
+       and looked fine, which is exactly why the bug was invisible
+       until the blossom was missing rather than misplaced. */
     const groups = []
     for (const [key, uses] of buckets) {
       const [colour, op] = key.split('|')
@@ -815,6 +928,26 @@ function village() {
     }
     parts.push('<g transform="translate(' + n2(x) + ' ' + n2(groundY) + ') scale(' +
       (Math.round(scale * 100) / 100) + ')">' + groups.join('') + '</g>')
+
+    /* ---- FALLEN PETALS AT THE FOOT. Drifted around the roots and
+       thinning outward, NOT a pink carpet: the ground stays visible
+       between them, which is what stops it reading as spilled paint.
+       Drawn last so they lie on top of the soil. */
+    const litter = Math.round(sp.clusters * 0.7)
+    for (let i = 0; i < litter; i++) {
+      const d = Math.pow(rng(), 0.55)
+      const px = x + (rng() < 0.5 ? -1 : 1) * d * cw * 0.9
+      const py = groundY + r(-1, 5) * scale + (1 - d) * 2
+      parts.push('<use href="#b1" x="' + Math.round(px) + '" y="' + Math.round(py) +
+        '" fill="' + (rng() < 0.5 ? mid : lit) + '" opacity="' +
+        (0.5 + rng() * 0.35).toFixed(2) + '"/>')
+    }
+  }
+
+  /* Canopy centre height for a species. Pulled out because the
+     canopy, the strands and the litter all have to agree about it. */
+  function ly0(top, sp, scale) {
+    return top - sp.canopyH * sp.rise * scale
   }
 
   function pine(x, groundY, scale) {
@@ -854,15 +987,43 @@ function village() {
     }
   }
 
-  const stands = []
-  for (let i = 0; i < 13; i++) stands.push({ x: r(30, PLATE_W - 30), cherry: rng() < 0.75 })
-  /* far to near, so a nearer tree overlaps a further one */
-  stands.sort((a, b) => a.x - b.x)
+  /* A GROVE HAS A STRUCTURE, NOT A DENSITY.
+
+     Thirteen trees with a 75% cherry roll put a random assortment
+     across the plate. A real stand reads as anchors with everything
+     else arranged around them, so this places by ROLE: two ancients
+     as the landmarks, matures filling between, a tall and a wide for
+     vertical and horizontal variation, one weeping as the rare note,
+     and youngs at the edges where a grove thins out.
+
+     Sorted by x and drawn left to right, which keeps neighbouring
+     canopies overlapping in a consistent direction. */
+  const stands = [
+    { kind: 'ancient', x: 232 }, { kind: 'ancient', x: 1010 },
+    { kind: 'mature', x: 96 }, { kind: 'mature', x: 402 },
+    { kind: 'mature', x: 596 }, { kind: 'mature', x: 838 },
+    { kind: 'mature', x: 1168 },
+    { kind: 'tall', x: 520 }, { kind: 'tall', x: 930 },
+    { kind: 'wide', x: 318 }, { kind: 'wide', x: 726 },
+    { kind: 'weeping', x: 660 },
+    { kind: 'young', x: 24 }, { kind: 'young', x: 160 },
+    { kind: 'young', x: 470 }, { kind: 'young', x: 790 },
+    { kind: 'young', x: 1104 }, { kind: 'young', x: 1246 },
+  ]
   for (const t of stands) {
-    const scale = r(0.62, 1.15)
-    if (t.cherry) cherry(t.x, GROUND + r(2, 16), scale)
-    else pine(t.x, GROUND + r(2, 14), scale)
+    t.x += r(-26, 26)
+    /* JITTER ONLY. The species table carries the real variation, so
+       this stays inside a band that cannot distort the proportions
+       that make an ancient read as ancient. */
+    t.scale = r(0.9, 1.1)
+    t.ground = GROUND + r(2, 16)
   }
+  stands.sort((a, b) => a.x - b.x)
+  for (const t of stands) cherry(t.x, t.ground, t.kind, t.scale)
+
+  /* Pines behind, as the dark note. A wall of pink with nothing dark
+     in it turns to candyfloss no matter how the pinks are tuned. */
+  for (let i = 0; i < 5; i++) pine(r(40, PLATE_W - 40), GROUND + r(2, 14), r(0.7, 1.1))
 
   /* Defined once, placed hundreds of times. `bl` is a five-lobed
      blossom rosette with a gap at its centre; `lf` is a pointed

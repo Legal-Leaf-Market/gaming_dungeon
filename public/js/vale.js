@@ -65,6 +65,54 @@
   scene.appendChild(frag)
 
   /* ---------------------------------------------------------
+     THE GUST
+
+     A breath through the grove every 26 to 48 seconds. Petals are
+     created for the gust and REMOVED when it ends, rather than kept
+     around at zero opacity, because a permanent set of extra
+     elements is a permanent cost for something that happens twice a
+     minute.
+
+     The interval is randomised per gust rather than fixed. A fixed
+     one is a metronome, and the eye finds a metronome within about
+     three repeats; an irregular one stays weather.
+
+     Nothing here runs under reduced motion: the guard at the top of
+     this file returns before any of it is built.
+     --------------------------------------------------------- */
+  function gust() {
+    var n = window.innerWidth < 700 ? 7 : 16
+    var frag = document.createDocumentFragment()
+    var petals = []
+    for (var i = 0; i < n; i++) {
+      var p = document.createElement('i')
+      p.className = 'gustpetal'
+      var dur = 4.6 + Math.random() * 3.4
+      p.style.cssText = [
+        '--l:' + (-8 - Math.random() * 12).toFixed(1) + '%',
+        '--t:' + (26 + Math.random() * 52).toFixed(1) + '%',
+        '--sz:' + (6 + Math.random() * 8).toFixed(0) + 'px',
+        '--hue:' + HUES[Math.floor(Math.random() * HUES.length)],
+        '--op:' + (0.4 + Math.random() * 0.35).toFixed(2),
+        '--dur:' + dur.toFixed(1) + 's',
+        /* staggered entry, so the gust arrives as a front rather
+           than as sixteen petals leaving at once */
+        '--delay:' + (Math.random() * 1.5).toFixed(2) + 's',
+      ].join(';')
+      petals.push(p)
+      frag.appendChild(p)
+    }
+    scene.appendChild(frag)
+    window.setTimeout(function () {
+      for (var i = 0; i < petals.length; i++) {
+        if (petals[i].parentNode) petals[i].parentNode.removeChild(petals[i])
+      }
+    }, 10000)
+    window.setTimeout(gust, 26000 + Math.random() * 22000)
+  }
+  window.setTimeout(gust, 9000 + Math.random() * 9000)
+
+  /* ---------------------------------------------------------
      BAND SEPARATION
 
      A FEW PIXELS EACH, and the numbers are small on purpose. The
