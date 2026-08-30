@@ -35,14 +35,16 @@
      against the flat version and reverted. A painting can. It is the
      one asset this repo cannot generate for itself.
 
-     So the scene is an UPGRADE PATH. Five painted plates, by name,
-     matching the five the generator makes:
+     So the scene is an UPGRADE PATH. Seven painted plates, by name,
+     matching the seven the generator makes:
 
-       /assets/paint/crag.webp    distant peaks, transparent below
-       /assets/paint/far.webp     the upper city, transparent above
-       /assets/paint/mid.webp     the quarter and its bridge
-       /assets/paint/near.webp    foreground eaves and lanterns
-       /assets/paint/bough.webp   the cherry branch, corner piece
+       /assets/paint/crag.webp         distant peaks
+       /assets/paint/far.webp          the upper city
+       /assets/paint/mid.webp          the quarter and its bridge
+       /assets/paint/near.webp         foreground eaves and lanterns
+       /assets/paint/canopy-far.webp   cherry, furthest, hangs full height
+       /assets/paint/canopy-mid.webp   cherry, middle
+       /assets/paint/canopy-near.webp  cherry, the wood you sit on
 
      Each layer is probed independently and swapped in on its own, so
      dropping in only the crag plate upgrades the mountains while the
@@ -54,9 +56,9 @@
 
      Probed with Image() rather than fetch so that a successful probe
      IS the warm cache, and remembered in sessionStorage so the
-     misses cost five 404s once per session rather than per page.
+     misses cost seven 404s once per session rather than per page.
      --------------------------------------------------------- */
-  var PAINT = ['crag', 'far', 'mid', 'near', 'bough']
+  var PAINT = ['crag', 'far', 'mid', 'near', 'canopy-far', 'canopy-mid', 'canopy-near']
   function paintProbe() {
     var cached = null
     try { cached = sessionStorage.getItem('verda_paint') } catch (e) {}

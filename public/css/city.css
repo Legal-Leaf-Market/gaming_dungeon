@@ -236,36 +236,49 @@
    It is hidden on narrow screens. At phone width it would cover a
    third of the title.
    ------------------------------------------------------------ */
-.city .canopy{
-  top:0; left:0; right:0; height:52vh; min-height:300px;
-  background:url(../assets/city-canopy.svg) repeat-x left top/auto 100%;
-  transform:translate3d(0, calc(var(--sy,0px) * -.05), 0);
+/* ------------------------------------------------------------
+   THE CANOPY, IN THREE DEPTHS
+
+   You are sitting in the tree. Three full-width layers, each
+   tiling, each at its own opacity, and the far one hangs the whole
+   height of the window so there is blossom over the CITY and not
+   only over the sky above it. Looking at the quarter through
+   several metres of cherry is the entire point of view.
+
+   THE OPACITIES ARE THE DEPTH and they are safe here in a way that
+   two alphas inside ONE plate never were. A plate that is half
+   opaque in places and fully opaque in others draws a boundary
+   wherever those regions meet, and that boundary belongs to nothing
+   in the picture -- that was a real complaint about an earlier
+   build. Three plates that each cover the whole frame have no
+   boundary anywhere; the eye reads the stack as distance.
+
+   Order matters: far first so the near wood crosses in front of it.
+   ------------------------------------------------------------ */
+.city .cf,.city .cm,.city .cn{
+  left:0; right:0; top:0;
+  background-repeat:repeat-x;
+  background-position:left top;
+  background-size:auto 100%;
   will-change:transform;
+  transform:translate3d(0, calc(var(--sy,0px) * var(--p,0)), 0);
 }
 
-/* THE NEAR BOUGH, and it is much larger than the one it replaces.
-
-   "A massive growth of cherry blossom branches down from the top
-   left" -- so it is a third of the window wide rather than a corner
-   ornament, and it sits in FRONT of the canopy so the two read as
-   near wood and far wood rather than as one flat layer.
-
-   The old one was "clearly cutting off": its artwork ran into all
-   four edges of a small box, so the plate's own boundary drew a
-   straight line through the tree. The plate is now far bigger than
-   the drawing and every limb aims down and right out of one corner,
-   so the wood thins to nothing well inside the frame and there is
-   no edge left to see.
-
-   Kept on narrow screens, unlike before. At phone width it is the
-   framing, not a decoration to drop: without it the hero is a city
-   with no foreground at all. */
-.city .bough{
-  top:-4vh; left:-6vw;
-  width:min(62vw,880px); aspect-ratio:1500/1150;
-  background:url(../assets/city-bough.svg) no-repeat left top/contain;
-  transform:translate3d(0, calc(var(--sy,0px) * -.075), 0);
-  transform-origin:0 0;
+/* FAR: down the whole window, thin, pale, and half there. */
+.city .cf{
+  height:100vh; --p:-.02; opacity:.5;
+  background-image:url(../assets/city-canopy-far.svg);
+}
+/* MIDDLE: most of the mass. */
+.city .cm{
+  height:74vh; min-height:420px; --p:-.05; opacity:.82;
+  background-image:url(../assets/city-canopy-mid.svg);
+}
+/* NEAR: the wood you would be sitting on. Heavy, opaque, and it
+   crowds the top of the frame rather than hanging into it. */
+.city .cn{
+  height:50vh; min-height:300px; --p:-.09;
+  background-image:url(../assets/city-canopy-near.svg);
 }
 
 /* ------------------------------------------------------------
@@ -355,8 +368,11 @@
 @media (max-width:760px){
     .city .mist-3{ display:none }
   .city .sun{ width:110px; height:110px; top:30vh; right:14vw }
-  .city .canopy{ height:40vh; min-height:210px }
-  .city .bough{ width:96vw; top:-3vh; left:-14vw }
+  /* Taller on a phone, not shorter: a narrow window shows less of
+     the tree's width, so the layers have to reach further down to
+     read as a canopy rather than as a fringe. */
+  .city .cm{ height:78vh }
+  .city .cn{ height:56vh }
   .city .crag{ height:52vh }
   .city .far { height:38vh }
   .city .mid { height:28vh }
@@ -378,7 +394,8 @@
   .city.drifting .crag,
   .city.drifting .far{ animation:none }
   .city .petal, .city .gust{ display:none }
-  .city .band, .city .haze, .city .sun, .city .bough, .city .canopy{ transform:none }
+  .city .band, .city .haze, .city .sun,
+  .city .cf, .city .cm, .city .cn{ transform:none }
 }
 
 /* ============================================================
@@ -425,6 +442,6 @@
   background-image:url(../assets/paint/near.webp),
                    linear-gradient(var(--city-near), var(--city-near));
 }
-.city.painted-bough .bough{
-  background-image:url(../assets/paint/bough.webp);
-}
+.city.painted-canopy-far .cf{ background-image:url(../assets/paint/canopy-far.webp) }
+.city.painted-canopy-mid .cm{ background-image:url(../assets/paint/canopy-mid.webp) }
+.city.painted-canopy-near .cn{ background-image:url(../assets/paint/canopy-near.webp) }

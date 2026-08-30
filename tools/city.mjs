@@ -883,110 +883,107 @@ function paint(sys) {
 }
 
 /* ============================================================
-   PLATE 5 -- THE CANOPY
+   PLATES 5-7 -- THE CANOPY, IN THREE DEPTHS
 
-   Blossom across the WHOLE top of the window, tiling, so there is
-   never a bare edge where the artwork stops. This is the half of
-   "cherry blossoms everywhere" that a single corner ornament cannot
-   do: the owner is standing under the tree looking out, so the tree
-   has to be over the whole view, not in one corner of it.
+   THE POINT OF VIEW IS THAT YOU ARE SITTING IN THE TREE. Not
+   standing near one, not looking at a branch someone hung in the
+   corner of the frame: up in an old cherry on the ridge, looking
+   down through it at the quarter. Everything below follows from
+   that, and the two things it demands are the two the previous
+   version got wrong.
 
-   Limbs enter from the TOP EDGE and hang down. Nothing reaches the
-   bottom of the plate except tapering twig tips, which is what
-   keeps the layer from ending in a visible horizontal cut.
+   FIRST, THERE IS NO CLUMP. The last build put one heavy limb in
+   the top-left and thin canopy everywhere else, and the note back
+   was exact: "the clump looks great, but we asked you to not clump
+   on the left, we want it everywhere." So there is no separate
+   bough plate any more. Every layer is full width and tiles, and
+   the heavy wood is distributed along all of them.
+
+   SECOND, DEPTH IS LAYERS OF THE WHOLE FRAME, NOT SHADING INSIDE
+   ONE. "Slightly different layers of opaque so you can kinda peek
+   through and see the city." That is the opposite of the seam that
+   was complained about earlier and it is worth being precise about
+   why, because the two look like the same idea:
+
+     - two alpha levels INSIDE one plate draw a visible boundary
+       wherever the groups overlap, which belongs to nothing in the
+       picture. That was the bug.
+     - three FULL-FRAME plates at three opacities have no boundary
+       anywhere, because each one covers everything. That is
+       atmospheric perspective, and it is what makes you feel like
+       you are looking through several metres of tree.
+
+   The far layer hangs the full height of the window, which is what
+   actually puts blossom over the city rather than only over the sky
+   above it. You look at the quarter THROUGH branches, which is the
+   whole brief.
    ============================================================ */
-function canopy() {
-  const w = 2400, h = 820
-  const seeds = rng(0x3c7f)
+function canopyLayer(w, h, seed, opts, anchors) {
+  const seeds = rng(seed)
   const all = { wood: [], far: [], near: [], lit: [], cores: [] }
-  const OPTS = {
-    bloomFrom: 2, perTwig: [9, 19], spread: 44, r: [5, 12],
-    minLen: 20, sink: 0.55,
-  }
 
   /* THE PLATE TILES, SO ANYTHING NEAR AN EDGE IS DRAWN TWICE.
 
-     The bands get this free from emit(); the canopy cannot, because
-     a branch is not a shape at a coordinate, it is a recursive walk
-     that consumes random numbers as it goes. Calling branch() a
-     second time at x - w advances the generator and draws a
-     DIFFERENT tree, which does not join up.
-
-     So each anchor gets its own seed and is replayed: a fresh
-     boughSystem on the same seed produces the identical tree, and
-     the second copy is placed one full width over. Without this the
-     canopy repeats at roughly 1370px on a 1440px window and every
-     branch crossing the seam is visibly chopped -- which is the
-     exact fault the owner called out on the old corner piece,
-     arriving somewhere new. */
-  const anchors = []
-  let x = -120
-  while (x < w + 160) {
-    anchors.push({
+     The bands get this free from emit(); a canopy cannot, because a
+     branch is not a shape at a coordinate, it is a recursive walk
+     that consumes random numbers as it goes. Calling branch() again
+     at x - w advances the generator and draws a DIFFERENT tree,
+     which does not join up. So each anchor carries its own seed and
+     is replayed: a fresh system on the same seed is the identical
+     tree, placed one full width over. */
+  const list = []
+  let x = -160
+  while (x < w + 200) {
+    list.push({
       x,
-      y: -34 - seeds() * 34,
-      ang: 1.05 + (seeds() - 0.5) * 0.95,
-      len: 104 + seeds() * 104,
-      wid: 9 + seeds() * 6,
+      y: -40 - seeds() * 60,
+      ang: opts.aim + (seeds() - 0.5) * opts.fan,
+      len: opts.len[0] + seeds() * (opts.len[1] - opts.len[0]),
+      wid: opts.wid[0] + seeds() * (opts.wid[1] - opts.wid[0]),
       seed: Math.floor(seeds() * 0xffffff),
     })
-    x += 92 + seeds() * 96
+    x += anchors[0] + seeds() * (anchors[1] - anchors[0])
   }
 
-  for (const a of anchors) {
+  for (const a of list) {
     const xs = [a.x]
-    /* one width over, on whichever side puts the copy on screen */
     if (a.x < w * 0.5) xs.push(a.x + w); else xs.push(a.x - w)
     for (const px of xs) {
-      const sys = boughSystem(rng(a.seed), OPTS)
-      sys.branch(px, a.y, a.ang, a.len, a.wid, 3)
+      const sys = boughSystem(rng(a.seed), opts)
+      sys.branch(px, a.y, a.ang, a.len, a.wid, opts.depth)
       for (const k of Object.keys(all)) all[k] = all[k].concat(sys[k])
     }
   }
-
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${paint(all)}
 </svg>\n`
 }
 
-/* ============================================================
-   PLATE 6 -- THE NEAR BOUGH
+/* THE FAR CANOPY hangs the whole height of the window. Thin wood,
+   small flowers, and the stylesheet runs it at about half opacity,
+   so it reads as branches several metres off rather than as a
+   second tree in front of you. This is the layer that puts blossom
+   over the CITY instead of only over the sky. */
+const canopyFar = () => canopyLayer(2400, 1500, 0x51a3, {
+  bloomFrom: 2, perTwig: [4, 8], spread: 48, r: [3.5, 8],
+  minLen: 26, sink: 0.62, depth: 3, aim: 1.16, fan: 0.9,
+  len: [170, 290], wid: [7, 12],
+}, [150, 265])
 
-   One heavy limb out of the top-left corner, in front of everything,
-   and much larger than the version it replaces. The owner asked for
-   "a massive growth of cherry blossom branches down from the top
-   left", and separately noted that the old one was "clearly cutting
-   off" -- it was a small box with the artwork running into all four
-   of its edges, so the plate's own boundary read as a cut through
-   the tree.
+/* THE MIDDLE. Where most of the mass is. */
+const canopyMid = () => canopyLayer(2400, 1120, 0x7b2e, {
+  bloomFrom: 2, perTwig: [7, 13], spread: 44, r: [4.5, 11],
+  minLen: 22, sink: 0.56, depth: 3, aim: 1.08, fan: 1.0,
+  len: [140, 235], wid: [9, 15],
+}, [124, 205])
 
-   Fixed twice over: the box is far bigger than the drawing, and
-   every limb is aimed down and right from one corner, so the wood
-   thins to nothing well inside the frame. Nothing to cut.
-   ============================================================ */
-function bough() {
-  const w = 1500, h = 1150
-  const rand = rng(0x4f2a)
-  const sys = boughSystem(rand, {
-    bloomFrom: 2, perTwig: [11, 21], spread: 58, r: [7, 19],
-    minLen: 24, sink: 0.5,
-  })
-  /* Three limbs off the same corner at different angles, so the
-     thing has a near side and a far side. One limb is a diagram. */
-  /* Four heavy limbs plus two long thin trailing ones. The trailers
-     are what stop the mass ending: without them the four limbs droop
-     into a solid wedge with a boundary, and a boundary in a tree is
-     the thing being complained about. These reach out past the
-     others and carry a few flowers each, so the canopy thins to
-     single twigs rather than stopping. */
-  sys.branch(-60, -40, 0.44, 340, 30, 4)
-  sys.branch(-30, 50, 0.80, 280, 23, 4)
-  sys.branch(130, -70, 1.06, 245, 19, 4)
-  sys.branch(-70, 190, 0.30, 230, 16, 4)
-  sys.branch(60, -50, 0.20, 400, 11, 3)
-  sys.branch(-40, 120, 0.62, 430, 9, 3)
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${paint(sys)}
-</svg>\n`
-}
+/* THE NEAR CANOPY. Heavy wood, the biggest flowers, full opacity,
+   and the shortest hang: this is the wood you would be sitting on,
+   so it crowds the top of the frame and thins fast. */
+const canopyNear = () => canopyLayer(2400, 780, 0x3c7f, {
+  bloomFrom: 2, perTwig: [9, 17], spread: 52, r: [6, 15],
+  minLen: 22, sink: 0.5, depth: 3, aim: 0.98, fan: 1.05,
+  len: [130, 220], wid: [14, 24],
+}, [155, 262])
 
 /* ------------------------------------------------------------
    THE SKY, AS CUSTOM PROPERTIES
@@ -1035,6 +1032,7 @@ write('public/assets/city-crag.svg', crags().svg(BAND.crag))
 write('public/assets/city-far.svg', farCity().svg(BAND.far))
 write('public/assets/city-mid.svg', quarter().svg(BAND.mid))
 write('public/assets/city-near.svg', nearEaves().svg(BAND.near))
-write('public/assets/city-canopy.svg', canopy())
-write('public/assets/city-bough.svg', bough())
+write('public/assets/city-canopy-far.svg', canopyFar())
+write('public/assets/city-canopy-mid.svg', canopyMid())
+write('public/assets/city-canopy-near.svg', canopyNear())
 write('public/css/city-sky.css', skyCss())

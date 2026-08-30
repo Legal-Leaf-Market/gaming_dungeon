@@ -90,12 +90,25 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
      reaches the bottom of the section, so a ground that began at
      transparent drew a ruled line straight across the page at the
      join. Matching the two makes the seam disappear. */
+  /* STARTS AT NOTHING AND GETS THERE FAST. Two failure modes sit on
+     either side of this and the scene has now hit both:
+
+       start at any alpha above zero and the section boundary draws a
+       ruled line the width of the page;
+       fade in too slowly and the copy underneath is set over a lit
+       city, which at golden hour is genuinely unreadable -- the map
+       headings and the door counts were sitting on mountains.
+
+     So: zero at the join, and effectively opaque within 260px. The
+     first section still gets the glow bleeding up behind it, which
+     was the whole reason for a gradient, and nothing is set over a
+     picture. */
   background:linear-gradient(180deg,
     rgba(20,34,48,0) 0,
-    rgba(30,44,60,.55) 120px,
-    rgba(16,26,38,.86) 320px,
-    rgba(8,13,22,.97) 520px,
-    var(--night) 680px);
+    rgba(24,38,54,.50) 40px,
+    rgba(15,25,38,.90) 110px,
+    rgba(9,15,25,.99) 185px,
+    var(--night) 260px);
 }
 
 /* ------------------------------------------------------------
@@ -210,6 +223,23 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
        under the copy is the radial above; this is only the bottom
        weighting, and it is not needed in the last few percent. */
     linear-gradient(180deg, transparent 44%, rgba(20,34,48,.30) 82%, transparent 100%);
+  /* MASKED TO NOTHING AT THE BOTTOM EDGE, and this is the fix for a
+     line the owner could see and I could not reason my way to.
+
+     The radial above is anchored to the HERO'S OWN BOX and is still
+     carrying most of its alpha right across the width when it
+     reaches the bottom of the section -- then the section ends, and
+     the scrim ends with it. That is a ruled edge the full width of
+     the page, and no amount of tuning the two gradients' end stops
+     removes it, because the radial's falloff is horizontal, not
+     vertical.
+
+     The mask makes the whole scrim fade out over the last quarter of
+     the hero whatever the gradients underneath it are doing. Same
+     technique the mist uses, for the same reason: an element that
+     paints to its own edge draws that edge. */
+  -webkit-mask-image:linear-gradient(180deg, #000 62%, transparent 98%);
+  mask-image:linear-gradient(180deg, #000 62%, transparent 98%);
 }
 /* the inner rail, so the copy lines up with everything in main */
 .hero-in{

@@ -23,7 +23,9 @@ above it. Cool blue sky overhead turning peach at the horizon, low sun, no
 moon. The tree is the near field and you are looking THROUGH it. It is not a real place and it is not the studio's game: the brief
 is deliberately "our own city, not that one".
 
-Five layers, back to front. Each is a separate file and each is optional.
+Seven layers, back to front. Each is a separate file and each is optional.
+The three canopies each cover the WHOLE frame at their own opacity: that
+stack is the depth, and it is why you can see the city through the tree.
 
 | File | What it holds | Transparency |
 |---|---|---|
@@ -31,8 +33,9 @@ Five layers, back to front. Each is a separate file and each is optional.
 | `far.webp` | the upper city: pagoda towers on a terrace wall | transparent above the roofline |
 | `mid.webp` | the quarter: the great hall, the bridge, lit windows | transparent above the roofline |
 | `near.webp` | foreground eaves, hung lanterns, a lantern string | transparent above the roofline |
-| `canopy.webp` | blossom across the whole top of the frame, tiling | transparent below the twigs |
-| `bough.webp` | a heavy cherry limb out of the top-left corner | transparent everywhere but the branch |
+| `canopy-far.webp` | cherry, furthest: thin wood, small pale flowers, hangs the FULL height | transparent between the twigs |
+| `canopy-mid.webp` | cherry, middle: most of the mass | transparent between the twigs |
+| `canopy-near.webp` | cherry, nearest: heavy wood, biggest flowers, crowds the top | transparent between the twigs |
 
 The vector versions of all five are committed in `public/assets/city-*.svg`.
 **Open them first.** They are the composition, and a painted plate that
@@ -55,12 +58,12 @@ delivered at a different ratio will jump once per drift cycle.
 | `far.webp` | 2400 x 620 | 4800 x 1240 |
 | `mid.webp` | 2400 x 560 | 4800 x 1120 |
 | `near.webp` | 2400 x 420 | 4800 x 840 |
-| `canopy.webp` | 2400 x 820 | 4800 x 1640 |
-| `bough.webp` | 1500 x 1150 | 3000 x 2300 |
+| `canopy-far.webp` | 2400 x 1500 | 4800 x 3000 |
+| `canopy-mid.webp` | 2400 x 1120 | 4800 x 2240 |
+| `canopy-near.webp` | 2400 x 780 | 4800 x 1560 |
 
-**2. The four band plates must TILE.** The left edge and the right edge join
-seamlessly: put the same content at both, or leave both edges quiet. The
-bough does not tile, and must not.
+**2. ALL SEVEN plates must TILE.** The left edge and the right edge join
+seamlessly: put the same content at both, or leave both edges quiet.
 
 **3. The bottom row of each band plate is a flat colour**, held for the last
 2 to 3 percent of the height, within a shade of the hex below. The site
@@ -78,7 +81,7 @@ fades out at its own bottom edge leaves a visible seam.
 gradient behind everything and the haze between the layers is drawn by the
 site; a plate with its own sky baked in will sit as a visible rectangle.
 
-**5. Budget.** Under 400 KB each, under 1.4 MB for all six. These load on a
+**5. Budget.** Under 400 KB each, under 1.6 MB for all seven. These load on a
 phone before anything else on the page is worth looking at.
 
 ---

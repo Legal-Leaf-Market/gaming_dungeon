@@ -523,19 +523,22 @@ test('the title card plays once a session and never under reduced motion', () =>
    `town.webp` fails with no error anywhere: the artist delivers,
    the file is committed, and nothing changes on the site.
    ============================================================ */
-const PAINT_LAYERS = ['crag', 'far', 'mid', 'near', 'bough']
+const PAINT_LAYERS = ['crag', 'far', 'mid', 'near',
+  'canopy-far', 'canopy-mid', 'canopy-near']
 
 test('city.js probes exactly the painted layers the contract names', () => {
   const src = readFileSync(join(ROOT, 'public', 'js', 'city.js'), 'utf8')
   const m = /var PAINT = \[([^\]]+)\]/.exec(src)
   assert.ok(m, 'city.js no longer declares the PAINT list')
-  const probed = m[1].match(/'([a-z]+)'/g).map(s => s.slice(1, -1))
+  /* The character class has to allow the hyphen, or the three canopy
+     names come back mangled and the test passes on a lie. */
+  const probed = m[1].match(/'([a-z-]+)'/g).map(s => s.slice(1, -1))
   assert.deepEqual(probed, PAINT_LAYERS)
 })
 
 test('city.css styles every painted layer, and no others', () => {
   const css = readFileSync(join(ROOT, 'public', 'css', 'city.css'), 'utf8')
-  const styled = [...css.matchAll(/\.city\.painted-([a-z]+)/g)].map(m => m[1])
+  const styled = [...css.matchAll(/\.city\.painted-([a-z-]+)/g)].map(m => m[1])
   assert.deepEqual([...new Set(styled)].sort(), [...PAINT_LAYERS].sort())
   for (const name of PAINT_LAYERS) {
     assert.ok(css.includes('assets/paint/' + name + '.webp'),
