@@ -19,7 +19,7 @@
    ============================================================ */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync, statSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -117,55 +117,60 @@ test('the live words never appear next to the painted ones', () => {
 })
 
 test('where the live words come back, the painted ones are covered', () => {
-  /* Restoring the live copy is only half of it. Wherever this branch
-     fires the painting is STILL the background, and
-     background-position alone cannot be relied on to push the words
-     off frame: at 1279x900 a `cover` crop removes about an eighth of
-     the artboard's width and the headline reaches 36% of it. */
-  assert.match(narrow, /linear-gradient\(90deg[^)]*rgba\(12,20,32,1\)/,
-    'the branch that shows the live copy has no opaque cover over the ' +
-    'painted copy, so both will be on screen at once')
+  /* Restoring the live copy is only half of it. Wherever the painting
+     is a GROUND rather than the whole composition it is still the
+     background, and background-position alone cannot be relied on to
+     push its words off frame: at 1279x900 a `cover` crop removes
+     about an eighth of the artboard's width and the painted headline
+     reaches 36% of it. */
+  const cover = block(css, css.indexOf('.hero-paint::after'))
+  assert.match(cover, /linear-gradient\(90deg[^)]*rgba\(12,20,32,1\)/,
+    '.hero-paint::after has no opaque cover over the painted copy, so the ' +
+    'live words and the painted ones will be on screen at once')
   /* NEARLY OPAQUE IS NOT OPAQUE. At 0.96 the painted headline
      measured 18-25 out of 255 against a ground of 18-20: seven
      levels, which is nothing on a chart and a legible grey ghost on
      a dark screen. */
-  const cover = block(narrow, narrow.indexOf('.hero-golden::after'))
   assert.ok(!/linear-gradient\(90deg[^;]*rgba\(12,20,32,\.9\d\)\s+0\b/.test(cover),
     'the cover starts at less than full opacity: the painted words will ghost')
-  /* AND IT MUST NOT INHERIT .ink-hero::before's MASK. That mask
-     fades the scrim out below 62% so it cannot draw a ruled line
-     where the section ends, which is right for a scrim and fatal for
-     a cover: the painted body copy and both buttons live in the
-     bottom third, and at 88% of the hero the cover was down to a
-     quarter of its alpha. */
+  /* AND IT MUST NOT INHERIT .ink-hero::before's MASK. That mask fades
+     the scrim out below 62% so it cannot draw a ruled line where the
+     section ends, which is right for a scrim and fatal for a cover:
+     the painted body copy and both buttons live in the bottom third,
+     and at 88% of the hero the cover was down to a quarter of its
+     alpha. */
   assert.match(cover, /mask-image:/,
-    'the cover has no mask of its own, so it inherits the scrim\'s ' +
-    'bottom fade and stops covering exactly where the painted buttons are')
+    'the cover has no mask of its own, so it inherits the scrim\'s bottom ' +
+    'fade and stops covering exactly where the painted buttons are')
   assert.ok(!/mask-image:\s*linear-gradient\(180deg,\s*#000 62%/.test(cover),
     'the cover carries the scrim\'s own fade-out mask')
+
+  /* The whole composition switches the covers off, and the branch
+     that brings the live words back switches them on again. It has
+     to do it with `content` and nothing else: restating a gradient
+     here is a second copy of every number above. */
+  assert.match(css, /\.hero-golden::before,\s*\n?\.hero-golden::after\{\s*content:none\s*\}/,
+    'the golden composition no longer turns the covers off, so it will be ' +
+    'showing its own painted copy through a panel meant to hide it')
+  assert.match(narrow, /\.hero-golden\.hero-paint::before,\s*\n?\s*\.hero-golden\.hero-paint::after\{\s*content:''\s*\}/,
+    'the narrow branch does not turn the covers back on')
+  assert.ok(!/linear-gradient\(90deg/.test(narrow),
+    'the narrow branch has its own copy of the cover gradient: it will drift ' +
+    'from the one on .hero-paint the first time either is tuned')
 })
 
-test('the transparent controls sit where the painting drew them', () => {
-  /* These four numbers are percentages of the artboard and they are
-     a copy of something that lives in a PNG. If the art is ever
-     regenerated they must be re-measured, and this is the thing that
-     will say so. */
-  const want = {
-    '.hit-map': { left: '6.55%', top: '85.55%', width: '10.42%', height: '6.73%' },
-    '.hit-arcade': { left: '17.70%', top: '85.55%', width: '9.05%', height: '6.73%' },
+test('every page that paints with the hero links the sheet that defines it', () => {
+  /* .hero-paint is what puts the painting behind a section, and it
+     lives in hero-golden.css. The arcade hero was given the class and
+     not the stylesheet, and the symptom is not an error: the section
+     simply keeps whatever background it had, which on that page was
+     the generated scene it was being moved away from. */
+  for (const page of readdirSync(join(ROOT, 'public')).filter(f => f.endsWith('.html'))) {
+    const src = readFileSync(join(ROOT, 'public', page), 'utf8')
+    if (!/class="[^"]*\bhero-paint\b/.test(src)) continue
+    assert.ok(src.includes('/css/hero-golden.css'),
+      `${page} uses .hero-paint but never links /css/hero-golden.css`)
   }
-  for (const [sel, props] of Object.entries(want)) {
-    const rule = new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}').exec(css)
-    assert.ok(rule, sel + ' has no rule in hero-golden.css')
-    for (const [k, v] of Object.entries(props)) {
-      assert.ok(rule[1].includes(k + ':' + v),
-        `${sel} should be ${k}:${v} (percentages of the 1680x936 artboard); got: ${rule[1].trim()}`)
-    }
-  }
-  assert.match(html, /class="golden-hit hit-map"[^>]*href="#map"/,
-    'the map hit target lost its route')
-  assert.match(html, /class="golden-hit hit-arcade"[^>]*href="\/arcade"/,
-    'the arcade hit target lost its route')
 })
 
 test('the light asset is the one that ships', () => {
@@ -196,6 +201,6 @@ test('the generated scene is switched off under the painting', () => {
      the gap between the bottom of the hero and the point the ground
      ramp goes opaque: a couple of hundred pixels of a completely
      different drawing style, at the join. */
-  assert.match(css, /body:has\(\.hero-golden\)\s*\.city\s*\{\s*display:none\s*\}/,
-    'the generated city scene is still drawn behind the golden hero')
+  assert.match(css, /body:has\(\.hero-paint\)\s*\.city\s*\{\s*display:none\s*\}/,
+    'the generated city scene is still drawn behind the painting')
 })

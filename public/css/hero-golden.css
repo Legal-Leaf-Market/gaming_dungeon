@@ -31,6 +31,148 @@
    it.
    ============================================================ */
 
+/* ============================================================
+   THE PAINTING AS A GROUND  --  .hero-paint
+
+   The owner, on this graphic: "redesign the entire website, every
+   inch of it, around this graphic."
+
+   The index hero IS the painting, at the artboard's own aspect, with
+   the words in it. Everywhere else the painting is a GROUND: cropped
+   to whatever the section is, with the part of it that carries
+   painted words covered over, and the page's own live copy on top.
+
+   That second mode is a class rather than a copy, because there are
+   now two places that want it. The arcade page's hero was the old
+   generated blue-hour scene -- a bright sky and flat pink blossom
+   directly under a warm dusk painting on the page before it, which
+   is two different worlds one click apart. And the index hero itself
+   falls back to exactly this treatment below 1280px, where its
+   painted copy is too small to read.
+
+   So the covers live on .hero-paint, and .hero-golden turns them OFF
+   for as long as it is showing the whole composition. `content:none`
+   is all it takes: every other declaration stays in the cascade, so
+   the narrow branch re-enables them with `content:''` and gets the
+   gradients back without restating one of them.
+   ============================================================ */
+.hero-paint{
+  position:relative;
+  background-color:#1a2233;
+  background-image:image-set(
+    url("/verda-hero/hero-golden-target.webp") type("image/webp"),
+    url("/verda-hero/hero-golden-target.png") type("image/png"));
+  background-image:-webkit-image-set(
+    url("/verda-hero/hero-golden-target.webp") type("image/webp"),
+    url("/verda-hero/hero-golden-target.png") type("image/png"));
+  background-repeat:no-repeat;
+  /* anchored right of centre so the mountain and the sun stay in
+     frame while the left blossom takes the crop */
+  background-position:62% center;
+  background-size:cover;
+}
+.hero-paint > .hero-in,
+.hero-paint > .ar-in{ position:relative; z-index:2 }
+
+/* THE COVER AND THE READING SCRIM ARE TWO PSEUDO-ELEMENTS BECAUSE
+   THEY WANT OPPOSITE MASKS.
+
+   .ink-hero::before is masked with
+   `linear-gradient(#000 62%, transparent 98%)` so that the scrim
+   cannot draw a ruled line the width of the page where the section
+   ends. That is right for a scrim and fatal for a cover: every word
+   the painting puts in its bottom third -- three lines of body copy
+   and both buttons -- lives under that fade, and with the cover on
+   the same element it inherited it. At 88% of the hero the cover was
+   down to a quarter of its alpha and the painted buttons were
+   legible through it. So the scrim keeps the mask it was written
+   for, and the cover gets its own, shaped to where the painted words
+   are.
+
+   ::before, MASKED AT THE BOTTOM -- the top band and the scrim. The
+   band puts out the painting's own header, because a live one is on
+   screen in this mode and the two would otherwise sit a few pixels
+   apart saying the same thing. The painted header's bottom edge is
+   at 8% of the artboard and no crop this mode produces pushes it
+   lower than 8% of the section, which at the tallest window is
+   84px. */
+.hero-paint::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+  background:
+    linear-gradient(180deg,
+      rgba(12,20,32,1) 0, rgba(12,20,32,1) 84px,
+      rgba(12,20,32,.72) 128px, rgba(12,20,32,.3) 192px,
+      rgba(12,20,32,0) 260px),
+    linear-gradient(180deg,
+      rgba(12,20,32,.06) 0%, rgba(12,20,32,.46) 54%, rgba(12,20,32,.84) 100%);
+}
+
+/* ::after, MASKED AT BOTH ENDS -- the cover.
+
+   THE PANEL puts out the painted headline, body copy and buttons.
+   The rightmost painted word ends at 43% of the artboard, and a crop
+   can only ever move that LEFT: with the offset at 0.62 of the
+   overflow the edge lands at 0.62 - 0.19*(displayed width / section
+   width), which is at most 0.43 and falls from there. A section wide
+   enough to need no horizontal crop at all -- the arcade's, which is
+   four times as wide as it is tall -- sits exactly at 0.43, so the
+   panel is opaque to 45% and takes the margin.
+
+   Then a long eased ramp rather than a short one, and eased out of
+   rather than turned off. At `1 to 44%, .5 to 68%` the change of
+   slope AT 44% read as a ruled vertical line down the page: a
+   gradient with a corner in it draws that corner, which is the same
+   mistake the mask above exists to prevent, turned ninety degrees.
+   The stops after 45% leave almost flat and steepen, so there is no
+   point along the ramp where the rate of change jumps.
+
+   OPAQUE, NOT NEARLY OPAQUE. At 0.96 the painted headline measured
+   18-25 out of 255 against a ground of 18-20: about seven levels,
+   which is nothing on a chart and a legible grey ghost on a dark
+   screen, because the eye's contrast sensitivity is at its highest
+   down there. There is no reason to leave any of it -- the left of
+   this composition is a panel for the live copy, so it is a panel.
+
+   THE CORNER is the painted seal, which the live one is hidden in
+   favour of. At some crops it sits half off the right edge, and half
+   a seal reads as a rendering fault.
+
+   AND THE MASK IS WHAT KEEPS THE PANEL FROM BEING A BLACK BOX. The
+   painted words start at 31% of the section and end at 92%, so the
+   cover is only needed between those. Fading it in over the top
+   fifth gives the blossom in the top left back, which is the part of
+   the painting a tall crop would otherwise throw away. The ramp
+   finishes at 18%, clear of 31% and clear too of the 21% the words
+   rise to when the crop is vertical rather than horizontal.
+
+   IT FADES IN AT THE TOP AND NOT OUT AT THE BOTTOM, and the
+   asymmetry is the arcade's doing. That hero is four times as wide
+   as it is tall, so its crop is VERTICAL: the painting is scaled to
+   the width and the middle band of it is what shows, which put the
+   painted copy's last line at 99% of the section, inside a 98-to-100
+   fade-out, and "Every door opens onto the maker's own shop" was
+   legible across the bottom of the arcade. The fade-out was there to
+   stop the panel drawing a ruled edge where the section ends, and it
+   cannot: the panel is opaque only on the left, where the page below
+   is the same near-black, and it is down to 0.07 by the right. */
+.hero-paint::after{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+  background:
+    radial-gradient(58% 40% at 100% 100%,
+      rgba(12,20,32,.94), rgba(12,20,32,0) 72%),
+    linear-gradient(90deg,
+      rgba(12,20,32,1) 0, rgba(12,20,32,1) 45%,
+      rgba(12,20,32,.995) 48%, rgba(12,20,32,.97) 52%,
+      rgba(12,20,32,.92) 57%, rgba(12,20,32,.80) 63%,
+      rgba(12,20,32,.62) 70%, rgba(12,20,32,.42) 78%,
+      rgba(12,20,32,.22) 88%, rgba(12,20,32,.07) 100%);
+  -webkit-mask-image:linear-gradient(180deg,
+    transparent 3%, #000 18%, #000 100%);
+  mask-image:linear-gradient(180deg,
+    transparent 3%, #000 18%, #000 100%);
+}
+
+/* ------------------------------------------------- the whole composition */
 .hero-golden{
   position:relative;
   /* THE SECTION IS THE ARTBOARD, EXACTLY, AT EVERY WINDOW SIZE, AND
@@ -70,16 +212,7 @@
   margin-inline:auto;
   display:block;
   padding:0;
-  background-color:#1a2233;
-  background-image:image-set(
-    url("/verda-hero/hero-golden-target.webp") type("image/webp"),
-    url("/verda-hero/hero-golden-target.png") type("image/png"));
-  background-image:-webkit-image-set(
-    url("/verda-hero/hero-golden-target.webp") type("image/webp"),
-    url("/verda-hero/hero-golden-target.png") type("image/png"));
-  background-repeat:no-repeat;
   background-position:center center;
-  background-size:cover;
 }
 
 /* THE OLD HERO'S SCRIM IS SWITCHED OFF TOO. `.ink-hero::before` is
@@ -89,7 +222,8 @@
    bottom left of the artwork and was most of the difference between
    the live render and the target. Only the narrow branch below
    brings a scrim back, because there the copy is live again. */
-.hero-golden::before{ content:none }
+.hero-golden::before,
+.hero-golden::after{ content:none }
 
 /* THE SCENE BEHIND IT IS SWITCHED OFF, and it has to be. `.city` is
    a fixed, full-viewport, generated vector scene that sits behind
@@ -99,7 +233,7 @@
    ramp goes opaque, which is a seam between two completely different
    drawing styles, a couple of hundred pixels tall, at the join. The
    arcade page still uses it. */
-body:has(.hero-golden) .city{ display:none }
+body:has(.hero-paint) .city{ display:none }
 
 /* The live copy, present and unread by eyes. Not display:none: an
    element that is not rendered is not announced either, and the
@@ -266,91 +400,17 @@ body:has(.hero-golden) .top::before{ display:none }
   }
   .hero-golden .golden-hit{ display:none }
 
-  /* THE BLOT AND THE READING SCRIM ARE TWO PSEUDO-ELEMENTS BECAUSE
-     THEY WANT OPPOSITE MASKS.
+  /* THE COVERS COME BACK ON. Everything about how they look -- the
+     top band, the panel, the corner, both masks -- is already on
+     .hero-paint above and has stayed in the cascade the whole time;
+     .hero-golden only ever set `content:none` on them. So this is
+     the entire narrow-mode difference, and there is no second copy
+     of a gradient anywhere to drift from the first.
 
-     .ink-hero::before is masked with
-     `linear-gradient(#000 62%, transparent 98%)` so that the scrim
-     cannot draw a ruled line the width of the page where the section
-     ends. That is right for a scrim and fatal for a cover: every
-     word the painting puts in its bottom third -- three lines of
-     body copy and both buttons -- lives under that fade, and with
-     the blot on the same element it inherited it. At 88% of the hero
-     the blot was down to a quarter of its alpha and the painted
-     buttons were legible through it. So the scrim keeps the mask it
-     was written for, and the cover gets its own, shaped to where the
-     painted words actually are.
-
-     ::before, MASKED AT THE BOTTOM -- the top band and the scrim.
-     The band puts out the painting's own header, because the live
-     one comes back on this branch and the two would otherwise sit a
-     few pixels apart saying the same thing. The painted header's
-     bottom edge is at 8% of the artboard and this crop never pushes
-     it lower than 8% of the section, which at the tallest window
-     this branch sees is 84px. */
-  .hero-golden::before{
-    content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
-    background:
-      linear-gradient(180deg,
-        rgba(12,20,32,1) 0, rgba(12,20,32,1) 84px,
-        rgba(12,20,32,.72) 128px, rgba(12,20,32,.3) 192px,
-        rgba(12,20,32,0) 260px),
-      linear-gradient(180deg,
-        rgba(12,20,32,.06) 0%, rgba(12,20,32,.46) 54%, rgba(12,20,32,.84) 100%);
-  }
-
-  /* ::after, MASKED AT BOTH ENDS -- the cover.
-
-     THE PANEL puts out the painted headline, body copy and buttons.
-     The rightmost painted word ends at 43% of the artboard, and the
-     crop can only ever move that LEFT: the offset is 0.62 of the
-     overflow, so the edge lands at 0.62 - 0.19*(displayed width /
-     section width) of the section, which is at most 0.43 and falls
-     from there. Opaque to 43%, then a long eased ramp rather than a
-     short one, and eased out of rather than turned off. At
-     `1 to 44%, .5 to 68%` the change of slope AT 44% read as a ruled
-     vertical line down the page: a gradient with a corner in it
-     draws that corner, which is the same mistake the mask above
-     exists to prevent, turned ninety degrees. The stops after 43%
-     leave almost flat and steepen, so there is no point along the
-     ramp where the rate of change jumps.
-
-     OPAQUE, NOT NEARLY OPAQUE. At 0.96 the painted headline measured
-     18-25 out of 255 against a ground of 18-20: about seven levels,
-     which is nothing on a chart and a legible grey ghost on a dark
-     screen, because the eye's contrast sensitivity is at its highest
-     down there. There is no reason to leave any of it -- the left of
-     this composition is a panel for the live copy, so it is a panel.
-
-     THE CORNER is the painted seal, which the live one is hidden in
-     favour of on this page. At this crop it sits half off the right
-     edge, and half a seal reads as a rendering fault.
-
-     AND THE MASK IS WHAT KEEPS THE PANEL FROM BEING A BLACK BOX.
-     The painted words start at 31% of the section and end at 92%, so
-     the cover is only needed between those. Fading it in over the
-     top fifth gives the blossom in the top left back, which is the
-     part of the painting this crop would otherwise throw away. The
-     ramp finishes at 18%, well clear of 31%, and clear too of the
-     21% the words rise to on the short-window arm of this query,
-     where the crop is vertical. */
-  .hero-golden::after{
-    content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
-    background:
-      radial-gradient(58% 40% at 100% 100%,
-        rgba(12,20,32,.94), rgba(12,20,32,0) 72%),
-      linear-gradient(90deg,
-        rgba(12,20,32,1) 0, rgba(12,20,32,1) 43%,
-        rgba(12,20,32,.995) 46%, rgba(12,20,32,.97) 50%,
-        rgba(12,20,32,.92) 55%, rgba(12,20,32,.80) 61%,
-        rgba(12,20,32,.62) 68%, rgba(12,20,32,.42) 76%,
-        rgba(12,20,32,.22) 86%, rgba(12,20,32,.07) 100%);
-    -webkit-mask-image:linear-gradient(180deg,
-      transparent 3%, #000 18%, #000 98%, transparent 100%);
-    mask-image:linear-gradient(180deg,
-      transparent 3%, #000 18%, #000 98%, transparent 100%);
-  }
-  .hero-golden .hero-in{ position:relative; z-index:2 }
+     The stacking context for the live copy comes from .hero-paint
+     too, which is why .hero-in is not mentioned here either. */
+  .hero-golden.hero-paint::before,
+  .hero-golden.hero-paint::after{ content:'' }
 
   /* AND THE HEADER IS VISIBLE AGAIN, for the same reason the copy is:
      the painting's own is under the top band above, so there is
