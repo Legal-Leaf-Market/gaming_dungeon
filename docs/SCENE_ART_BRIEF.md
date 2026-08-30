@@ -18,8 +18,9 @@ nothing to configure, no flag, no build step. **Committing the file at
 
 ## What the scene is
 
-A cultivation city at blue hour, seen from a terrace above it. Cool sky,
-warm city. It is not a real place and it is not the studio's game: the brief
+A cultivation city at GOLDEN HOUR, seen from under a cherry tree on a hill
+above it. Cool blue sky overhead turning peach at the horizon, low sun, no
+moon. The tree is the near field and you are looking THROUGH it. It is not a real place and it is not the studio's game: the brief
 is deliberately "our own city, not that one".
 
 Five layers, back to front. Each is a separate file and each is optional.
@@ -30,7 +31,8 @@ Five layers, back to front. Each is a separate file and each is optional.
 | `far.webp` | the upper city: pagoda towers on a terrace wall | transparent above the roofline |
 | `mid.webp` | the quarter: the great hall, the bridge, lit windows | transparent above the roofline |
 | `near.webp` | foreground eaves, hung lanterns, a lantern string | transparent above the roofline |
-| `bough.webp` | a cherry branch entering from the top-left corner | transparent everywhere but the branch |
+| `canopy.webp` | blossom across the whole top of the frame, tiling | transparent below the twigs |
+| `bough.webp` | a heavy cherry limb out of the top-left corner | transparent everywhere but the branch |
 
 The vector versions of all five are committed in `public/assets/city-*.svg`.
 **Open them first.** They are the composition, and a painted plate that
@@ -53,7 +55,8 @@ delivered at a different ratio will jump once per drift cycle.
 | `far.webp` | 2400 x 620 | 4800 x 1240 |
 | `mid.webp` | 2400 x 560 | 4800 x 1120 |
 | `near.webp` | 2400 x 420 | 4800 x 840 |
-| `bough.webp` | 1000 x 620 | 2000 x 1240 |
+| `canopy.webp` | 2400 x 820 | 4800 x 1640 |
+| `bough.webp` | 1500 x 1150 | 3000 x 2300 |
 
 **2. The four band plates must TILE.** The left edge and the right edge join
 seamlessly: put the same content at both, or leave both edges quiet. The
@@ -75,7 +78,7 @@ fades out at its own bottom edge leaves a visible seam.
 gradient behind everything and the haze between the layers is drawn by the
 site; a plate with its own sky baked in will sit as a visible rectangle.
 
-**5. Budget.** Under 400 KB each, under 1.4 MB for all five. These load on a
+**5. Budget.** Under 400 KB each, under 1.4 MB for all six. These load on a
 phone before anything else on the page is worth looking at.
 
 ---
@@ -99,6 +102,13 @@ is the first thing to protect and the easiest thing to lose.
 tips, concave roof slopes, tiered pagodas that narrow as they rise, hanging
 banners, an arched stone bridge. Look at `city-mid.svg` for the vocabulary.
 Straight rafter lines turn the whole thing into a circus tent.
+
+**The blossom reference is the Arizona green tea can**, named by the owner.
+Flat opaque petals with visible separation between them, five to a flower, a
+small warm centre, dark wood drawn straight through the middle of the bloom.
+Nothing blurred, nothing semi-transparent. Two earlier attempts failed the
+same way and got the words "cotton candy" and "clouds" back; the fix both
+times was separation, and branches visible through the gaps.
 
 **The bough is not candy floss.** Small separated bunches of blossom riding
 along the last two orders of twig, with the wood crossing IN FRONT of half of

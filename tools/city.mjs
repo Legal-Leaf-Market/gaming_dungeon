@@ -66,13 +66,22 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
    darker than the one behind it, and the near band is close enough
    to black that the lanterns in front of it have somewhere to burn.
    ------------------------------------------------------------ */
+/* GOLDEN HOUR, NOT BLUE HOUR (owner, 2026-08-29).
+
+   "A little brighter than this, but almost sunset, not moon out."
+   So the sun is still up and low, the sky is a clean cotton-candy
+   blue overhead turning peach at the horizon, and the moon is gone.
+
+   The one relationship is unchanged and still does all the work:
+   COOL above, WARM below. It just runs at a much higher key now,
+   which changes what the bands have to do -- see BAND. */
 const SKY = {
-  top:   '#080f1e',   // zenith
-  upper: '#0e1c33',
-  mid:   '#1b3350',
-  low:   '#3a5064',   // where the haze starts
-  haze:  '#6d6a63',   // the warm turn
-  glow:  '#b8845a',   // the city's own light on the underside of the air
+  top:   '#5f9fd4',   // zenith, clean blue
+  upper: '#8dbcdd',
+  mid:   '#bfd5e4',
+  low:   '#eccfae',   // where the warmth starts
+  haze:  '#f4b98c',
+  glow:  '#ef9358',   // the sun's own colour on the horizon
 }
 
 /* THE VALUE LADDER, and the spread matters more than the hues.
@@ -87,20 +96,49 @@ const SKY = {
 
    Rule of thumb that produced these: each step is roughly 40% of
    the way from the one in front toward the sky. */
+/* THE LADDER INVERTS AT DAYTIME, and this is the trap in the repaint.
+
+   At blue hour the sky was darker than everything, so distance meant
+   getting DARKER toward the sky. In daylight the sky is the brightest
+   thing in the frame, so distance means getting LIGHTER: a far ridge
+   at golden hour is a pale wash a few percent off the haze, and the
+   only genuinely dark thing is what is closest to you.
+
+   Keeping the old dark values under a bright sky is what makes a
+   repainted scene look like a night scene with the lights turned up.
+   Each step is still about 40% of the way from the one in front
+   toward the sky; the sky just moved. */
 const BAND = {
-  crag: '#3a4f68',
-  far:  '#243a52',
-  mid:  '#141f2f',
-  near: '#070c14',
+  crag: '#a8bdcd',
+  far:  '#7f9bb2',
+  mid:  '#53708a',
+  near: '#2c3f52',
 }
 
 const LIGHT = {
   lantern: '#ffb86b',   // paper lanterns and window squares
   hot:     '#ffe0ac',   // the core of a lantern, a stop brighter
   jade:    '#8fe3c4',   // the studio's green, used sparingly and high up
-  moon:    '#e8f4f2',
-  blossom: '#7a4a63',   // the bough, catching what light is left
-  bough:   '#0a1119',
+  sun:     '#fff3dc',
+  /* THREE BLOSSOM TONES, AND THEY ARE COLOURS RATHER THAN OPACITIES.
+
+     The first canopy used one rose at two alpha levels for near and
+     far, and the owner's note was exact: "the two opaque shapes over
+     each other, and we really didn't like it". Two alphas of one
+     colour do not read as depth, they read as a transparency seam,
+     and every place the two groups overlapped drew a visible edge
+     that belongs to no branch.
+
+     So depth here is pigment, at full opacity: the far flowers are a
+     duller, cooler rose, the near ones are bright and warm, and
+     nothing is see-through. This is also the Arizona green tea
+     look the owner named -- flat opaque petals, dark wood, no
+     blending anywhere. */
+  blossomFar:  '#d99ab4',
+  blossom:     '#f4bcd0',
+  blossomLit:  '#fdeef3',
+  blossomCore: '#e8b06a',   // the little centre, warm
+  bough:       '#4a3226',   // wood, brown rather than black: it is daytime
 }
 
 /* ------------------------------------------------------------
@@ -121,6 +159,10 @@ function rng(seed) {
   }
 }
 const n = (v) => Math.round(v * 100) / 100
+/* One decimal for blossom. There are thousands of petals and the
+   second decimal of a 6px petal is a hundredth of a pixel nobody can
+   see; over a plate it is a fifth of the file. */
+const m = (v) => Math.round(v * 10) / 10
 
 /* ------------------------------------------------------------
    A PLATE
@@ -545,11 +587,21 @@ function nearEaves() {
   /* Eaves OVERLAP on purpose (the step is smaller than the width),
      so they merge into one roofscape instead of reading as separate
      buildings. You are standing among these, not looking at them. */
-  for (let i = 0; i < 16; i++) {
-    const x = -80 + i * 158 + rand() * 44
-    const w = 104 + rand() * 66
-    const h = 44 + rand() * 24
-    const eave = ground - 118 - Math.pow(rand(), 1.4) * 84
+  /* THE ROOFLINE HAS TO BE JAGGED, and this is a real defect fixed
+     rather than a preference. The eaves used to sit within 84 units
+     of each other on a 420-unit plate, overlapping heavily, so their
+     tops merged into one nearly flat edge. Against a dark sky nobody
+     saw it; the moment the scene became daylight, that edge read as
+     a ruled grey line straight across the bottom of the hero, and it
+     measured as the single sharpest step in the whole picture.
+
+     A skyline is the silhouette's whole job. Three times the height
+     range, and less overlap so sky shows between some of them. */
+  for (let i = 0; i < 17; i++) {
+    const x = -80 + i * 150 + rand() * 60
+    const w = 92 + rand() * 62
+    const h = 40 + rand() * 30
+    const eave = ground - 76 - Math.pow(rand(), 1.15) * 236
     p.emit(p.solid, (xx) => roof(xx, eave, w, h) + body(xx, eave + h * 0.16, ground, w * 0.82), x)
 
     /* a pair of lanterns under every third eave, hung from the tips */
@@ -593,73 +645,346 @@ function nearEaves() {
    version of this reads as candy floss, the fix is to take the
    value DOWN, not the saturation.
    ============================================================ */
-function bough() {
-  const w = 1000, h = 620
-  const rand = rng(0x4f2a)
-  const limbs = []
-  const near = []   // flowers on the near side of the twig
-  const back = []   // flowers behind it, a shade darker
+/* ============================================================
+   BLOSSOM
+
+   THE REFERENCE IS THE ARIZONA GREEN TEA CAN, named by the owner and
+   worth writing down because it settles a dozen small decisions at
+   once. That artwork is not a photograph and not a soft airbrushed
+   cloud: it is FLAT OPAQUE PETALS with visible separation between
+   them, five to a flower, a small warm centre, and dark wood drawn
+   straight through the middle of the bloom. Nothing on it is
+   blurred and nothing on it is semi-transparent.
+
+   Two earlier attempts at this failed in the same direction and the
+   owner's words for them were "cotton candy" and "clouds". The fix
+   both times was the same and it is the rule here: separation. A
+   mass of overlapping soft blobs is weather. Individual flowers with
+   gaps between them, and branches visible THROUGH those gaps, is a
+   tree.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   A SHAPE LIBRARY, AND WHY IT IS NOT INLINE PATH DATA
+
+   Every flower drawn as its own path put the canopy at 632KB
+   gzipped. That is not a heavy hero background, it is a broken one:
+   the whole scene is supposed to paint before anybody has decided
+   whether to stay.
+
+   The density the owner asked for ("an incredible amount of cherry
+   blossoms") and a small file are only compatible one way. Each
+   distinct blossom is defined ONCE in <defs> and then placed with
+   <use href="#f2" x y/>, which is about 35 bytes against roughly 300
+   for the path, and which compresses far better besides because
+   every placement is the same seventeen characters with two numbers
+   in it.
+
+   THE LIBRARY IS INDEXED BY RADIUS RATHER THAN SCALED BY TRANSFORM.
+   A transform on every <use> costs most of what the symbol saved, so
+   there are five sizes and the caller snaps to the nearest. Nobody
+   can see the difference between a 7.4px flower and a 8px one in a
+   canopy of four thousand.
+
+   `fill` is inheritable and <use> inherits from where it is USED,
+   not from where it is defined, so the shapes carry no fill of their
+   own and each tone is one <g fill="..."> wrapping its placements.
+   ------------------------------------------------------------ */
+const R_STEPS = [4, 6, 8, 11, 15]
+const SHAPES = []
+
+/* Five petals around a centre. Each petal runs centre -> out one
+   side -> tip -> back the other -> centre, which winds the same way
+   as every other shape in this file (see THE VOCABULARY) so
+   overlapping flowers of one tone union instead of punching holes. */
+function flowerPath(r, rot, petals) {
+  let d = ''
+  for (let i = 0; i < petals; i++) {
+    const a = rot + i * (Math.PI * 2 / petals)
+    const tx = Math.cos(a) * r, ty = Math.sin(a) * r
+    const w = r * (petals === 5 ? 0.66 : 0.72)
+    const px = Math.cos(a + Math.PI / 2) * w, py = Math.sin(a + Math.PI / 2) * w
+    const qx = Math.cos(a - Math.PI / 2) * w, qy = Math.sin(a - Math.PI / 2) * w
+    d += `M0 0Q${m(px)} ${m(py)} ${m(tx)} ${m(ty)}Q${m(qx)} ${m(qy)} 0 0Z`
+  }
+  return d
+}
+
+/* A bud: the same silhouette read from behind. Real cherry is
+   perhaps a third buds and half-open flowers, and a canopy of
+   nothing but perfect blooms reads as wallpaper. */
+function budPath(r) {
+  return `M0 ${m(-r)}Q${m(r * 0.9)} ${m(-r * 0.3)} ${m(r * 0.35)} ${m(r)}` +
+    `Q0 ${m(r * 0.5)} ${m(-r * 0.35)} ${m(r)}` +
+    `Q${m(-r * 0.9)} ${m(-r * 0.3)} 0 ${m(-r)}Z`
+}
+
+function blobPath(r) {
+  return `M${m(-r)} 0A${m(r)} ${m(r)} 0 1 0 ${m(r)} 0A${m(r)} ${m(r)} 0 1 0 ${m(-r)} 0Z`
+}
+
+/* Built once, at module load. Three rotations per flower size so a
+   field of them does not read as a printed pattern. */
+const LIB = R_STEPS.map((r, i) => {
+  const set = {
+    /* the big tiers get real petals; the small ones cannot show them
+       at any size this scene renders (see DETAIL BY SIZE below) */
+    full: r >= 8 ? [0, 1, 2].map((k) => {
+      const id = 'f' + i + k
+      SHAPES.push({ id, d: flowerPath(r, k * 0.42, 5) })
+      return id
+    }) : null,
+    trio: r >= 6 ? [0, 1].map((k) => {
+      const id = 't' + i + k
+      SHAPES.push({ id, d: flowerPath(r, k * 0.6, 3) })
+      return id
+    }) : null,
+    blob: (() => { const id = 'b' + i; SHAPES.push({ id, d: blobPath(r * 0.86) }); return id })(),
+    bud: (() => { const id = 'd' + i; SHAPES.push({ id, d: budPath(r * 0.66) }); return id })(),
+    core: (() => { const id = 'c' + i; SHAPES.push({ id, d: blobPath(Math.max(0.8, r * 0.13)) }); return id })(),
+    lit: (() => { const id = 'l' + i; SHAPES.push({ id, d: blobPath(r * 0.34) }); return id })(),
+  }
+  return set
+})
+
+/* Snap a wanted radius to the nearest library step. */
+function tier(r) {
+  let best = 0, gap = Infinity
+  for (let i = 0; i < R_STEPS.length; i++) {
+    const g = Math.abs(R_STEPS[i] - r)
+    if (g < gap) { gap = g; best = i }
+  }
+  return best
+}
+
+/* DETAIL BY SIZE, and it is a size decision before it is an art one.
+   The canopy plate is 2400 wide and renders at roughly half a
+   viewport height, so a plate radius of 4 is about three screen
+   pixels. Five petals with gaps between them at three pixels is not
+   five petals, it is a dot. */
+function place(id, x, y) {
+  return `<use href="#${id}" x="${Math.round(x)}" y="${Math.round(y)}"/>`
+}
+
+/* ------------------------------------------------------------
+   A BRANCHING SYSTEM, shared by the canopy and the near bough.
+
+   `sink` is what makes it read as hanging rather than growing: every
+   generation is pulled back toward straight down, so limbs that
+   start out sideways end up drooping, which is what a cherry in
+   flower actually does under the weight.
+   ------------------------------------------------------------ */
+function boughSystem(rand, opts) {
+  const wood = []
+  const far = [], near = [], lit = [], cores = []
+
+  function bloomAt(x, y, r, depth) {
+    /* The far tone goes down FIRST and is drawn under the wood, the
+       near tones over it. That ordering is the whole illusion: the
+       branch crossing in front of half the flowers is what stops a
+       cluster reading as one lump, and it is the thing the Arizona
+       can does that a soft airbrushed blossom never does. */
+    const i = tier(r)
+    const set = LIB[i]
+    const pick = (list) => list[Math.floor(rand() * list.length)]
+    const bloom = () => (
+      set.full ? pick(set.full)
+      : set.trio ? pick(set.trio)
+      : set.blob
+    )
+    const roll = rand()
+    if (roll < 0.34) { far.push(place(bloom(), x, y)); return }
+    if (roll < 0.52) { far.push(place(set.bud, x, y)); return }
+    if (roll > 0.93) { near.push(place(set.bud, x, y)); return }
+    near.push(place(bloom(), x, y))
+    /* Only the nearest, biggest flowers get a highlight and a centre.
+       Putting them on everything flattens the depth the three tones
+       just bought. */
+    /* HIGHLIGHTS ARE RARE, and the first pass had them on every
+       flower above the middle size. On the near bough, where most
+       flowers ARE above it, that painted a pale near-white mass with
+       a straight edge where the bough's plate met the canopy behind
+       it -- the same "two opaque shapes over each other" the owner
+       objected to, arriving by a different route.
+
+       A highlight is a flower catching the low sun, and on a real
+       tree that is a scattering, not a coat. One in four, and the
+       gold centre rarer still. */
+    if (depth <= 1 && i >= 3 && rand() < 0.26) {
+      lit.push(place(set.lit, x, y))
+      if (rand() < 0.5) cores.push(place(set.core, x, y))
+    }
+  }
 
   function branch(x0, y0, ang, len, wid, depth) {
     const x1 = x0 + Math.cos(ang) * len
     const y1 = y0 + Math.sin(ang) * len
-    /* a bow in every limb: nothing in a tree is a straight line */
-    const bow = (rand() - 0.5) * len * 0.34
+    const bow = (rand() - 0.5) * len * 0.32
     const mx = (x0 + x1) / 2 + Math.cos(ang + Math.PI / 2) * bow
     const my = (y0 + y1) / 2 + Math.sin(ang + Math.PI / 2) * bow
     const nx = Math.cos(ang + Math.PI / 2), ny = Math.sin(ang + Math.PI / 2)
-    const w1 = wid * 0.44
-    limbs.push(
+    const w1 = wid * 0.42
+    wood.push(
       `M${n(x0 + nx * wid)} ${n(y0 + ny * wid)}` +
       `Q${n(mx + nx * wid * 0.7)} ${n(my + ny * wid * 0.7)} ${n(x1 + nx * w1)} ${n(y1 + ny * w1)}` +
       `L${n(x1 - nx * w1)} ${n(y1 - ny * w1)}` +
       `Q${n(mx - nx * wid * 0.7)} ${n(my - ny * wid * 0.7)} ${n(x0 - nx * wid)} ${n(y0 - ny * wid)}Z`
     )
 
-    /* FLOWERS RIDE THE WHOLE TWIG, NOT ITS TIP.
-
-       The first version hung a fat cluster off each end point and
-       the result was a lump of candy floss with sticks under it,
-       which the owner said in those words. A real cherry flowers
-       ALONG the last two orders of wood, in small separated
-       bunches, so the branch stays visible THROUGH the bloom. Two
-       rules keep it honest and both matter more than the colour:
-         - each blossom is small (r 3 to 9) and there are many
-         - they are scattered along the segment, not around a point
-       If this ever reads as candy again the fix is smaller and more,
-       and taking the value DOWN. Never a softer edge. */
-    if (depth <= 1) {
-      const count = 7 + Math.floor(rand() * 9)
+    /* FLOWERS RIDE THE WHOLE TWIG, NOT ITS TIP. Hanging a fat cluster
+       off each end point is what produced the lump the owner called
+       candy floss. Real cherry flowers along the last two orders of
+       wood, in small separated bunches. */
+    if (depth <= opts.bloomFrom) {
+      const count = opts.perTwig[0] + Math.floor(rand() * (opts.perTwig[1] - opts.perTwig[0]))
       for (let i = 0; i < count; i++) {
-        const t = 0.15 + rand() * 0.95
-        const bx = x0 + (x1 - x0) * t + (rand() - 0.5) * 34
-        const by = y0 + (y1 - y0) * t + (rand() - 0.5) * 30
-        const r = 3 + rand() * 6
-        const el = `<ellipse cx="${n(bx)}" cy="${n(by)}" rx="${n(r)}" ry="${n(r * (0.62 + rand() * 0.34))}" ` +
-          `transform="rotate(${n((rand() - 0.5) * 150)} ${n(bx)} ${n(by)})"/>`
-        ;(rand() > 0.45 ? near : back).push(el)
+        const t = 0.1 + rand() * 0.95
+        const spread = opts.spread * (0.5 + rand())
+        /* RADIUS FALLS OFF WITH DEPTH, which is what lets three
+           orders of wood bloom without the file tripling. A flower
+           deep in the tree is further from the viewer and smaller,
+           so it lands in the cheap blob tier by its own geometry
+           rather than by a rule; the tips, which is what anybody
+           actually looks at, stay full five-petal flowers. */
+        const scale = 1 - depth * 0.2
+        bloomAt(
+          x0 + (x1 - x0) * t + (rand() - 0.5) * spread,
+          y0 + (y1 - y0) * t + (rand() - 0.5) * spread * 0.85,
+          (opts.r[0] + rand() * (opts.r[1] - opts.r[0])) * scale,
+          depth
+        )
       }
     }
-    if (depth <= 0 || len < 20) return
-    const forks = rand() > 0.4 ? 3 : 2
+    if (depth <= 0 || len < opts.minLen) return
+    const forks = rand() > 0.38 ? 3 : 2
     for (let i = 0; i < forks; i++) {
-      const spread = (i - (forks - 1) / 2) * (0.44 + rand() * 0.3)
-      branch(x1, y1, ang + spread + (rand() - 0.5) * 0.18, len * (0.6 + rand() * 0.2), w1, depth - 1)
+      const spread = (i - (forks - 1) / 2) * (0.46 + rand() * 0.3)
+      /* pulled back toward straight down, generation by generation */
+      const want = ang + spread + (rand() - 0.5) * 0.2
+      const droop = want + (Math.PI / 2 - want) * opts.sink * rand()
+      branch(x1, y1, droop, len * (0.6 + rand() * 0.2), w1, depth - 1)
     }
   }
 
-  /* Two limbs off the same corner, at different angles, so the thing
-     has a near side and a far side. One limb is a diagram. */
-  branch(-40, -30, 0.58, 232, 27, 4)
-  branch(96, -14, 0.98, 168, 16, 4)
+  return { wood, far, near, lit, cores, branch }
+}
 
-  /* Order: back flowers, then the wood, then near flowers. The wood
-     crossing IN FRONT of half the bloom is the entire trick that
-     stops this reading as a cloud. */
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
-  <g fill="${LIGHT.blossom}" opacity=".62">${back.join('')}</g>
-  <path fill="${LIGHT.bough}" d="${limbs.join('')}"/>
-  <g fill="${LIGHT.blossom}" opacity=".92">${near.join('')}</g>
+function paint(sys) {
+  /* far flowers, then the wood, then near, then the highlights.
+     Wood between the two flower tones is the whole trick. */
+  const defs = SHAPES.map((sh) => `<path id="${sh.id}" d="${sh.d}"/>`).join('')
+  return `
+  <defs>${defs}</defs>
+  <g fill="${LIGHT.blossomFar}">${sys.far.join('')}</g>
+  <path fill="${LIGHT.bough}" d="${sys.wood.join('')}"/>
+  <g fill="${LIGHT.blossom}">${sys.near.join('')}</g>
+  <g fill="${LIGHT.blossomLit}">${sys.lit.join('')}</g>
+  <g fill="${LIGHT.blossomCore}">${sys.cores.join('')}</g>`
+}
+
+/* ============================================================
+   PLATE 5 -- THE CANOPY
+
+   Blossom across the WHOLE top of the window, tiling, so there is
+   never a bare edge where the artwork stops. This is the half of
+   "cherry blossoms everywhere" that a single corner ornament cannot
+   do: the owner is standing under the tree looking out, so the tree
+   has to be over the whole view, not in one corner of it.
+
+   Limbs enter from the TOP EDGE and hang down. Nothing reaches the
+   bottom of the plate except tapering twig tips, which is what
+   keeps the layer from ending in a visible horizontal cut.
+   ============================================================ */
+function canopy() {
+  const w = 2400, h = 820
+  const seeds = rng(0x3c7f)
+  const all = { wood: [], far: [], near: [], lit: [], cores: [] }
+  const OPTS = {
+    bloomFrom: 2, perTwig: [9, 19], spread: 44, r: [5, 12],
+    minLen: 20, sink: 0.55,
+  }
+
+  /* THE PLATE TILES, SO ANYTHING NEAR AN EDGE IS DRAWN TWICE.
+
+     The bands get this free from emit(); the canopy cannot, because
+     a branch is not a shape at a coordinate, it is a recursive walk
+     that consumes random numbers as it goes. Calling branch() a
+     second time at x - w advances the generator and draws a
+     DIFFERENT tree, which does not join up.
+
+     So each anchor gets its own seed and is replayed: a fresh
+     boughSystem on the same seed produces the identical tree, and
+     the second copy is placed one full width over. Without this the
+     canopy repeats at roughly 1370px on a 1440px window and every
+     branch crossing the seam is visibly chopped -- which is the
+     exact fault the owner called out on the old corner piece,
+     arriving somewhere new. */
+  const anchors = []
+  let x = -120
+  while (x < w + 160) {
+    anchors.push({
+      x,
+      y: -34 - seeds() * 34,
+      ang: 1.05 + (seeds() - 0.5) * 0.95,
+      len: 104 + seeds() * 104,
+      wid: 9 + seeds() * 6,
+      seed: Math.floor(seeds() * 0xffffff),
+    })
+    x += 92 + seeds() * 96
+  }
+
+  for (const a of anchors) {
+    const xs = [a.x]
+    /* one width over, on whichever side puts the copy on screen */
+    if (a.x < w * 0.5) xs.push(a.x + w); else xs.push(a.x - w)
+    for (const px of xs) {
+      const sys = boughSystem(rng(a.seed), OPTS)
+      sys.branch(px, a.y, a.ang, a.len, a.wid, 3)
+      for (const k of Object.keys(all)) all[k] = all[k].concat(sys[k])
+    }
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${paint(all)}
+</svg>\n`
+}
+
+/* ============================================================
+   PLATE 6 -- THE NEAR BOUGH
+
+   One heavy limb out of the top-left corner, in front of everything,
+   and much larger than the version it replaces. The owner asked for
+   "a massive growth of cherry blossom branches down from the top
+   left", and separately noted that the old one was "clearly cutting
+   off" -- it was a small box with the artwork running into all four
+   of its edges, so the plate's own boundary read as a cut through
+   the tree.
+
+   Fixed twice over: the box is far bigger than the drawing, and
+   every limb is aimed down and right from one corner, so the wood
+   thins to nothing well inside the frame. Nothing to cut.
+   ============================================================ */
+function bough() {
+  const w = 1500, h = 1150
+  const rand = rng(0x4f2a)
+  const sys = boughSystem(rand, {
+    bloomFrom: 2, perTwig: [11, 21], spread: 58, r: [7, 19],
+    minLen: 24, sink: 0.5,
+  })
+  /* Three limbs off the same corner at different angles, so the
+     thing has a near side and a far side. One limb is a diagram. */
+  /* Four heavy limbs plus two long thin trailing ones. The trailers
+     are what stop the mass ending: without them the four limbs droop
+     into a solid wedge with a boundary, and a boundary in a tree is
+     the thing being complained about. These reach out past the
+     others and carry a few flowers each, so the canopy thins to
+     single twigs rather than stopping. */
+  sys.branch(-60, -40, 0.44, 340, 30, 4)
+  sys.branch(-30, 50, 0.80, 280, 23, 4)
+  sys.branch(130, -70, 1.06, 245, 19, 4)
+  sys.branch(-70, 190, 0.30, 230, 16, 4)
+  sys.branch(60, -50, 0.20, 400, 11, 3)
+  sys.branch(-40, 120, 0.62, 430, 9, 3)
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${paint(sys)}
 </svg>\n`
 }
 
@@ -691,8 +1016,9 @@ function skyCss() {
   --city-lantern:${LIGHT.lantern};
   --city-hot:${LIGHT.hot};
   --city-jade:${LIGHT.jade};
-  --city-moon:${LIGHT.moon};
   --city-blossom:${LIGHT.blossom};
+  --city-blossom-far:${LIGHT.blossomFar};
+  --city-sun:${LIGHT.sun};
 }
 `
 }
@@ -709,5 +1035,6 @@ write('public/assets/city-crag.svg', crags().svg(BAND.crag))
 write('public/assets/city-far.svg', farCity().svg(BAND.far))
 write('public/assets/city-mid.svg', quarter().svg(BAND.mid))
 write('public/assets/city-near.svg', nearEaves().svg(BAND.near))
+write('public/assets/city-canopy.svg', canopy())
 write('public/assets/city-bough.svg', bough())
 write('public/css/city-sky.css', skyCss())

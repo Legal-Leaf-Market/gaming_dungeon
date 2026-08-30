@@ -146,24 +146,31 @@
   /* ---------------------------------------------------------
      3. PETALS
 
-     Fourteen on a wide screen, six on a phone. The count is small
-     on purpose: this is a shop, and the moment the reader notices
-     the weather instead of the shelf the weather has failed.
+     FORTY-TWO ON A WIDE SCREEN, and the old note said fourteen was
+     deliberately few so the weather never competed with the shelf.
+     That was right for a night city and wrong for this one: the
+     owner asked to be standing under a cherry in flower, and a tree
+     in flower drops a lot of petals. They fall in front of
+     everything including the near bough, which is what sells being
+     UNDER the tree rather than looking at a picture of one.
+
+     Still cheap: each is one element with a composited transform,
+     and they stop entirely under prefers-reduced-motion.
 
      Every petal gets its own everything. Sharing any one of size,
      duration, delay, drift or spin makes pairs of them visibly
      move together, which is the tell.
      --------------------------------------------------------- */
   var wide = innerWidth > 760
-  var count = wide ? 14 : 6
+  var count = wide ? 42 : 18
   var frag = document.createDocumentFragment()
   for (var i = 0; i < count; i++) {
     var p = document.createElement('i')
     p.className = 'petal'
     var s = p.style
     s.setProperty('--x', rnd(-4, 104).toFixed(1) + 'vw')
-    s.setProperty('--w', rnd(6, 13).toFixed(1) + 'px')
-    s.setProperty('--dur', rnd(15, 34).toFixed(1) + 's')
+    s.setProperty('--w', rnd(7, 17).toFixed(1) + 'px')
+    s.setProperty('--dur', rnd(11, 30).toFixed(1) + 's')
     /* NEGATIVE delays, so the first petal is already halfway down
        when the page paints. A positive delay means the visitor
        watches an empty sky for twenty seconds and concludes there
@@ -171,7 +178,7 @@
     s.setProperty('--delay', (-rnd(0, 34)).toFixed(1) + 's')
     s.setProperty('--drift', rnd(-140, 190).toFixed(0) + 'px')
     s.setProperty('--spin', rnd(240, 900).toFixed(0) + 'deg')
-    s.setProperty('--o', rnd(0.22, 0.56).toFixed(2))
+    s.setProperty('--o', rnd(0.55, 1).toFixed(2))
     frag.appendChild(p)
   }
   scene.appendChild(frag)

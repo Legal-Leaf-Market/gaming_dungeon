@@ -78,11 +78,24 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
    ------------------------------------------------------------ */
 .ground{
   position:relative;
+  /* A LONGER FADE, because the scene above it got bright. Against a
+     blue-hour hero this reached full dark in 240px and nobody saw a
+     join; against a golden-hour sky the same gradient is a ruled
+     line across the page where the daylight stops. Twice the
+     distance, and it starts from the near band's own colour rather
+     than from nothing, so the city dissolves into the page instead
+     of being cut off by it. */
+  /* STARTS AT THE ALPHA THE HERO'S SCRIM ENDS ON, not at zero. The
+     hero's shade gradient still carries .34 of this colour when it
+     reaches the bottom of the section, so a ground that began at
+     transparent drew a ruled line straight across the page at the
+     join. Matching the two makes the seam disappear. */
   background:linear-gradient(180deg,
-    rgba(8,13,22,0) 0,
-    rgba(8,13,22,.72) 90px,
-    rgba(8,13,22,.94) 240px,
-    var(--night) 420px);
+    rgba(20,34,48,0) 0,
+    rgba(30,44,60,.55) 120px,
+    rgba(16,26,38,.86) 320px,
+    rgba(8,13,22,.97) 520px,
+    var(--night) 680px);
 }
 
 /* ------------------------------------------------------------
@@ -99,9 +112,17 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   max-width:var(--page); margin:0 auto;
   padding:18px var(--pad);
 }
+/* THE HEADER SITS OVER OPEN SKY, and the sky is bright now. The
+   brand and the nav are light type, so without a scrim under them
+   they are light-on-light for the whole first screen. Deeper and
+   taller than the night version needed to be, and still nothing but
+   a gradient: the moment this becomes a bar, the top of the page
+   feels like a lid. */
 .top::before{
-  content:''; position:absolute; inset:-40px 0 auto; height:150px;
-  background:linear-gradient(180deg, rgba(4,7,13,.66) 0, rgba(4,7,13,.28) 52%, transparent 100%);
+  content:''; position:absolute; inset:-40px 0 auto; height:190px;
+  background:linear-gradient(180deg,
+    rgba(10,20,32,.72) 0, rgba(10,20,32,.44) 40%,
+    rgba(10,20,32,.16) 70%, transparent 100%);
   pointer-events:none; z-index:-1;
 }
 
@@ -162,9 +183,33 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
    the letters. */
 .ink-hero::before{
   content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
-  background:linear-gradient(100deg,
-    rgba(4,8,14,.76) 0%, rgba(4,8,14,.56) 22%,
-    rgba(4,8,14,.24) 46%, rgba(4,8,14,0) 66%);
+  /* A POOL OF SHADE, NOT A BAND OF DARK.
+
+     The night version was a near-black wash across the left third,
+     which was right over a blue-hour sky and wrong the moment the
+     scene became golden hour: dark navy laid over a warm horizon
+     mixes to brown, and the whole left of the hero came out as a
+     mud-coloured stripe with a visible edge running down it.
+
+     Two things fix it. The colour is the near band's own blue-grey
+     rather than black, so it darkens without dirtying; and it is
+     anchored to the bottom-left corner and falls off radially, so
+     it reads as the shade under the tree the viewer is standing
+     beneath. There is no straight edge anywhere in it. */
+  background:
+    radial-gradient(120% 96% at -8% 108%,
+      rgba(20,34,48,.74) 0%, rgba(20,34,48,.44) 38%,
+      rgba(20,34,48,.14) 62%, transparent 80%),
+    /* BOTH SIDES OF THE JOIN ARE TRANSPARENT. This used to still
+       carry a third of its alpha at 100%, and the section simply
+       ends there, so a ruled line ran the width of the page at the
+       hero's bottom edge -- measured at 38 levels. Matching the
+       ground's opening stop to it worked only while both numbers
+       agreed, which is a thing that stays true until somebody edits
+       one of them. Ending at nothing cannot come apart. The shade
+       under the copy is the radial above; this is only the bottom
+       weighting, and it is not needed in the last few percent. */
+    linear-gradient(180deg, transparent 44%, rgba(20,34,48,.30) 82%, transparent 100%);
 }
 /* the inner rail, so the copy lines up with everything in main */
 .hero-in{
@@ -180,7 +225,9 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   margin:0 0 22px; color:#fff;
   /* Two shadows: a tight one for legibility against a busy band,
      and a wide faint one that reads as the title being lit. */
-  text-shadow:0 2px 22px rgba(0,0,0,.62), 0 1px 3px rgba(0,0,0,.5);
+  /* Heavier than it was: the sky behind it is bright now, so the
+     title is light-on-light at the top of its own line height. */
+  text-shadow:0 2px 26px rgba(12,22,34,.72), 0 2px 6px rgba(12,22,34,.55);
 }
 .ink-hero h1 em{
   font-style:italic; color:var(--jade-lit);
@@ -192,8 +239,8 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   line-height:1.68; margin:0; max-width:56ch;
 }
 .ink-hero .lede{
-  color:#c6d4e2; max-width:50ch;
-  text-shadow:0 1px 14px rgba(0,0,0,.72);
+  color:#e4ecf4; max-width:50ch;
+  text-shadow:0 1px 16px rgba(12,22,34,.8), 0 1px 3px rgba(12,22,34,.6);
 }
 
 /* --- the two doors out of the hero ------------------------- */

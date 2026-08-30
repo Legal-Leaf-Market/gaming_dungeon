@@ -53,11 +53,11 @@
   background:
     linear-gradient(180deg,
       var(--city-sky-top)    0%,
-      var(--city-sky-upper) 18%,
-      var(--city-sky-mid)   36%,
-      var(--city-sky-low)   50%,
-      var(--city-haze)      59%,
-      var(--city-glow)      68%,
+      var(--city-sky-upper) 20%,
+      var(--city-sky-mid)   40%,
+      var(--city-sky-low)   54%,
+      var(--city-haze)      62%,
+      var(--city-glow)      70%,
       var(--city-mid)      100%);
 }
 
@@ -191,41 +191,35 @@
    a hard disc for the body, and a much wider, much fainter halo for
    the air around it.
    ------------------------------------------------------------ */
-.city .moon{
-  /* CLEAR OF THE FURNITURE. At 11vh/16vw it sat exactly where the
-     arcade page puts its "back to the map" pill, and a moon behind a
-     button is a bug on one page and an accident waiting on every
-     other. Everything in the top right corner of a web page is
-     navigation; the moon goes below that. */
-  top:20vh; right:21vw; width:58px; height:58px; border-radius:50%;
-  /* FLAT, not a sphere. The first version shaded it from the upper
-     left like a ball and it read as a golf ball stuck to the sky: a
-     moon at this distance has no visible terminator, it is a disc of
-     one value with a soft edge. All of the roundness comes from the
-     halo, none of it from the body. */
+/* ------------------------------------------------------------
+   THE SUN
+
+   Low and hazy rather than a disc. "Almost sunset, not moon out."
+   At this hour the sun is a bloom of light near the horizon with no
+   hard edge to it, which is also the honest way to draw it: a
+   crisp circle at golden hour reads as a sticker, and the thing
+   people actually recognise is the glow around it.
+   ------------------------------------------------------------ */
+.city .sun{
+  top:38vh; right:24vw; width:118px; height:118px; border-radius:50%;
+  /* A DISC WITH A HALO, not a smudge. The first pass blurred the
+     whole thing, which turned the sun into a soft grey-gold patch
+     that read as a lens artefact rather than as the sun. The body
+     is small and hard; only the air around it is soft, which is
+     what makes it look like light rather than like fog. */
   background:radial-gradient(circle,
-    var(--city-moon) 0 74%,
-    color-mix(in srgb, var(--city-moon) 62%, transparent) 100%);
-  box-shadow:
-    0 0 34px 6px color-mix(in srgb, var(--city-moon) 16%, transparent),
-    0 0 130px 44px color-mix(in srgb, var(--city-moon) 7%, transparent);
+    var(--city-sun) 0 21%,
+    color-mix(in srgb, var(--city-sun) 88%, transparent) 30%,
+    color-mix(in srgb, var(--city-glow) 42%, transparent) 52%,
+    transparent 100%);
   transform:translate3d(0, calc(var(--sy,0px) * .012), 0);
 }
 
-/* A handful of stars, and only in the top third where the sky is
-   dark enough to hold them. Hand-placed rather than random: five
-   deliberate ones read as a sky, forty random ones read as dust. */
-.city .stars{
-  top:0; left:0; right:0; height:46vh; opacity:.62;
-  background-image:
-    radial-gradient(1.4px 1.4px at 12% 22%, #fff, transparent),
-    radial-gradient(1.2px 1.2px at 27% 9%,  #dfe9ff, transparent),
-    radial-gradient(1.6px 1.6px at 46% 30%, #fff, transparent),
-    radial-gradient(1.1px 1.1px at 63% 14%, #cfe0ff, transparent),
-    radial-gradient(1.3px 1.3px at 78% 26%, #fff, transparent),
-    radial-gradient(1.1px 1.1px at 89% 8%,  #dfe9ff, transparent),
-    radial-gradient(1.2px 1.2px at 35% 40%, #fff, transparent);
-}
+/* THE STARS ARE GONE. It is daytime. The element is kept in the
+   markup on both pages so the two scenes stay identical, and it
+   simply draws nothing: deleting it from one page and not the other
+   is how the arcade and the front door drift apart. */
+.city .stars{ display:none }
 
 /* ------------------------------------------------------------
    THE BOUGH
@@ -242,12 +236,35 @@
    It is hidden on narrow screens. At phone width it would cover a
    third of the title.
    ------------------------------------------------------------ */
+.city .canopy{
+  top:0; left:0; right:0; height:52vh; min-height:300px;
+  background:url(../assets/city-canopy.svg) repeat-x left top/auto 100%;
+  transform:translate3d(0, calc(var(--sy,0px) * -.05), 0);
+  will-change:transform;
+}
+
+/* THE NEAR BOUGH, and it is much larger than the one it replaces.
+
+   "A massive growth of cherry blossom branches down from the top
+   left" -- so it is a third of the window wide rather than a corner
+   ornament, and it sits in FRONT of the canopy so the two read as
+   near wood and far wood rather than as one flat layer.
+
+   The old one was "clearly cutting off": its artwork ran into all
+   four edges of a small box, so the plate's own boundary drew a
+   straight line through the tree. The plate is now far bigger than
+   the drawing and every limb aims down and right out of one corner,
+   so the wood thins to nothing well inside the frame and there is
+   no edge left to see.
+
+   Kept on narrow screens, unlike before. At phone width it is the
+   framing, not a decoration to drop: without it the hero is a city
+   with no foreground at all. */
 .city .bough{
-  top:-6vh; left:-6vw;
-  width:min(34vw,470px); aspect-ratio:1000/620;
+  top:-4vh; left:-6vw;
+  width:min(62vw,880px); aspect-ratio:1500/1150;
   background:url(../assets/city-bough.svg) no-repeat left top/contain;
-  opacity:.95;
-  transform:translate3d(0, calc(var(--sy,0px) * -.055), 0);
+  transform:translate3d(0, calc(var(--sy,0px) * -.075), 0);
   transform-origin:0 0;
 }
 
@@ -298,17 +315,21 @@
    They are ellipses, not circles: a falling petal shows its edge.
    ------------------------------------------------------------ */
 .city .petal{
-  top:-6vh; left:var(--x,50%);
+  /* z-index above the bough: petals fall in FRONT of the near wood,
+     because the viewer is under the tree and not behind it. */
+  z-index:3;
+  top:-8vh; left:var(--x,50%);
   width:var(--w,9px); height:calc(var(--w,9px) * .62);
   border-radius:60% 40% 55% 45%;
   background:var(--city-blossom);
+  box-shadow:0 0 0 .5px color-mix(in srgb, var(--city-blossom-far) 60%, transparent);
   opacity:var(--o,.7);
   will-change:transform;
   animation:cityFall var(--dur,17s) linear var(--delay,0s) infinite;
 }
 @keyframes cityFall{
   from{ transform:translate3d(0,0,0) rotate(0deg) }
-  to  { transform:translate3d(var(--drift,60px),112vh,0) rotate(var(--spin,420deg)) }
+  to  { transform:translate3d(var(--drift,60px),126vh,0) rotate(var(--spin,420deg)) }
 }
 
 /* A gust: a burst of petals thrown across on a press. Built and
@@ -332,9 +353,10 @@
    with the two most expensive pieces removed.
    ------------------------------------------------------------ */
 @media (max-width:760px){
-  .city .bough{ display:none }
-  .city .mist-3{ display:none }
-  .city .moon{ width:46px; height:46px; top:15vh; right:13vw }
+    .city .mist-3{ display:none }
+  .city .sun{ width:110px; height:110px; top:30vh; right:14vw }
+  .city .canopy{ height:40vh; min-height:210px }
+  .city .bough{ width:96vw; top:-3vh; left:-14vw }
   .city .crag{ height:52vh }
   .city .far { height:38vh }
   .city .mid { height:28vh }
@@ -356,7 +378,7 @@
   .city.drifting .crag,
   .city.drifting .far{ animation:none }
   .city .petal, .city .gust{ display:none }
-  .city .band, .city .haze, .city .moon, .city .bough{ transform:none }
+  .city .band, .city .haze, .city .sun, .city .bough, .city .canopy{ transform:none }
 }
 
 /* ============================================================

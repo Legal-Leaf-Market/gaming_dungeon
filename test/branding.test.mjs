@@ -485,7 +485,11 @@ test('every committed plate is one the generator would write', async () => {
   const { readdirSync } = await import('node:fs')
   const dir = new URL('../public/assets/', import.meta.url)
   const plates = readdirSync(dir).filter(f => /^city-.*\.svg$/.test(f))
-  assert.equal(plates.length, 5, 'expected five plates, found ' + plates.join(', '))
+  /* Six now: the four tiling bands, the canopy across the top and the
+     near bough. Asserted as a count rather than "some", because a
+     plate that stops being written still sits committed and the scene
+     goes on looking right until somebody clones the repo fresh. */
+  assert.equal(plates.length, 6, 'expected six plates, found ' + plates.join(', '))
   for (const f of plates) {
     const svg = readScene(new URL(f, dir), 'utf8')
     assert.match(svg.slice(0, 400), /viewBox="0 0 \d+ \d+"/,
