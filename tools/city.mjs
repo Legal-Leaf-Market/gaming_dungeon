@@ -1558,250 +1558,423 @@ const canopyTall = () => canopyLayer(1080, 1920, 0x6d13, {
    time anybody moved a room.
    ============================================================ */
 function quarterPlan() {
-  const w = 1600, h = 900
+  /* ============================================================
+     THE MAP OF THE VALE
+
+     "That map's way too small and dinky and not fun enough. Make it
+     feel like I'm in Narnia or Lord of the Rings."
+
+     The old one was a PLAN: contour bands, a river, roof rectangles.
+     Accurate, legible, and the wrong genre entirely. A plan is what
+     a surveyor draws. What was asked for is what an ADVENTURER
+     carries, and the difference is not detail, it is that every
+     feature on a fantasy map is a DRAWING of the thing rather than a
+     measurement of it.
+
+     Five marks do nearly all of the work, and each is here because
+     leaving it out is what made the first attempt read as a diagram:
+
+       HACHURED PEAKS. A mountain drawn as a filled triangle with a
+       shaded wedge is a triangle. What makes it a mountain is the
+       flank being RULED -- a fan of short strokes down the shadow
+       side, closer together at the ridge. It is the mark on every
+       engraved map since the eighteenth century, and it costs six
+       lines a peak.
+
+       PEAKS DRAWN BACK TO FRONT, ONE ELEMENT EACH. Batched into a
+       single path, every hachure paints over every peak in front of
+       it and the range flattens into a frieze. The near peak has to
+       be able to interrupt the far one; that occlusion is the only
+       depth cue a flat drawing gets, and it is worth forty extra
+       elements.
+
+       TREES THAT DO NOT TOUCH. The first pass scattered them and let
+       them overlap, and a wood came out as grey confetti. Rejection
+       sampling on a minimum spacing keeps every tree a readable
+       shape, and the eye reads the drift as woodland without
+       counting them.
+
+       BANK LINES, NOT TICKS. Engraver's water is drawn PARALLEL to
+       the shore, two or three lines out, fading. Ticks across the
+       bank read as a railway.
+
+       LETTERING. A map with no names on it is a diagram. Four region
+       names, a cartouche and a scale bar, in an italic serif -- and
+       nothing exotic, because this file is fetched as an image and
+       an image cannot go and get a webfont.
+
+     DRAWN IN THE PAINTING'S OWN COLOURS. This hangs under a warm
+     dusk hero, so it is not parchment: parchment would be a bright
+     block in the middle of a dark page. It is the vale at the same
+     hour as the painting, lit the same way, with the ink a warm
+     near-black rather than a cool one.
+
+     AND THE GROUND IS A GRADIENT, NOT TWO SHAPES. It was a lighter
+     quadrilateral laid over a darker rectangle to give the far half
+     some air, and the join between them was a ruled diagonal a
+     thousand pixels long across the middle of the map. Nothing about
+     the shading was wrong; the EDGE was. A gradient has no edge.
+
+     THE VALUE RANGE STAYS NARROW. Ten coloured pins sit on top and
+     they have to read on every part of it. What carries the drawing
+     is line weight, not fill.
+     ============================================================ */
+  const w = 2000, h = 1250
   const rand = rng(0x9d4c)
-  const pick = (a) => a[Math.floor(rand() * a.length)]
 
-  /* ---------------------------------------------------- the land
-     Five terraces rising north. Each is a wobbling ribbon and each
-     gets a CREST: a hairline along its own top edge, a step lighter
-     than the band it caps. Without that the five bands differed by
-     four values and merged into one dark field, which is why the
-     old plate looked empty. */
-  const bandFill = ['#131f2b', '#16232f', '#192734', '#1c2b39', '#1f2f3e']
-  const crestInk = ['#25384a', '#2a3f52', '#2f465a', '#344c63', '#3a536c']
-  const contourAt = (i, x) =>
-    h - 40 - i * 138 + Math.sin(x / 190 + i * 1.7) * 26 + Math.sin(x / 61 + i) * 9
+  const INK      = '#0d0b0e'
+  const LAND_HI  = '#2f2934'   /* the ground, far side */
+  const LAND     = '#211c26'   /* the ground, near side */
+  const RIDGE    = '#191520'   /* rock, a shade under the ground it stands on */
+  const LINE     = '#7d6470'   /* the pen */
+  const LINE_HI  = '#ad8d90'   /* the pen, pressed */
+  const WATER    = '#141d2b'
+  const WATER_HI = '#44637c'
+  const LEAF     = '#15121c'
 
-  const bands = [], crests = []
-  for (let i = 0; i < 5; i++) {
-    let d = `M0 ${n(h)}L0 ${n(contourAt(i, 0))}`
-    let c = `M0 ${n(contourAt(i, 0))}`
-    for (let x = 0; x <= w; x += 24) {
-      d += `L${n(x)} ${n(contourAt(i, x))}`
-      c += `L${n(x)} ${n(contourAt(i, x))}`
+  const peaks = []      /* {y, svg} -- sorted and emitted back to front */
+  const trees = [], roofs = [], walls = [], roads = [], banks = []
+
+  /* ---------------------------------------------------- the water
+     One river, one lake it opens into. Everything else is placed
+     against these, because in a real landscape everything is. */
+  const riverAt = (t) => [620 + Math.sin(t * 2.7) * 210 + t * 300, 90 + t * 1180]
+  const riverW = (t) => 15 + t * 32
+
+  const riverBody = (() => {
+    const L = [], R = []
+    for (let i = 0; i <= 34; i++) {
+      const t = i / 34, [x, y] = riverAt(t), q = riverW(t)
+      L.push([x - q, y]); R.push([x + q, y])
     }
-    d += `L${n(w)} ${n(h)}Z`
-    bands.push(`<path fill="${bandFill[i]}" d="${d}"/>`)
-    crests.push(`<path fill="none" stroke="${crestInk[i]}" stroke-width="1.4" d="${c}"/>`)
+    let d = `M${n(L[0][0])} ${n(L[0][1])}`
+    for (const [x, y] of L) d += `L${n(x)} ${n(y)}`
+    for (let i = R.length - 1; i >= 0; i--) d += `L${n(R[i][0])} ${n(R[i][1])}`
+    return d + 'Z'
+  })()
+
+  const LAKE = { cx: 1500, cy: 985, rx: 258, ry: 132 }
+  const lakeAt = (a, grow) => {
+    const wob = 1 + Math.sin(a * 3 + 0.7) * 0.09 + Math.sin(a * 5) * 0.05
+    return [LAKE.cx + Math.cos(a) * (LAKE.rx * wob + grow),
+            LAKE.cy + Math.sin(a) * (LAKE.ry * wob + grow)]
   }
-
-  /* --------------------------------------------------- the river
-     A real bank rather than a smear: a dark channel, a lighter
-     shallow inside it, and a hairline down each side. The centre
-     line is shared with everything that has to know where the water
-     is, so nothing can drift off it. */
-  const cx = (t) => 430 + Math.sin(t * 3.1) * 250 + t * 180
-  const ty = (y) => (y - h * 0.02) / (h * 1.02)
-  const riverAt = (y) => cx(ty(y))
-  const ribbon = (wide) => {
+  const lakeRing = (grow) => {
     let d = ''
-    const pts = []
-    for (let k = 0; k <= 28; k++) {
-      const t = k / 28
-      pts.push([cx(t), h * 0.02 + t * h * 1.02, wide * (0.72 + t * 0.5)])
-    }
-    d += `M${n(pts[0][0] - pts[0][2])} ${n(pts[0][1])}`
-    for (const [x, y, q] of pts) d += `L${n(x - q)} ${n(y)}`
-    for (let k = pts.length - 1; k >= 0; k--) {
-      const [x, y, q] = pts[k]; d += `L${n(x + q)} ${n(y)}`
+    for (let i = 0; i <= 46; i++) {
+      const [x, y] = lakeAt((i / 46) * Math.PI * 2, grow)
+      d += (i ? 'L' : 'M') + `${n(x)} ${n(y)}`
     }
     return d + 'Z'
   }
-  const bankLine = (side) => {
+  const lake = lakeRing(0)
+  /* an island, because an empty lake is a puddle */
+  const isle = (() => {
     let d = ''
-    for (let k = 0; k <= 28; k++) {
-      const t = k / 28
-      const q = 34 * (0.72 + t * 0.5)
-      d += (k ? 'L' : 'M') + `${n(cx(t) + side * q)} ${n(h * 0.02 + t * h * 1.02)}`
+    for (let i = 0; i <= 20; i++) {
+      const a = (i / 20) * Math.PI * 2
+      const r = 1 + Math.sin(a * 4 + 1.4) * 0.16
+      d += (i ? 'L' : 'M') + `${n(1556 + Math.cos(a) * 36 * r)} ${n(962 + Math.sin(a) * 20 * r)}`
+    }
+    return d + 'Z'
+  })()
+
+  /* THE BANK LINES. Parallel to the shore, three out, each fainter
+     and more broken than the last, which is how an engraver draws
+     the edge of water and the reason a map reads as water at all. */
+  for (let k = 1; k <= 3; k++) {
+    let d = ''
+    for (let i = 0; i <= 34; i++) {
+      const t = i / 34, [x, y] = riverAt(t), q = riverW(t) + k * 11
+      d += (i ? 'L' : 'M') + `${n(x - q)} ${n(y)}`
+    }
+    for (let i = 0; i <= 34; i++) {
+      const t = i / 34, [x, y] = riverAt(t), q = riverW(t) + k * 11
+      d += (i ? 'L' : 'M') + `${n(x + q)} ${n(y)}`
+    }
+    banks.push({ d: d + lakeRing(k * 12), k })
+  }
+
+  /* ---------------------------------------------------- the peaks
+     A PEAK IS A DRAWING. Two flanks with a shoulder in one of them,
+     so the silhouette is crooked the way a drawn one is; a fan of
+     hachures down the right; a snow chevron on the big ones. The
+     shade always falls the same way, because a map lit from two
+     directions reads as a mistake even to somebody who could not say
+     why. */
+  function peakGlyph(x, y, s) {
+    const half = s * 0.80
+    const sx = x + (rand() - 0.5) * s * 0.14
+    const body =
+      `M${n(x - half)} ${n(y)}L${n(x - half * 0.44)} ${n(y - s * 0.54)}` +
+      `L${n(sx)} ${n(y - s)}L${n(x + half)} ${n(y)}Z`
+    let hach = ''
+    const lines = 3 + Math.round(s / 13)
+    for (let i = 1; i <= lines; i++) {
+      /* squared so the strokes crowd toward the ridge, which is
+         where a real hachure is densest */
+      const t = Math.pow(i / (lines + 1), 0.78)
+      const px = sx + (x + half - sx) * t
+      const py = (y - s) + s * t
+      const len = s * 0.40 * (1 - t * 0.62)
+      hach += `M${n(px)} ${n(py)}L${n(px - len * 0.78)} ${n(py + len * 0.42)}`
+    }
+    let cap = ''
+    if (s > 40) {
+      cap = `M${n(sx - half * 0.34)} ${n(y - s * 0.58)}L${n(sx - half * 0.12)} ${n(y - s * 0.76)}` +
+            `L${n(sx + half * 0.02)} ${n(y - s * 0.64)}L${n(sx + half * 0.16)} ${n(y - s * 0.80)}`
+    }
+    peaks.push({ y, svg:
+      `<path fill="${RIDGE}" stroke="${LINE}" stroke-width="1.8" stroke-linejoin="round" d="${body}"/>` +
+      `<path fill="none" stroke="${LINE}" stroke-width="1.15" opacity=".62" stroke-linecap="round" d="${hach}"/>` +
+      (cap ? `<path fill="none" stroke="${LINE_HI}" stroke-width="1.7" opacity=".72" stroke-linecap="round" stroke-linejoin="round" d="${cap}"/>` : '')
+    })
+  }
+
+  /* A RANGE IS A ROW THAT OVERLAPS ITSELF. Peaks placed apart read
+     as a row of tents; peaks that overlap read as mountains. */
+  function range(x0, y0, x1, y1, count, big) {
+    for (let i = 0; i < count; i++) {
+      const t = i / (count - 1)
+      peakGlyph(
+        x0 + (x1 - x0) * t + (rand() - 0.5) * 48,
+        y0 + (y1 - y0) * t + (rand() - 0.5) * 34,
+        big * (0.55 + Math.pow(rand(), 1.6) * 0.8))
+    }
+  }
+
+  range(140, 300, 700, 195, 14, 60)      // the northern wall
+  range(1160, 235, 1620, 300, 11, 64)    // the eastern range
+  range(120, 640, 380, 900, 7, 42)       // a western spur
+  range(1520, 585, 1900, 720, 8, 46)     // the eastern foothills
+
+  /* --------------------------------------------------- the forest
+     Individual trees, in drifts, and NOT TOUCHING. The first pass
+     let them overlap and a wood came out as grey confetti: a
+     silhouette that shares an edge with its neighbour stops being a
+     tree and becomes texture. */
+  function tree(x, y, s) {
+    trees.push(
+      `M${n(x)} ${n(y - s)}L${n(x + s * 0.46)} ${n(y - s * 0.12)}` +
+      `L${n(x + s * 0.20)} ${n(y - s * 0.18)}L${n(x + s * 0.38)} ${n(y + s * 0.24)}` +
+      `L${n(x + s * 0.10)} ${n(y + s * 0.20)}L${n(x + s * 0.10)} ${n(y + s * 0.46)}` +
+      `L${n(x - s * 0.10)} ${n(y + s * 0.46)}L${n(x - s * 0.10)} ${n(y + s * 0.20)}` +
+      `L${n(x - s * 0.38)} ${n(y + s * 0.24)}L${n(x - s * 0.20)} ${n(y - s * 0.18)}` +
+      `L${n(x - s * 0.46)} ${n(y - s * 0.12)}Z`)
+  }
+  function wood(cx, cy, rx, ry, count) {
+    const placed = []
+    let guard = 0
+    while (placed.length < count && guard++ < count * 60) {
+      const a = rand() * Math.PI * 2, r = Math.sqrt(rand())
+      const x = cx + Math.cos(a) * rx * r, y = cy + Math.sin(a) * ry * r
+      const [rvx] = riverAt((y - 90) / 1180)
+      if (Math.abs(x - rvx) < riverW((y - 90) / 1180) + 46) continue
+      const s = 13 + rand() * 8
+      if (placed.some(p => Math.hypot(p[0] - x, p[1] - y) < (p[2] + s) * 0.54)) continue
+      placed.push([x, y, s])
+    }
+    /* back to front, so a tree in front reads in front */
+    placed.sort((a, b) => a[1] - b[1])
+    for (const [x, y, s] of placed) tree(x, y, s)
+  }
+  wood(430, 470, 210, 118, 96)
+  wood(1010, 335, 230, 92, 82)
+  wood(1730, 900, 200, 130, 86)
+  wood(770, 1075, 270, 112, 102)
+  wood(1200, 705, 150, 92, 46)
+
+  /* ------------------------------------------------ the townships
+     Tiny roofs inside a wall. The wall is what makes a scatter of
+     marks read as a PLACE: without it they are just more texture. */
+  const TOWNS = [
+    { x: 300, y: 800, r: 78, n: 22 },
+    { x: 690, y: 620, r: 62, n: 16 },
+    { x: 1010, y: 900, r: 92, n: 30 },
+    { x: 1330, y: 470, r: 70, n: 18 },
+    { x: 1620, y: 1090, r: 60, n: 14 },
+    { x: 520, y: 1020, r: 56, n: 13 },
+  ]
+  for (const T of TOWNS) {
+    const placed = []
+    let guard = 0
+    while (placed.length < T.n && guard++ < T.n * 40) {
+      const a = rand() * Math.PI * 2, r = Math.sqrt(rand()) * T.r * 0.8
+      const x = T.x + Math.cos(a) * r, y = T.y + Math.sin(a) * r * 0.8
+      if (placed.some(p => Math.hypot(p[0] - x, p[1] - y) < 17)) continue
+      placed.push([x, y])
+      const s = 6 + rand() * 4
+      roofs.push(
+        `M${n(x - s)} ${n(y + s * 0.7)}L${n(x - s)} ${n(y - s * 0.1)}` +
+        `L${n(x)} ${n(y - s * 0.95)}L${n(x + s)} ${n(y - s * 0.1)}` +
+        `L${n(x + s)} ${n(y + s * 0.7)}Z`)
+    }
+    let ring = ''
+    for (let k = 0; k <= 34; k++) {
+      const a = (k / 34) * Math.PI * 2
+      const rr = T.r * (1 + Math.sin(a * 4 + T.x) * 0.07)
+      ring += (k ? 'L' : 'M') + `${n(T.x + Math.cos(a) * rr)} ${n(T.y + Math.sin(a) * rr * 0.8)}`
+    }
+    walls.push(ring + 'Z')
+  }
+
+  /* ------------------------------------------------------ the roads
+     Dashed, and they run between townships and to the crossings. A
+     road that ignores the river is the fastest way to make a map
+     look generated. */
+  const CROSSINGS = [0.26, 0.62].map((t) => {
+    const [x, y] = riverAt(t); return { x, y, t }
+  })
+  const side = (p) => (p.x < riverAt((p.y - 90) / 1180)[0] ? -1 : 1)
+  const wobble = (a, b) => {
+    let d = `M${n(a.x)} ${n(a.y)}`
+    for (let i = 1; i <= 5; i++) {
+      const t = i / 5
+      d += `L${n(a.x + (b.x - a.x) * t + (rand() - 0.5) * 34)} ` +
+           `${n(a.y + (b.y - a.y) * t + (rand() - 0.5) * 34)}`
     }
     return d
   }
-
-  /* ------------------------------------------------- the bridges
-     TWO, and they are the reason the lanes go where they go. A road
-     network drawn first and a river drawn second cross each other
-     wherever they happen to, which is exactly what a map never
-     does. */
-  const BRIDGES = [0.30, 0.72].map((t) => ({
-    t, x: cx(t), y: h * 0.02 + t * h * 1.02, wide: 34 * (0.72 + t * 0.5),
-  }))
-  const bridges = BRIDGES.map((b) => {
-    /* SQUARE TO THE FLOW, not to the page. Drawn as a horizontal bar
-       it crossed a river running at sixty degrees, which reads as a
-       grey rectangle lying on top of the map rather than as a
-       crossing. The tangent comes from the same centre line the
-       water does, so the two can never disagree. */
-    const dt = 0.001
-    const dx = cx(b.t + dt) - cx(b.t - dt)
-    const dy = (h * 1.02) * dt * 2
-    const L = Math.hypot(dx, dy) || 1
-    const ux = -dy / L, uy = dx / L          // across the water
-    const vx = dx / L, vy = dy / L           // along it
-    const q = b.wide + 9, th = 4.2
-    const P = (a, c) => `${n(b.x + ux * a + vx * c)} ${n(b.y + uy * a + vy * c)}`
-    let d = `M${P(-q, -th)}L${P(q, -th)}L${P(q, th)}L${P(-q, th)}Z`
-    /* the planking, which is what says bridge and not culvert */
-    for (let k = 1; k < 6; k++) {
-      const a = -q + (q * 2) * (k / 6)
-      d += `M${P(a, -th)}L${P(a + 1.4, -th)}L${P(a + 1.4, th)}L${P(a, th)}Z`
+  for (let i = 0; i < TOWNS.length; i++) {
+    for (let j = i + 1; j < TOWNS.length; j++) {
+      const A = TOWNS[i], B = TOWNS[j]
+      if (Math.hypot(A.x - B.x, A.y - B.y) > 520) continue
+      if (side(A) === side(B)) { roads.push(wobble(A, B)); continue }
+      const c = CROSSINGS.reduce((best, k) =>
+        Math.hypot(A.x - k.x, A.y - k.y) + Math.hypot(B.x - k.x, B.y - k.y) <
+        Math.hypot(A.x - best.x, A.y - best.y) + Math.hypot(B.x - best.x, B.y - best.y) ? k : best)
+      roads.push(wobble(A, c) + wobble(c, B))
+    }
+  }
+  /* A BRIDGE IS TWO RAILS AND ITS TIES, not a filled bar. The bar
+     read as a smudge across the river at map scale. */
+  const bridges = CROSSINGS.map(c => {
+    const q = riverW(c.t) + 14
+    let d = `M${n(c.x - q)} ${n(c.y - 7)}L${n(c.x + q)} ${n(c.y - 7)}` +
+            `M${n(c.x - q)} ${n(c.y + 7)}L${n(c.x + q)} ${n(c.y + 7)}`
+    for (let i = 0; i <= 5; i++) {
+      const x = c.x - q + (2 * q) * (i / 5)
+      d += `M${n(x)} ${n(c.y - 7)}L${n(x)} ${n(c.y + 7)}`
     }
     return d
   }).join('')
 
-  /* ---------------------------------------------------- the town
-     Eight districts on the dry ground either side of the water.
-     Placed by hand rather than sampled, because a settlement's
-     shape is a decision: two banks, a cluster at each bridgehead,
-     and outliers thinning toward the high ground. */
-  const DISTRICTS = [
-    { x: 190, y: 700, r: 74, n: 44 }, { x: 355, y: 470, r: 62, n: 32 },
-    { x: 300, y: 235, r: 52, n: 22 }, { x: 640, y: 300, r: 58, n: 28 },
-    { x: 700, y: 700, r: 68, n: 36 }, { x: 1010, y: 470, r: 65, n: 34 },
-    { x: 1270, y: 300, r: 56, n: 26 }, { x: 1330, y: 730, r: 71, n: 40 },
-    /* three more, and they are placed where the plate READ as empty
-       rather than where a generator would have put them: the top
-       left shoulder, the far right shelf and the low middle. An
-       even scatter is not what a valley looks like, but neither is
-       a third of the frame with nothing on it. */
-    { x: 120, y: 380, r: 46, n: 18 }, { x: 1520, y: 460, r: 44, n: 17 },
-    { x: 980, y: 830, r: 54, n: 22 },
-  ]
-
-  const roofs = [], yards = []
-  for (const D of DISTRICTS) {
-    /* ONE ORIENTATION PER DISTRICT. Roofs at random angles read as
-       rubble; roofs agreeing with their neighbours read as streets,
-       and the agreement is the only thing doing that work. */
-    const ang = rand() * Math.PI
-    const ca = Math.cos(ang), sa = Math.sin(ang)
-    const placed = []
-    let guard = 0
-    while (placed.length < D.n && guard++ < D.n * 40) {
-      /* packed along the district axis, so blocks come out longer
-         than they are wide, the way a street frontage does */
-      const u = (rand() - 0.5) * D.r * 2
-      const v = (rand() - 0.5) * D.r * 1.15
-      const x = D.x + u * ca - v * sa
-      const y = D.y + u * sa + v * ca
-      if (Math.abs(x - riverAt(y)) < 58) continue
-      if (x < 40 || x > w - 40 || y < 60 || y > h - 40) continue
-      if (placed.some((p) => Math.hypot(p[0] - x, p[1] - y) < 13)) continue
-      placed.push([x, y])
-      /* SMALLER THAN THEY WANT TO BE. At fifteen units a roof is a
-         slab, and a block of slabs at one angle is a barcode: the
-         first pass drew exactly that. A building on a plan at this
-         scale is a mark, and the district is what you read. */
-      const rw = 6 + rand() * 7, rh = rw * (0.5 + rand() * 0.26)
-      /* AGREEING, NOT IDENTICAL. One angle for the whole district is
-         what makes a block read as streets, and one angle EXACTLY is
-         what makes it read as a lattice. A few degrees of slop per
-         building is the difference between a village and a circuit
-         board. */
-      const ja = ang + (rand() - 0.5) * 0.24
-      const jc = Math.cos(ja), js = Math.sin(ja)
-      roofs.push(
-        `M${n(x - rw * jc)} ${n(y - rw * js)}` +
-        `L${n(x - rh * js)} ${n(y + rh * jc)}` +
-        `L${n(x + rw * jc)} ${n(y + rw * js)}` +
-        `L${n(x + rh * js)} ${n(y - rh * jc)}Z`
-      )
+  /* ------------------------------------------------ the compass rose
+     Eight points, the cardinals long and the ordinals short, with
+     each point split light and dark the way every rose since the
+     portolan charts has been. Smaller than it was and moved clear of
+     the eastern range, which it had been sitting on top of. */
+  function rose(cx, cy, r) {
+    let light = '', dark = ''
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 2
+      const len = i % 2 ? r * 0.42 : r
+      const wid = i % 2 ? r * 0.08 : r * 0.12
+      const tx = cx + Math.cos(a) * len, ty = cy + Math.sin(a) * len
+      const lx = cx + Math.cos(a + Math.PI / 2) * wid, ly = cy + Math.sin(a + Math.PI / 2) * wid
+      const rx = cx + Math.cos(a - Math.PI / 2) * wid, ry = cy + Math.sin(a - Math.PI / 2) * wid
+      light += `M${n(cx)} ${n(cy)}L${n(lx)} ${n(ly)}L${n(tx)} ${n(ty)}Z`
+      dark += `M${n(cx)} ${n(cy)}L${n(tx)} ${n(ty)}L${n(rx)} ${n(ry)}Z`
     }
-    /* the yard wall around the block, drawn as an open ring so it
-       reads as an enclosure rather than as another building */
     let ring = ''
-    for (let k = 0; k <= 26; k++) {
-      const a = (k / 26) * Math.PI * 2
-      const rr = D.r * (1.04 + Math.sin(a * 3 + D.x) * 0.05)
-      ring += (k ? 'L' : 'M') + `${n(D.x + Math.cos(a) * rr)} ${n(D.y + Math.sin(a) * rr * 0.78)}`
+    for (const rr of [r * 1.18, r * 1.27]) {
+      ring += `M${n(cx - rr)} ${n(cy)}A${n(rr)} ${n(rr)} 0 1 0 ${n(cx + rr)} ${n(cy)}` +
+              `A${n(rr)} ${n(rr)} 0 1 0 ${n(cx - rr)} ${n(cy)}`
     }
-    yards.push(ring)
+    return { light, dark, ring }
   }
+  const R = rose(1852, 232, 54)
 
-  /* --------------------------------------------------- the lanes
-     Each district joins its nearest neighbour, and anything on the
-     far bank routes through a bridge. That single rule is what
-     turns eight blobs into a place somebody could walk. */
-  const lanes = []
-  const side = (p) => (p.x < riverAt(p.y) ? -1 : 1)
-  const path = (pts) => {
-    let d = `M${n(pts[0][0])} ${n(pts[0][1])}`
-    for (let k = 1; k < pts.length; k++) {
-      const [x0, y0] = pts[k - 1], [x1, y1] = pts[k]
-      const mx = (x0 + x1) / 2 + (rand() - 0.5) * 40
-      const my = (y0 + y1) / 2 + (rand() - 0.5) * 40
-      d += `Q${n(mx)} ${n(my)} ${n(x1)} ${n(y1)}`
-    }
-    return d
-  }
-  for (let i = 0; i < DISTRICTS.length; i++) {
-    for (let j = i + 1; j < DISTRICTS.length; j++) {
-      const A = DISTRICTS[i], B = DISTRICTS[j]
-      if (Math.hypot(A.x - B.x, A.y - B.y) > 340) continue
-      if (side(A) === side(B)) { lanes.push(path([[A.x, A.y], [B.x, B.y]])); continue }
-      const br = BRIDGES.reduce((best, b) =>
-        Math.hypot(A.x - b.x, A.y - b.y) + Math.hypot(B.x - b.x, B.y - b.y) <
-        Math.hypot(A.x - best.x, A.y - best.y) + Math.hypot(B.x - best.x, B.y - best.y) ? b : best)
-      lanes.push(path([[A.x, A.y], [br.x, br.y], [B.x, B.y]]))
-    }
-  }
+  /* --------------------------------------------------- the border
+     A double rule with the corners turned, which is the cheapest
+     possible way to say the thing you are looking at is a document
+     rather than a picture. */
+  const m1 = 22, m2 = 34
+  const frame = [m1, m2].map(m =>
+    `M${m} ${m}L${w - m} ${m}L${w - m} ${h - m}L${m} ${h - m}Z`).join('')
+  const corners = [[m2, m2, 1, 1], [w - m2, m2, -1, 1], [m2, h - m2, 1, -1], [w - m2, h - m2, -1, -1]]
+    .map(([x, y, sx, sy]) =>
+      `M${n(x + sx * 46)} ${n(y)}L${n(x)} ${n(y)}L${n(x)} ${n(y + sy * 46)}` +
+      `M${n(x + sx * 16)} ${n(y + sy * 16)}L${n(x + sx * 30)} ${n(y + sy * 16)}` +
+      `M${n(x + sx * 16)} ${n(y + sy * 16)}L${n(x + sx * 16)} ${n(y + sy * 30)}`).join('')
 
-  /* -------------------------------------------------- the fields
-     Hatched patches, and each patch takes the CONTOUR rather than a
-     random angle: terraced ground follows the slope because water
-     does, and parallel lines that ignore the hillside are the tell
-     that a map was generated rather than surveyed. */
-  const fields = []
-  for (let i = 0; i < 26; i++) {
-    const fx = 70 + rand() * (w - 140), fy = 120 + rand() * (h - 200)
-    if (Math.abs(fx - riverAt(fy)) < 80) continue
-    if (DISTRICTS.some((D) => Math.hypot(D.x - fx, D.y - fy) < D.r * 1.3)) continue
-    const fw = 34 + rand() * 52, fh = 22 + rand() * 34
-    /* the local slope, read off the contour the patch sits on */
-    const slope = (contourAt(2, fx + 30) - contourAt(2, fx - 30)) / 60
-    const rows = 2 + Math.floor(rand() * 3)
-    for (let k = 0; k < rows; k++) {
-      const yy = fy - fh / 2 + (fh * (k + 0.5)) / rows
-      fields.push(
-        `M${n(fx - fw / 2)} ${n(yy - slope * fw / 2)}` +
-        `L${n(fx + fw / 2)} ${n(yy + slope * fw / 2)}` +
-        `L${n(fx + fw / 2)} ${n(yy + slope * fw / 2 + 1.8)}` +
-        `L${n(fx - fw / 2)} ${n(yy - slope * fw / 2 + 1.8)}Z`
-      )
-    }
-  }
+  /* -------------------------------------------------- the lettering
+     A SERIF STACK WITH NO WEBFONT IN IT. This file is fetched as an
+     image, and an image is its own document with no access to the
+     page's @font-face rules: name the site's display face here and
+     every one of these falls back to the browser default, in a
+     different size, and the map is suddenly set in Times.
 
-  /* -------------------------------------------------- the groves
-     Cherry, since that is what the whole site is standing in. Small
-     stipple clusters, kept off the roofs and out of the water. */
-  const groves = []
-  for (let i = 0; i < 22; i++) {
-    const gx = 60 + rand() * (w - 120), gy = 90 + rand() * (h - 150)
-    if (Math.abs(gx - riverAt(gy)) < 54) continue
-    if (DISTRICTS.some((D) => Math.hypot(D.x - gx, D.y - gy) < D.r)) continue
-    for (let k = 0; k < 5 + Math.floor(rand() * 7); k++) {
-      const a = rand() * 6.3, rr = rand() * 26
-      const tx = gx + Math.cos(a) * rr, tyy = gy + Math.sin(a) * rr * 0.8
-      const q = 2.6 + rand() * 2
-      groves.push(`M${n(tx - q)} ${n(tyy)}A${n(q)} ${n(q)} 0 1 0 ${n(tx + q)} ${n(tyy)}` +
-        `A${n(q)} ${n(q)} 0 1 0 ${n(tx - q)} ${n(tyy)}Z`)
-    }
-  }
+     The names are placed in the gaps between the ten pins, which sit
+     at known percentages (js/app.js, ROOMS). A label under a pin is
+     a label nobody can read. */
+  const FONT = `Georgia,'Iowan Old Style','Palatino Linotype',serif`
+  const label = (x, y, size, text, rot) =>
+    `<text x="${x}" y="${y}" font-family="${FONT}" font-style="italic" ` +
+    `font-size="${size}" letter-spacing="${(size * 0.22).toFixed(1)}" ` +
+    `fill="${LINE_HI}" opacity=".5" text-anchor="middle"` +
+    (rot ? ` transform="rotate(${rot} ${x} ${y})"` : '') + `>${text}</text>`
 
+  const lettering =
+    label(400, 132, 30, 'The Northern Wall') +
+    label(150, 560, 26, 'Greensleep', 0) +
+    label(1560, 430, 26, 'The Eastern Reach') +
+    label(1500, 1155, 26, 'The Still Water') +
+    label(905, 505, 24, 'Lantern Water', 74)
+
+  /* THE CARTOUCHE, bottom left, under the one pin whose label ends
+     highest on that side. Two rules, a name and a scale bar: the
+     three marks a chart carries to say it is a chart. */
+  const cx0 = 78, cy0 = 1084, cw = 400, ch = 104
+  const cartouche =
+    `<path fill="${LAND}" fill-opacity=".72" stroke="${LINE_HI}" stroke-width="1.3" ` +
+    `stroke-opacity=".45" d="M${cx0} ${cy0}L${cx0 + cw} ${cy0}L${cx0 + cw} ${cy0 + ch}L${cx0} ${cy0 + ch}Z"/>` +
+    `<path fill="none" stroke="${LINE_HI}" stroke-width=".9" stroke-opacity=".3" ` +
+    `d="M${cx0 + 8} ${cy0 + 8}L${cx0 + cw - 8} ${cy0 + 8}L${cx0 + cw - 8} ${cy0 + ch - 8}L${cx0 + 8} ${cy0 + ch - 8}Z"/>` +
+    `<text x="${cx0 + cw / 2}" y="${cy0 + 44}" font-family="${FONT}" font-size="27" ` +
+    `letter-spacing="5.4" fill="${LINE_HI}" opacity=".72" text-anchor="middle">THE LANTERN QUARTER</text>` +
+    `<path fill="none" stroke="${LINE_HI}" stroke-width="1.4" stroke-opacity=".5" ` +
+    `d="M${cx0 + 118} ${cy0 + 72}L${cx0 + 282} ${cy0 + 72}` +
+    `M${cx0 + 118} ${cy0 + 66}L${cx0 + 118} ${cy0 + 78}` +
+    `M${cx0 + 200} ${cy0 + 68}L${cx0 + 200} ${cy0 + 76}` +
+    `M${cx0 + 282} ${cy0 + 66}L${cx0 + 282} ${cy0 + 78}"/>` +
+    `<text x="${cx0 + cw / 2}" y="${cy0 + 93}" font-family="${FONT}" font-style="italic" ` +
+    `font-size="16" letter-spacing="1.6" fill="${LINE_HI}" opacity=".5" text-anchor="middle">two days on foot</text>`
+
+  const g = (list) => list.join('')
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
-  <rect width="${w}" height="${h}" fill="#101a24"/>
-  ${bands.join('')}
-  ${crests.join('')}
-  <path fill="#2e4b60" opacity=".26" d="${fields.join('')}"/>
-  <path fill="#1b3346" opacity=".55" d="${groves.join('')}"/>
-  <path fill="none" stroke="#33526a" stroke-width="1.2" stroke-dasharray="7 6" opacity=".34" d="${yards.join('')}"/>
-  <path fill="none" stroke="#4c6d85" stroke-width="1.8" stroke-linecap="round" opacity=".56" d="${lanes.join('')}"/>
-  <path fill="#16303f" d="${ribbon(34)}"/>
-  <path fill="#1e4358" opacity=".8" d="${ribbon(20)}"/>
-  <path fill="none" stroke="#3d6076" stroke-width="1.2" opacity=".5" d="${bankLine(-1) + bankLine(1)}"/>
-  <path fill="#3f5f75" opacity=".6" d="${bridges}"/>
-  <path fill="#294459" opacity=".82" d="${roofs.join('')}"/>
-  <path fill="none" stroke="#0d1922" stroke-width=".7" opacity=".5" d="${roofs.join('')}"/>
+  <defs>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${LAND_HI}"/>
+      <stop offset=".62" stop-color="${LAND}"/>
+      <stop offset="1" stop-color="${LAND}"/>
+    </linearGradient>
+    <radialGradient id="vign" cx=".5" cy=".46" r=".78">
+      <stop offset=".55" stop-color="${INK}" stop-opacity="0"/>
+      <stop offset="1" stop-color="${INK}" stop-opacity=".55"/>
+    </radialGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="url(#ground)"/>
+  <path fill="${WATER}" stroke="${LINE_HI}" stroke-width="1.2" stroke-opacity=".38" d="${riverBody}${lake}"/>
+  <path fill="${LAND}" stroke="${LINE}" stroke-width="1.1" stroke-opacity=".5" d="${isle}"/>
+  ${banks.map(b => `<path fill="none" stroke="${WATER_HI}" stroke-width="1.1" ` +
+    `opacity="${(0.5 - b.k * 0.12).toFixed(2)}" stroke-dasharray="${18 - b.k * 4} ${4 + b.k * 5}" d="${b.d}"/>`).join('\n  ')}
+  <path fill="none" stroke="${LINE}" stroke-width="2" stroke-linecap="round"
+        stroke-dasharray="9 8" opacity=".5" d="${g(roads)}"/>
+  <path fill="none" stroke="${LINE_HI}" stroke-width="1.3" opacity=".6" d="${bridges}"/>
+  ${peaks.sort((a, b) => a.y - b.y).map(p => p.svg).join('\n  ')}
+  <path fill="${LEAF}" stroke="${LINE}" stroke-width="1.15" stroke-opacity=".78"
+        stroke-linejoin="round" d="${g(trees)}"/>
+  <path fill="none" stroke="${LINE}" stroke-width="1.2" stroke-dasharray="5 6" opacity=".45" d="${g(walls)}"/>
+  <path fill="${RIDGE}" stroke="${LINE_HI}" stroke-width=".9" stroke-opacity=".7" d="${g(roofs)}"/>
+  <path fill="${LINE_HI}" opacity=".34" d="${R.light}"/>
+  <path fill="${INK}" opacity=".6" d="${R.dark}"/>
+  <path fill="none" stroke="${LINE_HI}" stroke-width="1.3" opacity=".4" d="${R.ring}"/>
+  <rect width="${w}" height="${h}" fill="url(#vign)"/>
+  ${lettering}
+  ${cartouche}
+  <path fill="none" stroke="${LINE_HI}" stroke-width="1.4" opacity=".32" d="${frame}"/>
+  <path fill="none" stroke="${LINE_HI}" stroke-width="1.4" opacity=".44" stroke-linecap="round" d="${corners}"/>
 </svg>\n`
 }
 

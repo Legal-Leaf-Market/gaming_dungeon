@@ -1041,10 +1041,27 @@ a.g-card:active{ transform:translateY(-1px) }
    ============================================================ */
 .plan{
   position:relative;
-  aspect-ratio:2/1;
+  /* BIGGER, AND OUT OF THE READING RAIL. "That map's way too small
+     and dinky and not fun enough."
+
+     It was 2:1 inside the 1180px rail, which is a 590px-tall
+     diagram sitting politely in a column of text. A map you are
+     supposed to want to walk around has to be the biggest thing on
+     the page, so it breaks the rail and runs nearly edge to edge,
+     and it is taller in proportion so there is somewhere to go in
+     it rather than a strip to scan.
+
+     100vw with a margin pulled from the rail rather than
+     `width:100vw`, because 100vw includes the scrollbar and would
+     add a horizontal scroll of its own. */
+  width:calc(100vw - 48px);
+  max-width:1560px;
+  margin-inline:calc(50% - min(50vw - 24px, 780px));
+  aspect-ratio:16/10;
   border-radius:var(--r-lg);
   border:1px solid var(--line);
   background:url(/assets/quarter.svg) center/cover no-repeat, var(--void);
+  border-color:var(--line-2);
   box-shadow:var(--lift-2);
   overflow:hidden;
   /* the plan is a dark plate and the page is dark: a soft inner edge

@@ -51,26 +51,47 @@
      catching more or less light. --night deliberately matches the
      near band of the city art, so the skyline dissolves into the
      page instead of ending at a visible edge. */
-  --void:#04070d;
-  --night:#080d16;
-  --surface:#0e1622;
-  --surface-2:#131e2c;
-  --surface-3:#1a2635;
+  /* SAMPLED OFF THE HERO PAINTING, not chosen. The owner's brief
+     after the approved art landed was to design the whole site
+     around it: "that's the city we're looking at, those are the
+     cherry blossoms, everything else is accents."
+
+     So these five are the painting's own village, read out of it
+     rather than invented: quantising the render gives #1b181d,
+     #23212a, #2a2c38 and #453036 as four of its fourteen dominant
+     colours, and they are the roofs, the shadowed lanes and the
+     wood. The old ground was #04070d to #1a2635, a cool blue-black
+     that belonged to the vector night city it was drawn for. Under
+     a warm dusk painting it read as a different site below the
+     fold, which is exactly what it was.
+
+     Still five steps, still close together: a dark interface goes
+     muddy when its surfaces are far apart. --night still matches
+     the bottom of the art so the picture dissolves into the page
+     rather than ending at an edge. */
+  --void:#12100f;
+  --night:#1a181d;
+  --surface:#23212a;
+  --surface-2:#2a2c38;
+  --surface-3:#343446;
 
   /* Hairlines. Light-on-dark, never a darker line: a dark border on
      a dark surface reads as a gap, and a light one reads as an edge
      catching the sky. That difference is most of what separates a
      lit interface from a flat one. */
-  --line:rgba(146,180,214,.13);
-  --line-2:rgba(146,180,214,.24);
-  --line-3:rgba(146,180,214,.40);
+  /* Warmed to match. A blue hairline on a warm ground reads as a
+     seam between two materials rather than as an edge catching the
+     light, and every panel on the site is drawn with one. */
+  --line:rgba(226,196,186,.14);
+  --line-2:rgba(226,196,186,.26);
+  --line-3:rgba(226,196,186,.42);
 
   /* --- text ------------------------------------------------
      Not white. #e9eef6 is a hair cool and a hair down from pure,
      which stops long copy vibrating on a dark ground. */
-  --text:#e9eef6;
-  --text-dim:#9dafc4;
-  --text-faint:#65788e;
+  --text:#f4ece6;
+  --text-dim:#c2aca6;
+  --text-faint:#8a7477;
 
   /* --- the light -------------------------------------------
      Two sources and they mean different things, which is the whole
@@ -80,14 +101,34 @@
        LANTERN is the world. Money, warmth, the city's own light.
      A jade price or an amber button is a category error and looks
      like one. */
-  --jade:#7fdcb8;
-  --jade-lit:#a5ecd0;
-  --jade-deep:#2f8f6d;
-  --jade-rgb:127,220,184;
+  /* JADE IS THE PAINTING'S OWN BUTTON. #5da38b is what the mint CTA
+     measures in the render, so the interface green is now the green
+     that is actually in the picture rather than one beside it. The
+     lit and deep steps are that hue opened and closed, not a
+     separate ramp.
 
-  --lantern:#ffb86b;
-  --lantern-hot:#ffe0ac;
-  --blossom:#e88ab0;
+     LANTERN IS THE PAINTING'S OWN WINDOWS AND SUN: #fabf8e is the
+     gold of the sky beside the sun, #fbf5eb its core. Both were
+     already close; they are exact now.
+
+     BLOSSOM IS NEW AND IT IS LOAD-BEARING. The old palette had two
+     light sources, us and the world. The painting has three, and
+     the third one is most of its surface area: rose. It is a real
+     token now rather than a decoration, because it is what the
+     whole page is made of. */
+  --jade:#7fd0b0;
+  --jade-lit:#a8e6c9;
+  --jade-deep:#5da38b;
+  --jade-rgb:127,208,176;
+
+  --lantern:#fabf8e;
+  --lantern-hot:#fbf5eb;
+
+  --blossom:#c6968e;
+  --blossom-lit:#f2c9b1;
+  --blossom-deep:#7f4c4f;
+  --blossom-rgb:198,150,142;
+  --bough:#453036;
 
   /* --- the twelve major realms ------------------------------
      Realms.luau, unchanged: rooms fly realms and the mapping in
