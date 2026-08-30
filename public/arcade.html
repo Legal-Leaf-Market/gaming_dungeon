@@ -91,8 +91,8 @@ a{color:inherit;text-decoration:none}
 /* the same directional wash the index hero uses, for the same reason:
    copy over lit windows loses contrast in motion, not in a screenshot */
 .ar-hero::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:linear-gradient(100deg,rgba(4,8,14,.76) 0%,rgba(4,8,14,.52) 24%,
-    rgba(4,8,14,.2) 50%,rgba(4,8,14,0) 70%);
+  background:linear-gradient(100deg,rgba(4,8,14,.8) 0%,rgba(4,8,14,.62) 26%,
+    rgba(4,8,14,.34) 52%,rgba(4,8,14,0) 78%);
   /* THE WASH HAS TO END AT NOTHING, NOT AT THE ELEMENT'S EDGE. The
      gradient runs across, so at the hero's bottom the left of it was
      still at .76 alpha and simply stopped: a hard horizontal line all
@@ -128,11 +128,23 @@ a{color:inherit;text-decoration:none}
 .ar-lede,.hub-sec .lede{
   color:var(--text-dim);font-size:16px;line-height:1.68;max-width:62ch;margin:0;
 }
-.ar-hero .ar-lede{color:#c6d4e2;max-width:56ch;text-shadow:0 1px 14px rgba(0,0,0,.7)}
+/* Light enough to read off blossom. #c6d4e2 was chosen against the
+   old, thinner canopy; the plates behind this are opaque now and
+   carry pale flowers right across the column. */
+.ar-hero .ar-lede{color:#e2ebf3;max-width:56ch;
+  text-shadow:0 1px 3px rgba(8,14,22,.8), 0 1px 18px rgba(8,14,22,.75)}
+.ar-top h1{text-shadow:0 2px 22px rgba(8,14,22,.7), 0 2px 5px rgba(8,14,22,.55)}
 .hub-sec .lede{margin-bottom:26px}
 
 /* ---- the wall ------------------------------------------------------------ */
-.ar-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:var(--gap)}
+/* auto-FIT, not auto-fill. With two cabinets on a 1180px rail
+   auto-fill reserves five tracks and leaves three of them empty, so
+   the wall reads as a shelf someone has taken most of the stock off.
+   auto-fit collapses the empty tracks and the two that exist share
+   the row. The max stops two cabinets becoming two billboards. */
+.ar-wall{display:grid;gap:var(--gap);
+  grid-template-columns:repeat(auto-fit,minmax(236px,1fr));}
+@media (min-width:900px){ .ar-wall{ grid-template-columns:repeat(auto-fit,minmax(236px,320px)) } }
 
 /* A CABINET IS A DOOR. Same surface, same hairline, same lift and the same
    radius as .door in app.css, because the arcade's cabinets and the map's
@@ -153,8 +165,21 @@ a{color:inherit;text-decoration:none}
 .ar-cab:active{transform:translateY(-1px)}
 .ar-cab[disabled]{cursor:default;opacity:.55;transform:none;box-shadow:var(--lift-1)}
 
+/* THE SCREEN IS A SCREEN. It was a flat 4:3 rectangle with one
+   letter in the middle, which is a placeholder rather than a
+   cabinet. Three cheap things make it read as glass: scanlines, a
+   corner vignette because a CRT is brightest in the middle, and a
+   phosphor glow behind whatever is on it. All three are gradients on
+   one element, so an empty cabinet costs nothing extra to draw. */
 .ar-screen{position:relative;aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;
-  background:linear-gradient(155deg,var(--surface-3),var(--void))}
+  background:
+    radial-gradient(120% 110% at 50% 46%,
+      rgba(var(--jade-rgb),.09) 0%, transparent 62%),
+    repeating-linear-gradient(180deg,
+      rgba(255,255,255,.028) 0 1px, transparent 1px 3px),
+    radial-gradient(140% 120% at 50% 50%,
+      transparent 46%, rgba(2,5,9,.5) 100%),
+    linear-gradient(155deg,var(--surface-3),var(--void))}
 .ar-screen img{width:100%;height:100%;object-fit:cover;opacity:.78}
 .ar-screen .ar-glyph{font-family:var(--display);font-style:italic;font-size:30px;
   color:var(--jade);opacity:.42}

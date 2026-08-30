@@ -106,8 +106,16 @@
   .ar-cab:hover .ar-screen img{
     filter:grayscale(1) contrast(1.5) brightness(1.12);
   }
+  /* TRANSPARENT, NOT PAPER, and the difference is a missing line.
+     A descendant's background paints ABOVE its parent's border, and
+     border-image-width is 6px against a 1px border, so five of those
+     pixels sit over the padding box. The screen is the first child
+     and reaches the card's top edge, so filling it with paper
+     painted out the top of the brush frame: three sides drawn and
+     the fourth gone. Letting the card's own paper show through gives
+     the same surface, with its grain, and leaves the frame alone. */
   .g-card:hover .g-shot,.ar-cab:hover .ar-screen{
-    background:var(--ink-paper);
+    background:transparent;
   }
   /* The cabinet's own furniture: the placeholder initial, the slot
      number and the SOON badge each set their own colour, so each
