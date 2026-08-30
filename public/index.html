@@ -460,38 +460,57 @@
         <strong>Kawaii Katz</strong>
         <span>The little sister. Kawaii, gifts, kid-safe. Everything here that
         is cute rather than loud lives over there.</span>
+        <em class="sis-host">kawaiikatz.com</em>
       </a>
       <a class="sis" href="https://nicotiamarket.com" rel="noopener" style="--i:1">
         <strong>Nicotia Market</strong>
         <span>Pouches and vapour, priced by the unit. 21+.</span>
+        <em class="sis-host">nicotiamarket.com</em>
       </a>
       <a class="sis" href="https://herballeafmarket.com" rel="noopener" style="--i:2">
         <strong>Herbal Leaf Market</strong>
         <span>CBD, herbal smokes, tea and botanicals. 21+.</span>
+        <em class="sis-host">herballeafmarket.com</em>
       </a>
     </div>
   </section>
 </main>
 
+<!-- THE FOOTER CARRIES THE SAME WORDS IT ALWAYS DID. They are the
+     disclosure and they are checked by tests; the only thing that
+     changed is that they now have a shape to sit in. One column of
+     prose against a rail of links reads as a finished page, where a
+     paragraph alone at the top left of an empty band read as one
+     that had been abandoned. -->
 <footer class="foot">
-  <p>
-    Verda Studio is an affiliate storefront. We never take an order: every
-    checkout is a hand-off to the shop's own site. Some of those links pay us
-    and <a href="#" id="disclosureLink">many currently do not</a>.
-    <a href="/disclosure">The whole story is here</a>.
-  </p>
-  <p class="fine">
-    <a href="/disclosure">Affiliate disclosure</a> &middot;
-    <a href="/privacy">Privacy</a> &middot;
-    <a href="/terms">Terms</a>
-  </p>
-  <p class="fine" id="disclosure" hidden>
-    Roughly half the shops registered here have a live affiliate code and
-    roughly half do not. The ones that do not are listed anyway, because the
-    brief was to build the right site rather than the site we happen to be
-    approved for. You are not paying either way; the price at the shop is the
-    price.
-  </p>
+  <div class="foot-in">
+    <div class="foot-say">
+      <span class="brand-mark foot-mark" aria-hidden="true"></span>
+      <p>
+        Verda Studio is an affiliate storefront. We never take an order: every
+        checkout is a hand-off to the shop's own site. Some of those links pay us
+        and <a href="#" id="disclosureLink">many currently do not</a>.
+        <a href="/disclosure">The whole story is here</a>.
+      </p>
+      <p class="fine" id="disclosure" hidden>
+        Roughly half the shops registered here have a live affiliate code and
+        roughly half do not. The ones that do not are listed anyway, because the
+        brief was to build the right site rather than the site we happen to be
+        approved for. You are not paying either way; the price at the shop is the
+        price.
+      </p>
+    </div>
+    <nav class="foot-links" aria-label="Site information">
+      <a href="/disclosure">Affiliate disclosure</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <!-- NO ARCADE LINK HERE. The header already carries one, and
+           arcade.html is deliberately unadvertised while it waits on
+           a game author's sign-off (see the note at the top of that
+           file). A second link is a decision about that, not a
+           layout choice, so it is not made here. -->
+    </nav>
+  </div>
 </footer>
 
 </div><!-- /.ground -->

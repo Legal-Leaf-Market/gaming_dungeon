@@ -113,9 +113,17 @@ export default async function handler(req, res) {
       ok: true,
       cabinets: [],
       waiting: waiting.map(c => ({ key: c.key, name: c.name, ours: !!c.ours })),
-      why: 'No cabinet has a place id yet. Paste each game\'s id into api/_games.js — it is the ' +
-           'number in roblox.com/games/<PLACE ID>/<name>. Nothing is guessed here on purpose: an ' +
-           'invented id resolves to a stranger\'s game under our recommendation.',
+      /* WRITTEN FOR THE VISITOR, because the page prints it. This
+         string used to be the instruction for filling the shelf in:
+         the file to paste into, the shape of the URL to read the id
+         out of. All true, all useful, and all of it appeared inside
+         a panel on a public page under the words "No cabinets yet".
+         The person who needs those directions is standing in
+         api/_games.js, whose header carries them; the person reading
+         this is standing in the arcade. */
+      why: 'The shelf is not stocked yet. Nothing here is guessed: a made-up link ' +
+           'would send you to a stranger\'s game under our recommendation, so the ' +
+           'shelf stays empty until each one is checked.',
     })
   }
 

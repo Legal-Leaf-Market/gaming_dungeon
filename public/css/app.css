@@ -264,6 +264,30 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   -webkit-mask-image:linear-gradient(180deg, #000 62%, transparent 98%);
   mask-image:linear-gradient(180deg, #000 62%, transparent 98%);
 }
+
+/* NARROW SCREENS NEED A DIFFERENT SCRIM, because they are a
+   different picture. On a desktop the copy is a column down the left
+   and the radial is anchored to the bottom-left corner, so the two
+   line up by construction. On a phone the copy is the full width and
+   runs up the middle of the frame, where that radial has already
+   fallen away to nothing, and the lede was left sitting on the pale
+   band of the sunset in light grey. The text-shadow was carrying it
+   alone, which is a thing text-shadow should never be asked to do.
+
+   A vertical weighting, not a stronger radial: what has to darken is
+   the middle of the frame at every x, and pushing the radial harder
+   would only pile more shade into a corner that already has it. */
+@media (max-width:760px){
+  .ink-hero::before{
+    background:
+      radial-gradient(140% 90% at -10% 108%,
+        rgba(20,34,48,.62) 0%, rgba(20,34,48,.34) 44%, transparent 74%),
+      linear-gradient(180deg,
+        transparent 6%, rgba(14,25,37,.38) 32%,
+        rgba(14,25,37,.44) 70%, transparent 100%);
+  }
+}
+
 /* the inner rail, so the copy lines up with everything in main */
 .hero-in{
   position:relative; z-index:2; width:100%;
@@ -839,12 +863,31 @@ a.g-card:active{ transform:translateY(-1px) }
 .sis strong{ font-family:var(--sans); font-weight:600; font-size:15.5px; color:var(--text) }
 .sis span{ color:var(--text-dim); font-size:14.5px; line-height:1.55 }
 /* an arrow that only exists on approach */
+/* THE ARROW IS ALWAYS THERE. It appeared on hover, which means on a
+   touch screen it never appeared at all, and on a desktop it was
+   telling you something you had already worked out by pointing at
+   the card. What it is for is saying, before you commit, that this
+   one leaves the site. */
 .sis::after{
-  content:'\2192'; position:absolute; top:18px; right:20px;
-  color:var(--jade); opacity:0; transform:translateX(-5px);
-  transition:opacity var(--fast), transform var(--fast);
+  content:'\2192'; position:absolute; top:19px; right:20px;
+  color:var(--text-faint); opacity:.75; transform:translateX(0);
+  transition:color var(--fast), transform var(--fast), opacity var(--fast);
 }
-.sis:hover::after{ opacity:1; transform:translateX(0) }
+.sis:hover::after{ color:var(--jade); opacity:1; transform:translateX(3px) }
+
+/* The host, so a card that takes you off the site says where to.
+   Pushed to the bottom by margin-top:auto, which is what evens out
+   three cards whose blurbs are one, two and three lines long: the
+   rule lands on the same baseline in all three instead of leaving
+   two of them with a hole under the text. */
+.sis-host{
+  margin-top:auto; padding-top:12px;
+  font-family:var(--sans); font-style:normal; font-weight:600;
+  font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--text-faint);
+  border-top:1px solid var(--line);
+}
+.sis:hover .sis-host{ color:var(--text-dim) }
 
 /* ------------------------------------------------------------
    FOOTER
@@ -859,7 +902,26 @@ a.g-card:active{ transform:translateY(-1px) }
   content:''; position:absolute; top:0; left:var(--pad); right:var(--pad); height:1px;
   background:linear-gradient(90deg, transparent, var(--line-2) 22%, var(--line-2) 78%, transparent);
 }
-.foot p{ margin:0 0 8px; max-width:74ch }
+/* Prose against a rail of links. On a narrow screen the rail drops
+   under the prose and goes horizontal, because a single column of
+   four links stacked down a phone is most of a screen for nothing. */
+.foot-in{
+  display:grid; gap:var(--gap) 56px;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:start;
+}
+.foot-say{ position:relative; padding-left:44px }
+.foot-mark{
+  position:absolute; left:0; top:2px;
+  width:28px; height:28px; opacity:.5;
+}
+.foot-links{ display:flex; flex-direction:column; gap:9px; text-align:right }
+.foot-links a{ font-size:13px }
+@media (max-width:720px){
+  .foot-in{ grid-template-columns:1fr }
+  .foot-links{ flex-direction:row; flex-wrap:wrap; gap:8px 18px; text-align:left }
+}
+.foot p{ margin:0 0 8px; max-width:66ch }
 .foot a{ color:var(--text-dim); border-bottom:1px solid transparent; transition:color var(--fast), border-color var(--fast) }
 .foot a:hover{ color:var(--jade); border-bottom-color:rgba(var(--jade-rgb),.5) }
 .fine{ margin-top:12px; font-size:12.5px }

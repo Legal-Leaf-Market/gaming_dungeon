@@ -119,14 +119,14 @@
       listed: false,
       note: "Not installed yet: drop the Godot web export into public/arcade/drowned-signal/ (see DROP_EXPORT_HERE.txt there) and set embed to \"/arcade/drowned-signal/\".",
       controls: [
-        "WASD / Arrows — steer",
-        "Shift — turbo (fast, loud, empties the meter)",
-        "E — cast, sell, tie up at the dock",
-        "Space — set the hook",
-        "F — lantern",
-        "Q / R — tune radio",
-        "T — radio on/off",
-        "Esc — pause",
+        "WASD / Arrows: steer",
+        "Shift: turbo (fast, loud, empties the meter)",
+        "E: cast, sell, tie up at the dock",
+        "Space: set the hook",
+        "F: lantern",
+        "Q / R: tune radio",
+        "T: radio on/off",
+        "Esc: pause",
       ],
     },
     {
@@ -142,9 +142,9 @@
       /* PLACEHOLDER, SAYS THE CATALOG IT CAME FROM: "confirm final desktop
          keybinds from the Starlane project" before this game goes listed. */
       controls: [
-        "WASD / Arrows — fly",
-        "Mouse — menus, map & docking",
-        "Touch — fully supported on mobile",
+        "WASD / Arrows: fly",
+        "Mouse: menus, map and docking",
+        "Touch: fully supported on mobile",
       ],
     },
   ];

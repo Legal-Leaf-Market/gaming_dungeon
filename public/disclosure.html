@@ -38,7 +38,15 @@
      old CRT theme and this interface is brush and woodblock. -->
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Merriweather:wght@700&display=swap" rel="stylesheet"/>
 <style>
-  .doc{max-width:68ch;margin:0 auto;padding:0 18px 80px}
+  /* ON THE SAME RAIL AS EVERY OTHER PAGE. This was a 68ch column
+     centred in the window, which is a fine measure for reading and
+     the wrong place for it here: the header sits on the site's
+     1180px rail at the far left and the prose started three hundred
+     pixels inboard of it, so the two read as misaligned rather than
+     as a reading column. The measure is kept; it is just hung off
+     the rail the rest of the site uses. */
+  .doc{max-width:var(--page);margin:0 auto;padding:0 var(--pad) 80px}
+  .doc > *{max-width:68ch}
   .doc h2{font-family:var(--pixel);font-size:11px;line-height:1.9;margin:38px 0 12px;color:var(--accent)}
   .doc p,.doc li{color:var(--muted);line-height:1.75}
   .doc strong{color:var(--text)}
