@@ -437,6 +437,158 @@ function crags() {
 }
 
 /* ============================================================
+   THE PEAK -- assets/city-peak.svg
+
+   ONE MOUNTAIN, AND IT IS ITS OWN LAYER FOR A REASON. The crag band
+   is a range of small peaks and it TILES: it repeats across the
+   width and drifts sideways forever, which is right for a horizon
+   made of anonymous rock. A landmark cannot do that. Put a single
+   distinctive mountain into the crag plate and you get a row of
+   identical mountains sliding past each other, which is worse than
+   having no landmark at all.
+
+   So this is drawn once, placed once, and does not tile. It sits
+   behind the crag range and in front of the sky, and it is
+   positioned to stand inside the opening in the canopy: the whole
+   point of a frame is that there is something in it.
+
+   THE HOUSE IS THE SCALE. Without it this is a shape, and a shape
+   has no size. One roof, four pixels of it, a third of the way up
+   the slope, is what turns the whole thing into a mountain somebody
+   lives on. It is the smallest mark in the scene and it does the
+   most work, which is why it gets its own comment.
+   ============================================================ */
+/* WHERE THE OPENING IN THE CANOPY IS, in plate coordinates.
+
+   Declared here rather than beside the canopy layers because the
+   MOUNTAIN reads it too: the frame and the thing framed have to
+   agree about where the hole is, and two numbers that must agree
+   should be one number. */
+const GAP = { x: 1330, y: 560, r: 430, k: 0.86 }
+
+function peak() {
+  /* THE SAME PLATE GEOMETRY AS THE CANOPY, and that is the whole
+     reason this lines up. The mountain has to stand INSIDE the
+     opening in the frame, and the opening is at GAP in canopy plate
+     coordinates. Give this plate a different size or a different
+     background-position and aligning the two becomes arithmetic
+     against the viewport, which changes with every window. Same
+     2400x1350, same cover, same center top: GAP.x here is GAP.x
+     there, at every window size, by construction. */
+  const w = 2400, h = 1350
+  const rand = rng(0x2f8a)
+  const glow = []
+
+  /* PROPORTION IS THE WHOLE THING. The first cut was 750 tall on a
+     560 half-base, which is a 53-degree slope: that is an alp, and it
+     read as a spike. A stratovolcano is SHALLOW -- Fuji is about 25
+     degrees -- and the shallowness is most of why the silhouette is
+     recognisable at all. Wide base, low apex, and the flanks very
+     slightly concave. */
+  /* Apex inside the opening, base below the far city so the range and
+     the rooftops overlap its skirt and it reads as the furthest thing
+     in the picture rather than a sticker on the sky. */
+  const apex = { x: GAP.x - 40, y: 486 }
+  const base = 1180
+  const halfW = 700
+  const flank = (dir, t) => [
+    apex.x + dir * halfW * Math.pow(t, 1.14),
+    apex.y + (base - apex.y) * t,
+  ]
+
+  const cone = () => {
+    let d = ''
+    for (let i = 0; i <= 24; i++) {
+      const [x, y] = flank(1, i / 24)
+      d += (i ? 'L' : 'M') + `${n(x)} ${n(y + (rand() - 0.5) * 4)}`
+    }
+    for (let i = 24; i >= 0; i--) {
+      const [x, y] = flank(-1, i / 24)
+      d += `L${n(x)} ${n(y + (rand() - 0.5) * 4)}`
+    }
+    return d + 'Z'
+  }
+
+  /* THE SNOW CAP FOLLOWS THE FLANKS. The first version ran a straight
+     line from the apex to one end of its own zigzag, which is not a
+     cap: it was a wedge that hung past the left flank and showed
+     against the sky as a pale triangle with a ruled edge. Walk down
+     one flank, across, and back up the other, and it cannot leave the
+     mountain because its sides ARE the mountain's sides.
+
+     The lower edge is a zigzag rather than a line because that is
+     what makes it snow: it lies deep in the gullies and melts off the
+     ridges, so the boundary has teeth, longest in the middle of each
+     flank and shortest at the rim. */
+  /* A CAP, NOT A COAT. At 0.42 with 60-unit teeth the white ran most
+     of the way down the cone and the mountain read as a white
+     triangle: the rock has to be the mountain and the snow has to be
+     the thing on top of it. A third of the way, with teeth about half
+     as long. */
+  const capT = 0.29
+  const cap = () => {
+    let d = `M${n(apex.x)} ${n(apex.y)}`
+    for (let i = 1; i <= 6; i++) {
+      const [x, y] = flank(1, capT * (i / 6))
+      d += `L${n(x)} ${n(y)}`
+    }
+    const [rx] = flank(1, capT), [lx] = flank(-1, capT)
+    const yBase = apex.y + (base - apex.y) * capT
+    for (let i = 1; i < 22; i++) {
+      const t = i / 22
+      const x = rx + (lx - rx) * t
+      const tooth = Math.sin(t * Math.PI) * 34 * (0.3 + rand())
+      d += `L${n(x)} ${n(yBase + (i % 2 ? tooth : -tooth * 0.3))}`
+    }
+    for (let i = 6; i >= 1; i--) {
+      const [x, y] = flank(-1, capT * (i / 6))
+      d += `L${n(x)} ${n(y)}`
+    }
+    return d + 'Z'
+  }
+
+  /* A shoulder so the cone is not alone against the sky. */
+  const shoulder = () => {
+    let d = `M${n(apex.x + 520)} ${n(base)}`
+    for (let i = 0; i <= 16; i++) {
+      const t = i / 16
+      d += `L${n(apex.x + 520 + t * 520)} ${n(base - Math.sin(t * Math.PI) * 250 - rand() * 14)}`
+    }
+    return d + `L${n(apex.x + 1040)} ${n(base)}Z`
+  }
+
+  /* THE HOUSE IS THE SCALE, and it has to sit ABOVE the haze or the
+     far band swallows it. Just under the snow line on the eastern
+     flank, which is also where the ground would actually be walkable.
+     It is the smallest mark in the scene and it does the most work:
+     without it this is a shape, and a shape has no size. */
+  const [hx, hy] = flank(1, capT + 0.07)
+  const house =
+    `M${n(hx - 26)} ${n(hy)}L${n(hx)} ${n(hy - 20)}L${n(hx + 26)} ${n(hy)}` +
+    `L${n(hx + 17)} ${n(hy)}L${n(hx + 17)} ${n(hy + 17)}` +
+    `L${n(hx - 17)} ${n(hy + 17)}L${n(hx - 17)} ${n(hy)}Z`
+  glow.push(`<rect x="${n(hx - 4)}" y="${n(hy + 4)}" width="7" height="7" fill="${LIGHT.lantern}"/>`)
+  glow.push(`<circle cx="${n(hx)}" cy="${n(hy + 7)}" r="20" fill="${LIGHT.lantern}" opacity=".2"/>`)
+
+  /* Darker than the sky it stands in. At the crag band's own value it
+     was within a step of the haze and the mountain read as a smudge:
+     aerial perspective is real, and the thing at the back still has
+     to be a SHAPE first. */
+  const rock = mixHex(BAND.crag, '#20303f', 0.34)
+  /* Everything reaches the plate floor. A silhouette that stops
+     above its own bottom edge draws a ruled line where the element
+     ends, which is the scar this scene has already been fixed for
+     once (see .city .band in city.css). */
+  const floor = `M0 ${n(base)}L${n(w)} ${n(base)}L${n(w)} ${n(h)}L0 ${n(h)}Z`
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+  <path fill="${rock}" d="${cone()}${shoulder()}${floor}"/>
+  <path fill="${mixHex(BAND.crag, '#ffffff', 0.82)}" d="${cap()}"/>
+  <path fill="${mixHex(rock, '#0d1620', 0.55)}" d="${house}"/>
+  ${glow.join('')}
+</svg>\n`
+}
+
+/* ============================================================
    PLATE 2 -- THE UPPER CITY
 
    The quarter climbs, so the far band is the part of it that got
@@ -863,6 +1015,30 @@ function place(id, x, y) {
    start out sideways end up drooping, which is what a cherry in
    flower actually does under the weight.
    ------------------------------------------------------------ */
+/* IS THIS POINT INSIDE THE OPENING?
+
+   THE EDGE IS NOT A CIRCLE. A constant radius gives a clean ellipse,
+   and a clean ellipse in the middle of a canopy reads as a vignette
+   somebody applied rather than as a hole between branches. The radius
+   is modulated by angle with two out-of-phase harmonics, which pushes
+   the boundary in and out by about a fifth and gives the opening
+   lobes and inlets the way a real gap has them.
+
+   One function, used by both the branch guard and the per-flower
+   guard, because two copies of this arithmetic would eventually
+   disagree and the disagreement would show as flowers floating
+   alone inside the hole. */
+function inGap(gap, x, y) {
+  if (!gap) return false
+  const dx = x - gap.x
+  const dy = (y - gap.y) / (gap.k || 1)
+  const d = Math.hypot(dx, dy)
+  if (d > gap.r * 1.35) return false          // cheap reject
+  const a = Math.atan2(dy, dx)
+  const r = gap.r * (1 + 0.19 * Math.sin(3 * a + 1.1) + 0.10 * Math.sin(5 * a - 0.4))
+  return d < r
+}
+
 function boughSystem(rand, opts) {
   const wood = []
   const far = [], near = [], lit = [], cores = []
@@ -941,22 +1117,38 @@ function boughSystem(rand, opts) {
            rather than by a rule; the tips, which is what anybody
            actually looks at, stay full five-petal flowers. */
         const scale = 1 - depth * 0.2
-        bloomAt(
-          x0 + (x1 - x0) * t + (rand() - 0.5) * spread,
-          y0 + (y1 - y0) * t + (rand() - 0.5) * spread * 0.85,
-          (opts.r[0] + rand() * (opts.r[1] - opts.r[0])) * scale,
-          depth
-        )
+        const bx = x0 + (x1 - x0) * t + (rand() - 0.5) * spread
+        const by = y0 + (y1 - y0) * t + (rand() - 0.5) * spread * 0.85
+        /* Scatter is what makes a knot look like a knot, and it is
+           also what would fling flowers into the opening from a twig
+           that correctly stopped outside it. Checked per flower. */
+        if (inGap(opts.gap, bx, by)) continue
+        bloomAt(bx, by, (opts.r[0] + rand() * (opts.r[1] - opts.r[0])) * scale, depth)
       }
     }
     if (depth <= 0 || len < opts.minLen) return
+
+    /* THE GAP IS WHERE NOTHING REACHES, not a hole cut in something.
+       Growth stops short of it rather than being masked out of it,
+       so the edge of the opening is made of real twig ends at
+       different depths instead of a clipped line. `opts.gap` is a
+       point and a radius in plate coordinates; a branch that would
+       cross into it simply ends. */
+    if (inGap(opts.gap, x1, y1)) return
+
     const forks = rand() > 0.38 ? 3 : 2
     for (let i = 0; i < forks; i++) {
       const spread = (i - (forks - 1) / 2) * (0.46 + rand() * 0.3)
-      /* pulled back toward straight down, generation by generation */
-      const want = ang + spread + (rand() - 0.5) * 0.2
-      const droop = want + (Math.PI / 2 - want) * opts.sink * rand()
-      branch(x1, y1, droop, len * (0.6 + rand() * 0.2), w1, depth - 1)
+      /* PULLED BACK TOWARD THE LIMB'S OWN LINE, not toward straight
+         down. `sink` used to bend every generation toward vertical,
+         which is what turned this into a curtain: a weeping cherry
+         does that and an ordinary one does not. A cherry limb holds
+         its direction and its twigs fan around it, so the pull is
+         toward `ang` and the fan is what makes it a branch rather
+         than a stick. */
+      const want = ang + spread + (rand() - 0.5) * 0.22
+      const held = want + (ang - want) * (opts.hold || 0) * rand()
+      branch(x1, y1, held, len * (0.6 + rand() * 0.2), w1, depth - 1)
     }
   }
 
@@ -1166,120 +1358,172 @@ function strand(sys, rand, x0, y0, len, wid, sway, opts) {
   }
 }
 
-function canopyLayer(w, h, seed, opts, anchors) {
+/* ------------------------------------------------------------
+   THE CANOPY IS A FRAME WITH A HOLE IN IT.
+
+   The previous version hung weeping strands the full height of the
+   window, and two things were wrong with it. The owner named both:
+   "it's not accurate that these cherry blossoms would hang down like
+   vines like that. I was just trying to get you to fill the whole
+   page." An ordinary cherry reaches OUT and UP; only shidarezakura
+   weeps, and a curtain of them is not what anybody pictures when they
+   picture blossom over a view.
+
+   And filling the frame was never the goal, it was a way of asking
+   for coverage. The reference is a mountain seen THROUGH branches:
+   blossom heavy round the edges and at the top, thinning inward, and
+   a clear opening in the middle you look through.
+
+   SO THE OPENING IS NOT MASKED, IT IS UNREACHED. Boughs are anchored
+   ON THE FRAME EDGE, aimed inward, and given a length that runs out
+   before the middle; branch() additionally stops any twig that would
+   cross into the gap. The edge of the hole is therefore made of real
+   twig ends at three depths, which is what a gap between branches
+   actually looks like. A mask would have given it a clipped line.
+
+   AND THIS PLATE NO LONGER TILES. That is a consequence rather than
+   a preference: a gap repeated every 2400px is a row of holes, not a
+   window. city.css draws it once, covering, so the opening stays
+   where it was put. The horizontal repeat was only ever there to
+   cover the width.
+   ------------------------------------------------------------ */
+function canopyLayer(w, h, seed, opts) {
   const seeds = rng(seed)
   const all = { wood: [], far: [], near: [], lit: [], cores: [] }
 
-  /* THE PLATE TILES, SO ANYTHING NEAR AN EDGE IS DRAWN TWICE.
-
-     The bands get this free from emit(); a canopy cannot, because a
-     branch is not a shape at a coordinate, it is a recursive walk
-     that consumes random numbers as it goes. Calling branch() again
-     at x - w advances the generator and draws a DIFFERENT tree,
-     which does not join up. So each anchor carries its own seed and
-     is replayed: a fresh system on the same seed is the identical
-     tree, placed one full width over. */
-  const list = []
-  let x = -160
-  while (x < w + 200) {
-    list.push({
-      x,
-      y: -40 - seeds() * 60,
-      ang: opts.aim + (seeds() - 0.5) * opts.fan,
-      len: opts.len[0] + seeds() * (opts.len[1] - opts.len[0]),
+  /* Anchors walk the frame. Each side gets its own spacing and its
+     own inward aim, because the top of a window is not the side of
+     one: the top carries most of the mass (that is where the tree
+     is), the sides reach in level, and the bottom corners get just
+     enough to close the frame without filling the foreground. */
+  const anchors = []
+  /* `back` pushes the anchor further outside the frame along its own
+     aim. The first one or two generations of any bough are bare wood
+     -- blossom starts at opts.bloomFrom -- so an anchor sitting on
+     the edge puts its naked trunk INSIDE the picture, which along the
+     top edge came out as a row of dark tentacles hanging into the
+     sky. Backing the anchor off by most of its own first segment
+     leaves that wood off-plate and lets the blossoming end of the
+     bough be the part you see. */
+  const push = (x, y, ang, spread, lenMul, back) => {
+    const len = (opts.len[0] + seeds() * (opts.len[1] - opts.len[0])) * lenMul
+    const a = ang + (seeds() - 0.5) * spread
+    const k = (back || 0) * len
+    anchors.push({
+      x: x - Math.cos(a) * k,
+      y: y - Math.sin(a) * k,
+      ang: a, len,
       wid: opts.wid[0] + seeds() * (opts.wid[1] - opts.wid[0]),
       seed: Math.floor(seeds() * 0xffffff),
     })
-    x += anchors[0] + seeds() * (anchors[1] - anchors[0])
   }
 
-  for (const a of list) {
-    const xs = [a.x]
-    if (a.x < w * 0.5) xs.push(a.x + w); else xs.push(a.x - w)
-    for (const px of xs) {
-      const sys = boughSystem(rng(a.seed), opts)
-      sys.branch(px, a.y, a.ang, a.len, a.wid, opts.depth)
-      for (const k of Object.keys(all)) all[k] = all[k].concat(sys[k])
-    }
+  const S = opts.sides
+  /* top: the densest edge, aimed down and slightly inward */
+  for (let x = -120; x < w + 120; x += S.top[0] + seeds() * (S.top[1] - S.top[0])) {
+    const inward = (x < w / 2 ? 0.34 : -0.34) * seeds()
+    push(x, -30 - seeds() * 70, Math.PI / 2 + inward, 0.5, 1, 1.25)
+  }
+  /* sides: level, reaching in */
+  for (let y = 40; y < h; y += S.side[0] + seeds() * (S.side[1] - S.side[0])) {
+    push(-40 - seeds() * 50, y, 0.10 + (seeds() - 0.5) * 0.7, 0.4, 0.86, 1.15)
+    push(w + 40 + seeds() * 50, y, Math.PI - 0.10 + (seeds() - 0.5) * 0.7, 0.4, 0.86, 1.15)
+  }
+  /* the bottom corners only. A bough across the middle of the bottom
+     edge would stand in front of the city, which is the one thing
+     the opening exists to show. */
+  for (let x = -80; x < w * 0.30; x += S.foot[0] + seeds() * (S.foot[1] - S.foot[0])) {
+    push(x, h + 30 + seeds() * 60, -Math.PI / 2 + 0.4 * seeds(), 0.5, 0.7, 1.1)
+  }
+  for (let x = w * 0.72; x < w + 80; x += S.foot[0] + seeds() * (S.foot[1] - S.foot[0])) {
+    push(x, h + 30 + seeds() * 60, -Math.PI / 2 - 0.4 * seeds(), 0.5, 0.7, 1.1)
   }
 
-  /* THE STRANDS, hung on their own even-ish spacing rather than off
-     the branch tips. Tips cluster where the branching happened to
-     fork, which leaves wide bald columns between them; the hero has
-     to be filled edge to edge, so these are placed across the width
-     and only jittered. Same replay trick for the tiling copy. */
-  if (opts.vines) {
-    const v = opts.vines
-    let vx = -60
-    while (vx < w + 80) {
-      const seed2 = Math.floor(seeds() * 0xffffff)
-      const y0 = v.top[0] + seeds() * (v.top[1] - v.top[0])
-      const len = v.len[0] + seeds() * (v.len[1] - v.len[0])
-      const wid = v.wid[0] + seeds() * (v.wid[1] - v.wid[0])
-      const sway = v.sway * (0.4 + seeds() * 1.2)
-      const xs2 = [vx]
-      if (vx < w * 0.5) xs2.push(vx + w); else xs2.push(vx - w)
-      for (const px of xs2) {
-        const sys = boughSystem(rng(seed2), opts)
-        strand(sys, rng(seed2 ^ 0x5bd1), px, y0, len, wid, sway, {
-          per: v.per, spread: v.spread, r: v.r,
-        })
-        for (const k of Object.keys(all)) all[k] = all[k].concat(sys[k])
-      }
-      vx += v.gap[0] + seeds() * (v.gap[1] - v.gap[0])
-    }
+  for (const a of anchors) {
+    const sys = boughSystem(rng(a.seed), opts)
+    sys.branch(a.x, a.y, a.ang, a.len, a.wid, opts.depth)
+    for (const k of Object.keys(all)) all[k] = all[k].concat(sys[k])
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${paint(all, LAYER_PAL(opts.depthT || 0))}
 </svg>\n`
 }
 
-/* THE FAR CANOPY hangs the whole height of the window. Thin wood,
-   small flowers, and the stylesheet runs it at about half opacity,
-   so it reads as branches several metres off rather than as a
-   second tree in front of you. This is the layer that puts blossom
-   over the CITY instead of only over the sky. */
-const canopyFar = () => canopyLayer(2400, 1900, 0x51a3, {
+/* ------------------------------------------------------------
+   THREE FRAMES, ONE OPENING.
+
+   All three plates are 16:9 and share the same gap, so `cover` at a
+   normal window keeps the hole where it was put and the three edges
+   of it sit at three depths. The gap is slightly RIGHT of centre and
+   above the middle: the hero's copy is anchored bottom left, so the
+   opening goes where the copy is not, and the mountain it frames sits
+   in the upper right of the scene behind it.
+
+   The near layer's gap is the widest. That is what gives the opening
+   a soft edge without any blur: the far twigs come closest in, the
+   near ones stop furthest out, so looking through it you see three
+   receding rims rather than one cut.
+   ------------------------------------------------------------ */
+
+/* THE FAR FRAME. Thin wood, small pale flowers, reaching furthest
+   into the opening. This is the layer that puts a few blossoms over
+   the city itself rather than only round the edge. */
+const canopyFar = () => canopyLayer(2400, 1350, 0x51a3, {
   depthT: 0.52,
-  bloomFrom: 2, perTwig: [6, 11], spread: 54, r: [5, 11],
-  minLen: 26, sink: 0.62, depth: 3, aim: 1.16, fan: 0.9,
-  len: [170, 290], wid: [8, 14],
-  /* the longest strands, reaching the floor of the plate */
-  vines: {
-    gap: [96, 164], top: [90, 380], len: [900, 1750], wid: [3.4, 5.6],
-    sway: 104, per: [32, 52], spread: 40, r: [6, 13],
-  },
-}, [150, 265])
+  bloomFrom: 2, perTwig: [9, 15], spread: 56, r: [5, 11],
+  minLen: 30, hold: 0.34, depth: 3,
+  len: [190, 300], wid: [7, 13],
+  gap: { ...GAP, r: GAP.r * 0.88 },
+  sides: { top: [104, 178], side: [150, 250], foot: [180, 300] },
+})
 
 /* THE MIDDLE. Where most of the mass is. */
-const canopyMid = () => canopyLayer(2400, 1650, 0x7b2e, {
+const canopyMid = () => canopyLayer(2400, 1350, 0x7b2e, {
   depthT: 0.24,
-  bloomFrom: 2, perTwig: [10, 17], spread: 50, r: [6.5, 14],
-  minLen: 22, sink: 0.56, depth: 3, aim: 1.08, fan: 1.0,
-  len: [140, 235], wid: [10, 17],
-  vines: {
-    gap: [118, 200], top: [110, 400], len: [620, 1320], wid: [4.2, 6.8],
-    sway: 92, per: [24, 40], spread: 46, r: [7.5, 15],
-  },
-}, [124, 205])
+  bloomFrom: 2, perTwig: [13, 21], spread: 52, r: [6.5, 14],
+  minLen: 28, hold: 0.38, depth: 3,
+  len: [180, 285], wid: [10, 17],
+  gap: { ...GAP, r: GAP.r * 1.0 },
+  sides: { top: [116, 196], side: [170, 280], foot: [200, 330] },
+})
 
-/* THE NEAR CANOPY. Heavy wood, the biggest flowers, full opacity,
-   and the shortest hang: this is the wood you would be sitting on,
-   so it crowds the top of the frame and thins fast. */
-const canopyNear = () => canopyLayer(2400, 1450, 0x3c7f, {
-  bloomFrom: 2, perTwig: [12, 21], spread: 58, r: [8, 19],
-  minLen: 22, sink: 0.5, depth: 3, aim: 0.98, fan: 1.05,
-  len: [130, 220], wid: [16, 27],
-  /* Still the sparsest strands of the three, even after the density
-     went up everywhere: this is the wood nearest the viewer, and a
-     forest of thick whips across the front would curtain the city
-     off rather than let you peek through it. Everything else got
-     denser; this one only got thicker. */
-  vines: {
-    gap: [200, 330], top: [90, 300], len: [500, 1080], wid: [5.6, 8.8],
-    sway: 76, per: [18, 30], spread: 54, r: [9, 18],
-  },
-}, [155, 262])
+/* THE NEAR FRAME. Heavy wood, the biggest flowers, and the widest
+   gap: this is the wood you would be sitting in, and it crowds the
+   corners rather than the middle. */
+const canopyNear = () => canopyLayer(2400, 1350, 0x3c7f, {
+  bloomFrom: 2, perTwig: [15, 25], spread: 60, r: [8, 19],
+  minLen: 28, hold: 0.42, depth: 3,
+  len: [170, 265], wid: [15, 26],
+  gap: { ...GAP, r: GAP.r * 1.16 },
+  sides: { top: [138, 232], side: [200, 320], foot: [230, 380] },
+})
+
+/* ------------------------------------------------------------
+   ONE PORTRAIT FRAME, FOR NARROW SCREENS.
+
+   A 16:9 frame cannot frame a 9:19 window. `cover` on a phone scales
+   the landscape plates by height and throws away most of their width,
+   so both sides and the whole bottom of the frame are cropped off and
+   what is left is blossom along the top: a fringe, not a frame.
+
+   So a portrait plate, with its own gap in its own place. ONE rather
+   than three, and that is a weight decision as much as a design one:
+   a phone is the connection least able to afford three plates, and
+   three depths of frame on a 390px screen resolve to about the same
+   picture as one. A browser does not fetch a background-image whose
+   media query does not match, so a desktop never pays for this and a
+   phone never pays for the other three.
+   ------------------------------------------------------------ */
+const GAP_TALL = { x: 540, y: 900, r: 430, k: 1.45 }
+
+const canopyTall = () => canopyLayer(1080, 1920, 0x6d13, {
+  depthT: 0.16,
+  bloomFrom: 2, perTwig: [13, 21], spread: 54, r: [7, 16],
+  minLen: 26, hold: 0.4, depth: 3,
+  len: [150, 250], wid: [12, 21],
+  gap: GAP_TALL,
+  sides: { top: [96, 160], side: [150, 250], foot: [150, 250] },
+})
 
 /* ============================================================
    THE PLAN OF THE QUARTER -- assets/quarter.svg
@@ -1611,5 +1855,7 @@ write('public/assets/city-near.svg', nearEaves().svg(BAND.near))
 write('public/assets/city-canopy-far.svg', canopyFar())
 write('public/assets/city-canopy-mid.svg', canopyMid())
 write('public/assets/city-canopy-near.svg', canopyNear())
+write('public/assets/city-canopy-tall.svg', canopyTall())
+write('public/assets/city-peak.svg', peak())
 write('public/assets/quarter.svg', quarterPlan())
 write('public/css/city-sky.css', skyCss())

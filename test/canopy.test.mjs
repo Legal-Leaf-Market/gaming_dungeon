@@ -24,6 +24,13 @@ import { gzipSync } from 'node:zlib'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 const PLATES = ['city-canopy-far.svg', 'city-canopy-mid.svg', 'city-canopy-near.svg']
+
+/* The portrait frame is a hero plate too, and it is the one served to
+   the connection least able to afford it. It replaces all three above
+   under 720px rather than adding to them, so it gets its own smaller
+   budget rather than a share of theirs. */
+const TALL = 'city-canopy-tall.svg'
+const TALL_BUDGET = 170 * 1024
 const BUDGET = 520 * 1024
 
 test('the three canopy plates fit the hero weight budget, gzipped', () => {
@@ -48,4 +55,13 @@ test('every plate is still one shape library, not inlined path data', () => {
     const uses = (svg.match(/<use\b/g) || []).length
     assert.ok(uses > 1000, `${f} has only ${uses} <use>: the library is not being used`)
   }
+})
+
+test('the portrait frame fits its own budget, gzipped', () => {
+  const gz = gzipSync(readFileSync(join(ROOT, 'public', 'assets', TALL))).length
+  assert.ok(gz <= TALL_BUDGET,
+    `${TALL} is ${(gz / 1024).toFixed(0)}KB gzipped, over the ` +
+    `${(TALL_BUDGET / 1024).toFixed(0)}KB phone budget. This is the plate a ` +
+    `phone downloads instead of the other three; it must stay smaller than any ` +
+    `one of them, not just smaller than all three.`)
 })

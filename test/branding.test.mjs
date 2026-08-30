@@ -485,11 +485,23 @@ test('every committed plate is one the generator would write', async () => {
   const { readdirSync } = await import('node:fs')
   const dir = new URL('../public/assets/', import.meta.url)
   const plates = readdirSync(dir).filter(f => /^city-.*\.svg$/.test(f))
-  /* Seven: the four tiling bands and the three canopy depths.
-     Asserted as a count rather than "some", because a plate that
-     stops being written still sits committed and the scene goes on
-     looking right until somebody clones the repo fresh. */
-  assert.equal(plates.length, 7, 'expected seven plates, found ' + plates.join(', '))
+
+  /* DERIVED FROM THE GENERATOR, NOT COUNTED. This asserted `length
+     === 7`, which is a magic number standing in for "the ones
+     tools/city.mjs writes" and goes stale the moment a plate is
+     legitimately added: it failed on the day the peak arrived, in
+     the direction that makes somebody edit the number rather than
+     check the claim. The test's own name is the right rule, so read
+     the generator's write() calls and compare sets.
+
+     Both directions matter. A plate the generator no longer writes
+     stays committed and the scene goes on looking right until
+     somebody clones the repo fresh; a plate it writes that is not
+     committed is a 404 nobody sees locally. */
+  const written = [...cityTool.matchAll(/write\('public\/assets\/(city-[^']+\.svg)'/g)]
+    .map(m => m[1]).sort()
+  assert.deepEqual(plates.slice().sort(), written,
+    'the committed plates and the ones tools/city.mjs writes disagree')
   for (const f of plates) {
     const svg = readScene(new URL(f, dir), 'utf8')
     assert.match(svg.slice(0, 400), /viewBox="0 0 \d+ \d+"/,

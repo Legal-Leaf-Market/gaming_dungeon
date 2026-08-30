@@ -102,6 +102,37 @@
   background-position:0 calc(100% - var(--lift,0px)), 0 100%;
 }
 
+/* ------------------------------------------------------------
+   THE PEAK. One mountain, drawn once, and the only layer in the
+   scene that neither tiles nor drifts.
+
+   It cannot tile: it is a landmark, and a landmark repeated across
+   the width is a row of identical mountains sliding past. It does
+   not drift for the same reason the others do -- the drift sells
+   distance by parallax, and something this far away would move less
+   than a pixel a minute anyway.
+
+   Positioned to stand inside the opening in the canopy. `center
+   bottom` with a width in vw keeps it there as the window changes
+   shape, and it sits BEHIND the crag range so the small peaks
+   overlap its skirt and it reads as the furthest thing in the
+   picture rather than as a sticker on the sky. */
+.city .peak{
+  /* EXACTLY THE CANOPY'S BOX. Same top, same height, same cover, same
+     position, because the plate is the same 2400x1350 and the
+     mountain is drawn at the canopy's own GAP coordinates. Anything
+     else and lining the mountain up with the hole becomes arithmetic
+     against a viewport that changes. */
+  left:0; right:0; top:0; height:100vh;
+  background-image:url(../assets/city-peak.svg);
+  background-repeat:no-repeat;
+  background-position:center top;
+  background-size:cover;
+  opacity:.92;
+  will-change:transform;
+  transform:translate3d(0, calc(var(--sy,0px) * .012), 0);
+}
+
 .city .crag{
   height:calc(46vh + 29vh); --h:46vh; --lift:29vh; --p:.020; opacity:.9;
   background-image:url(../assets/city-crag.svg),
@@ -255,11 +286,17 @@
 
    Order matters: far first so the near wood crosses in front of it.
    ------------------------------------------------------------ */
+/* NO REPEAT, AND THAT IS THE FRAME'S DOING. These plates used to tile
+   horizontally, which is right for a curtain and impossible for a
+   window: a gap repeated every plate width is a row of holes. Each
+   is drawn once, covering, so the one opening stays where it was
+   put. `center top` keeps the opening on screen when a wide window
+   crops the sides. */
 .city .cf,.city .cm,.city .cn{
   left:0; right:0; top:0;
-  background-repeat:repeat-x;
-  background-position:left top;
-  background-size:auto 100%;
+  background-repeat:no-repeat;
+  background-position:center top;
+  background-size:cover;
   will-change:transform;
   transform:translate3d(0, calc(var(--sy,0px) * var(--p,0)), 0);
 }
@@ -300,6 +337,31 @@
 .city .cn{
   height:100vh; --p:-.09;
   background-image:url(../assets/city-canopy-near.svg);
+}
+
+/* ------------------------------------------------------------
+   THE PORTRAIT FRAME.
+
+   Under 720px the three landscape plates are replaced by one made
+   for the shape. `cover` on a 16:9 plate in a 9:19 window scales by
+   height and throws away most of the width, so both sides and the
+   bottom of the frame are cropped and what is left is a fringe along
+   the top. This one is 1080x1920 with its own opening.
+
+   ONE, not three. A phone is the connection least able to afford
+   three plates, and three depths of frame at 390px resolve to about
+   the same picture as one. The other three are switched off rather
+   than overlaid: a background-image behind a media query that does
+   not match is never fetched, so a desktop never pays for this file
+   and a phone never pays for those.
+   ------------------------------------------------------------ */
+@media (max-width:720px){
+  .city .cf, .city .cm{ display:none }
+  .city .cn{
+    background-image:url(../assets/city-canopy-tall.svg);
+    background-position:center top;
+    background-size:cover;
+  }
 }
 
 /* ------------------------------------------------------------
