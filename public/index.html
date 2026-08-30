@@ -44,6 +44,13 @@
      was the game's BOLD_FONT and at 11px on a dark ground it is a
      slab of texture rather than a label. -->
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet"/>
+<!-- The hero art is the largest contentful paint on this page by a
+     wide margin, and it is a background image, so nothing discovers
+     it until the stylesheet has parsed. Preloaded as WebP only: the
+     PNG fallback is 2.9MB and preloading both would download the one
+     the browser is not going to use. -->
+<link rel="preload" as="image" href="/verda-hero/hero-golden-target.webp" type="image/webp" fetchpriority="high"/>
+<link rel="stylesheet" href="/css/hero-golden.css"/>
 <!-- The ink layer is deliberately the last stylesheet on the page: it has
      to sit above this page's own <style> block, not argue with it. -->
 <link rel="stylesheet" href="/css/ink.css"/>
@@ -355,7 +362,32 @@
      for stillness gets a complete page, not one with the good bits
      missing.
      =========================================================== -->
-<section class="ink-hero">
+<!-- ===========================================================
+     THE GOLDEN HERO.
+
+     The art direction arrived as an approved 1680x936 render with
+     the headline, the copy, the two buttons, the nav and the badge
+     PAINTED INTO IT. The instruction was to match it rather than
+     reinterpret it, so the image is the hero and this markup sits
+     over the top of it.
+
+     EVERY WORD IS STILL HERE IN THE DOM. On the golden composition
+     it is drawn by the image, so the live text is taken out of the
+     visual flow, not out of the document: a screen reader still
+     reads the h1 and the paragraph, find-in-page still finds them,
+     and a crawler still sees a page with a heading rather than a
+     picture with four links on it. The buttons are real anchors on
+     their real routes, made transparent and laid over the ones in
+     the painting.
+
+     ON A NARROW SCREEN THE TEXT COMES BACK. That is not a liberty,
+     it is the only way the page works: the composition is left-
+     heavy and the crop is centred, so a phone showing this image
+     scaled to its own height crops the entire left third off, which
+     is all of the copy. Below the design aspect ratio the art
+     becomes the mountain and the words are set live over it.
+     =========================================================== -->
+<section class="ink-hero hero-golden">
   <div class="hero-in">
   <div class="hero-body">
     <h1>A room to <em>wander</em>.</h1>
@@ -388,7 +420,25 @@
   <!-- The seal: the twelfth realm's name, the one this site does
        not hand out to any shelf. -->
   <span class="seal" aria-hidden="true"><i>True</i><b>Immortal</b></span>
+
   </div><!-- /.hero-in -->
+
+  <!-- THE PAINTED BUTTONS, MADE TO WORK.
+
+       Children of the SECTION rather than of .hero-in, and that is
+       not tidiness: the handoff's coordinates are percentages of the
+       1680x936 artboard, and .hero-in is the site's 1180px reading
+       rail centred inside it. Hung off the rail they came out at a
+       different x, a different width, and a height of zero, because
+       the rail has no height of its own to take a percentage of.
+
+       The two real controls are up in .hero-body with the real
+       routes; on this composition they are clipped out of view
+       because the painting already draws them, so these sit over the
+       painted ones. Same hrefs. Hidden again below the design aspect,
+       where the live buttons come back. -->
+  <a class="golden-hit hit-map" href="#map" aria-label="Walk the map">Walk the map</a>
+  <a class="golden-hit hit-arcade" href="/arcade" aria-label="The arcade">The arcade</a>
 </section>
 
 <!-- ===========================================================

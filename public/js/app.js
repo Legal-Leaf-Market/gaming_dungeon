@@ -138,6 +138,47 @@
      Still ten links with text in them, in document order, so a
      screen reader gets a list of destinations and a keyboard gets a
      tab sequence. The map is how it looks, not what it is. */
+  /* ---------------------------------------------------------
+     THE HEADER OVER THE GOLDEN HERO
+
+     The approved hero art has the brand and the top link PAINTED
+     INTO IT. The live header carries the real routes, so both exist,
+     and two sets of the same words a few pixels apart is the most
+     obvious mistake this page could ship. They cannot be made to
+     coincide: the painting's typeface is not the site's, so matching
+     the size and the tracking lines up the ends of the words and
+     leaves every letter between them doubled. Measured, tried,
+     discarded.
+
+     So over the hero the live header is a transparent hit layer and
+     the painting is what you read. Below the hero there is no
+     painting, and a header nobody can see is not a header, so it
+     comes back. One class, toggled on scroll.
+
+     Not a reveal animation: the existing navigation staying legible
+     on the part of the page that has no picture under it.
+     --------------------------------------------------------- */
+  function goldenHeader() {
+    var hero = document.querySelector('.hero-golden');
+    if (!hero) return;
+    var pending = false;
+    function check() {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(function () {
+        pending = false;
+        /* Switches where the header stops being over the painting:
+           the hero's bottom, less the header's own height. */
+        var past = (window.scrollY || 0) > (hero.offsetHeight - 90);
+        document.body.classList.toggle('past-golden', past);
+      });
+    }
+    addEventListener('scroll', check, { passive: true });
+    addEventListener('resize', check, { passive: true });
+    check();
+  }
+  goldenHeader();
+
   function renderMap() {
     var published = state.stores.length;
     var narrow = window.matchMedia && window.matchMedia('(max-width: 720px)').matches;

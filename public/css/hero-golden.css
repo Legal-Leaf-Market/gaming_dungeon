@@ -1,0 +1,233 @@
+/* ============================================================
+   THE GOLDEN HERO — public/verda-hero/hero-golden-target.png
+   ------------------------------------------------------------
+   The art direction arrived as an approved 1680x936 render with the
+   headline, the body copy, both buttons, the brand, the top link and
+   the badge PAINTED INTO IT, and the instruction was to match it
+   rather than reinterpret it. So the image is the hero, and the live
+   markup is laid over the painting.
+
+   TWO THINGS THAT ARE NOT NEGOTIABLE WHATEVER THE ART SAYS
+
+   The words stay in the document. On the golden composition they are
+   drawn by the image, so the live text is removed from the VISUAL
+   flow and from nothing else: a screen reader still reads the h1 and
+   the paragraph, find-in-page still finds them, a crawler still sees
+   a heading. `clip-path` rather than `display:none`, because a
+   hidden element is not read and this one must be.
+
+   And the controls stay real anchors on their real routes. They are
+   made transparent and positioned over the buttons in the painting,
+   which means their coordinates are art rather than layout: if the
+   image is ever regenerated, these four percentages move with it.
+   They are listed together, below, for exactly that reason.
+
+   WEIGHT. The supplied PNG is 2.9MB, which is not a hero background,
+   it is a reason to leave. The same image as WebP at q86 is 382KB
+   and measures a mean difference of 2.6/255 over the text block,
+   which is the part lossy compression would damage first and where
+   it is invisible. The PNG stays as the fallback and as the asset
+   the handoff named; no browser that supports image-set will fetch
+   it.
+   ============================================================ */
+
+.hero-golden{
+  position:relative;
+  /* The design is 1680x936. Holding that aspect on a wide window
+     keeps the composition the art director approved rather than
+     letting the sides stretch. */
+  min-height:min(100svh, 100vw * 936 / 1680);
+  display:block;
+  padding:0;
+  background-color:#1a2233;
+  background-image:image-set(
+    url("/verda-hero/hero-golden-target.webp") type("image/webp"),
+    url("/verda-hero/hero-golden-target.png") type("image/png"));
+  background-image:-webkit-image-set(
+    url("/verda-hero/hero-golden-target.webp") type("image/webp"),
+    url("/verda-hero/hero-golden-target.png") type("image/png"));
+  background-repeat:no-repeat;
+  background-position:center center;
+  background-size:cover;
+}
+
+/* THE OLD HERO'S SCRIM IS SWITCHED OFF TOO. `.ink-hero::before` is
+   a radial shade anchored bottom-left, put there to hold white copy
+   over a bright generated sky. The painting has its own shading
+   baked in and does not want a second one: left on, it darkened the
+   bottom left of the artwork and was most of the difference between
+   the live render and the target. Only the narrow branch below
+   brings a scrim back, because there the copy is live again. */
+.hero-golden::before{ content:none }
+
+/* THE SCENE BEHIND IT IS SWITCHED OFF, and it has to be. `.city` is
+   a fixed, full-viewport, generated vector scene that sits behind
+   the whole document; the hero is now an opaque photograph in front
+   of it. Left on, the only place it would still show is the sliver
+   between the bottom of this section and the point where the ground
+   ramp goes opaque, which is a seam between two completely different
+   drawing styles, a couple of hundred pixels tall, at the join. The
+   arcade page still uses it. */
+body:has(.hero-golden) .city{ display:none }
+
+/* The live copy, present and unread by eyes. Not display:none: an
+   element that is not rendered is not announced either, and the
+   whole point is that the words survive being painted. */
+.hero-golden .hero-body{
+  position:absolute;
+  width:1px; height:1px;
+  margin:-1px; padding:0; border:0;
+  overflow:hidden; white-space:nowrap;
+  clip-path:inset(50%);
+}
+
+/* --------------------------------------------------- the hit areas
+   PERCENTAGES OF THE 1680x936 ARTBOARD, and they are the one part of
+   this file that is a copy of something else: the buttons they cover
+   are pixels in the painting. Regenerate the art and these four move
+   with it. `background-size:cover` means they only stay aligned while
+   the section holds the design aspect, which is why the rule above
+   pins it. */
+.hero-golden .golden-hit{
+  position:absolute; z-index:5; display:block;
+  color:transparent; font-size:0; line-height:0;
+  background:transparent; border:0;
+  border-radius:999px;
+}
+.hero-golden .golden-hit:focus-visible{
+  outline:2px solid var(--jade-lit);
+  outline-offset:3px;
+}
+.hero-golden .hit-map   { left:6.55%;  top:85.55%; width:10.42%; height:6.73% }
+.hero-golden .hit-arcade{ left:17.70%; top:85.55%; width:9.05%;  height:6.73% }
+
+/* --------------------------------------------- the header, and the seal
+   THE PAINTING CONTAINS A HEADER AND A BADGE, so the live ones have
+   to be reckoned with or the page shows each of them twice.
+
+   The header is the harder of the two. `.top` is sticky, which means
+   it takes space in the flow, which pushed the whole artboard down by
+   its own height and cut the buttons off the bottom. Fixed instead:
+   out of the flow, so the image starts at the top of the viewport
+   where the composition assumes it does, and still there when you
+   scroll, which is the behaviour the rest of the page wants.
+
+   Its rail is widened to the artboard's own margins so the live brand
+   lands on the painted one rather than beside it. `.top` is normally
+   centred in the 1180px reading rail, which at 1680 puts it 250px
+   in; the painting has it at 4.2%, which is 70. Two sets of the same
+   words 180px apart is the most obvious possible mistake, so these
+   numbers come off the artboard, like the buttons'.
+
+   The seal is decorative and already aria-hidden, and it is painted
+   into the bottom right. The live one is simply not drawn here. */
+body:has(.hero-golden) .top{
+  position:fixed; left:0; right:0; top:0;
+  max-width:none; margin:0;
+  /* Measured off the artboard rather than taken from the handoff's
+     rounded percentages: the painted mark occupies x 73-113, y 31-70,
+     so it is 40px square with its centre at y 50.5. The live mark is
+     30px in the site's own header. Two headers a few pixels and ten
+     points of size apart is worse than either alone, so on this page
+     the live one is sized and placed to land ON the painted one and
+     the two read as a single, slightly crisper header. */
+  padding:30px 4.35% 30px 4.345%;
+}
+/* AND THE LIVE HEADER IS NOT DRAWN OVER THE PAINTING.
+
+   Matching it was tried properly first: the painted mark is 40px
+   square at x73 and the painted wordmark spans x130-328, so the live
+   mark was sized to 40 and the wordmark to 20px/0.19em, which
+   measures 197px against the painted 198. The ends line up and every
+   letter between them is doubled, because the painting's typeface is
+   not this site's. Two sets of the same word a few pixels apart is
+   the most obvious mistake this page could ship, and it is invisible
+   to anyone who already knows what it says.
+
+   So the painting is the header here, and the live one is a
+   transparent hit layer over it: real links, real accessible names,
+   nothing drawn. It becomes a normal header again below the hero,
+   where there is no painting to read instead (see goldenHeader() in
+   app.js). */
+body:has(.hero-golden) .top .brand-mark,
+body:has(.hero-golden) .top .brand-name,
+body:has(.hero-golden) .top-nav a{
+  color:transparent;
+  opacity:0;
+  transition:opacity var(--fast);
+}
+body:has(.hero-golden) .top-nav a{ border-color:transparent; background:transparent }
+body:has(.hero-golden) .top a:focus-visible{
+  opacity:1; outline:2px solid var(--jade-lit); outline-offset:3px;
+}
+/* below the painting, an ordinary header again */
+body.past-golden .top .brand-mark,
+body.past-golden .top .brand-name,
+body.past-golden .top-nav a{ opacity:1; color:inherit }
+body.past-golden .top .brand-name{ color:var(--text) }
+body.past-golden .top::before{ display:block }
+body:has(.hero-golden) .top::before{ display:none }
+.hero-golden .seal{ display:none }
+
+/* ------------------------------------------------------------
+   NARROW: THE WORDS COME BACK
+
+   The composition is left-heavy and any crop is centred, so a phone
+   showing this image at its own height crops the left third away,
+   which is the entire headline and body. The plan's "symmetric
+   horizontal crop" is right for the picture and loses the page.
+
+   So below the design aspect the art becomes the part worth keeping
+   -- the mountain and the blossom above it -- and the copy is set
+   live over the top, which is what it always was before the render
+   arrived. Same words, same order, same routes.
+   ------------------------------------------------------------ */
+/* STRICTLY LESS THAN, and the strictness is the point. Written as
+   `max-aspect-ratio: 1680/936` this branch fires AT 1680x936, because
+   max- is inclusive and the artboard is exactly the boundary. That is
+   the one viewport the handoff names for QA, so the golden
+   composition was being replaced by the narrow fallback at precisely
+   the size it was supposed to be checked against. Range syntax says
+   what is meant. */
+@media (aspect-ratio < 1680/936){
+  .hero-golden{
+    min-height:100svh;
+    display:flex; align-items:flex-end;
+    padding:120px 0 clamp(40px,7vh,88px);
+    /* anchored right of centre so the mountain and the sun stay in
+       frame while the left blossom takes the crop */
+    background-position:62% center;
+  }
+  .hero-golden .hero-body{
+    position:static;
+    width:auto; height:auto; margin:0; overflow:visible;
+    white-space:normal; clip-path:none;
+  }
+  .hero-golden .golden-hit{ display:none }
+  /* the painting's own copy is off-frame at this crop, so the live
+     copy needs the scrim it used to have */
+  .hero-golden::before{
+    content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+    background:linear-gradient(180deg,
+      rgba(12,20,32,.10) 0%, rgba(12,20,32,.52) 46%,
+      rgba(12,20,32,.80) 100%);
+  }
+  .hero-golden .hero-in{ position:relative; z-index:2 }
+
+  /* AND THE HEADER IS VISIBLE AGAIN, for the same reason the copy is:
+     this crop cuts the painting's own header off the top, so there is
+     nothing left to read and nothing to double with. Without this the
+     phone gets a page with no brand and no way to the arcade above
+     the fold, which is the failure mode of hiding a live element in
+     favour of a painted one and then cropping the painting. */
+  body:has(.hero-golden) .top{
+    position:sticky;
+    padding:18px var(--pad);
+    max-width:var(--page); margin:0 auto;
+  }
+  body:has(.hero-golden) .top .brand-mark,
+  body:has(.hero-golden) .top .brand-name,
+  body:has(.hero-golden) .top-nav a{ opacity:1; color:inherit }
+  body:has(.hero-golden) .top .brand-name{ color:var(--text) }
+  body:has(.hero-golden) .top::before{ display:block }
+}
