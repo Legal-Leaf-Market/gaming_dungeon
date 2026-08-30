@@ -11,7 +11,8 @@
     "worklist": "node tools/worklist.mjs",
     "draft": "node tools/draft.mjs",
     "sitemap": "node tools/sitemap.mjs",
-    "branding": "node tools/branding.mjs"
+    "branding": "node tools/branding.mjs",
+    "ink": "node tools/ink.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0"

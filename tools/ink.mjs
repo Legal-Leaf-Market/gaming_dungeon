@@ -64,15 +64,23 @@ const n = (v) => Math.round(v * 10) / 10
    Walk the points offsetting by the half-width to one side, then
    walk back the other way. One closed path, consistent winding.
    ------------------------------------------------------------ */
-function brush(pts, widthAt) {
+function brush(pts, widthAt, upto = 1) {
+  /* `upto` truncates the stroke part-way round WITHOUT changing the part
+     already drawn: widthAt is still asked for the fraction along the WHOLE
+     path, so point 12 has the same swell in the half-drawn frame as in the
+     finished one. Normalising to the truncated length instead would make
+     every stage a different drawing, and the sequence would read as a line
+     wriggling rather than as a brush travelling. */
+  const total = pts.length
+  const n_pts = Math.max(2, Math.round(total * upto))
   const L = [], R = []
-  for (let i = 0; i < pts.length; i++) {
+  for (let i = 0; i < n_pts; i++) {
     const p = pts[i]
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)]
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(total - 1, i + 1)]
     const dx = b[0] - a[0], dy = b[1] - a[1]
     const len = Math.hypot(dx, dy) || 1
     const nx = -dy / len, ny = dx / len
-    const w = widthAt(i / (pts.length - 1))
+    const w = widthAt(i / (total - 1))
     L.push([p[0] + nx * w, p[1] + ny * w])
     R.push([p[0] - nx * w, p[1] - ny * w])
   }
@@ -94,9 +102,9 @@ function brush(pts, widthAt) {
    border-image slices and repeats, so one frame fits every control on
    the site and none of them stretches it out of shape.
    ------------------------------------------------------------ */
-function frame() {
+function frame(seed = 0x1a7c, upto = 1) {
   const S = 240, r = 46, m = 26
-  const rand = rng(0x1a7c)
+  const rand = rng(seed)
   const pts = []
   const push = (x, y) => pts.push([
     x + (rand() - 0.5) * 2.6,
@@ -127,7 +135,8 @@ function frame() {
   /* Swells and thins around the perimeter. Three overlapping sine
      terms so the rhythm never repeats on a side. */
   const d = brush(pts, (t) =>
-    3.4 + Math.sin(t * 15.2) * 1.5 + Math.sin(t * 6.1 + 2) * 1.1 + Math.sin(t * 31 + 1) * 0.5)
+    3.4 + Math.sin(t * 15.2) * 1.5 + Math.sin(t * 6.1 + 2) * 1.1 + Math.sin(t * 31 + 1) * 0.5,
+    upto)
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}">
   <path fill="${INK}" d="${d}"/>
@@ -142,20 +151,21 @@ function frame() {
    the paper. The gap is the whole character of an enso; closing it
    makes a ring.
    ------------------------------------------------------------ */
-function enso() {
+function enso(seed = 0x33b1, upto = 1, steps = 96) {
   const S = 200, R = 78
-  const rand = rng(0x33b1)
+  const rand = rng(seed)
   const start = -2.5, sweep = Math.PI * 2 - 0.55
   const pts = []
-  for (let k = 0; k <= 96; k++) {
-    const t = k / 96
+  for (let k = 0; k <= steps; k++) {
+    const t = k / steps
     const a = start + sweep * t
     const rr = R + Math.sin(t * 9.3) * 2.6 + (rand() - 0.5) * 1.8
     pts.push([S / 2 + Math.cos(a) * rr, S / 2 + Math.sin(a) * rr])
   }
   /* Lands heavy, runs, and goes dry at the lift. */
   const d = brush(pts, (t) =>
-    Math.max(0.7, 9 * Math.pow(1 - t, 0.55) * (0.55 + 0.45 * Math.sin(t * 5 + 1)) + 1.6))
+    Math.max(0.7, 9 * Math.pow(1 - t, 0.55) * (0.55 + 0.45 * Math.sin(t * 5 + 1)) + 1.6),
+    upto)
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}">
   <path fill="${INK}" d="${d}"/>
 </svg>\n`
@@ -186,6 +196,106 @@ function write(rel, text) {
   console.log(String(Buffer.byteLength(text)).padStart(7) + '  ' + rel)
 }
 
+/* ------------------------------------------------------------
+   THE DRAWING, AS AN ANIMATION
+
+   The owner: "I want the buttons to animate as if they're drawing
+   the ink... maybe even wiggle the text or the borders."
+
+   Two separate things, and it is worth being clear which is which:
+
+     THE DRAW-ON. The frame arrives one stage at a time, the brush
+     travelling clockwise from the top-left corner. `brush(..., upto)`
+     truncates the point list, so stage 3 of 6 is literally the first
+     half of the same stroke -- not a different drawing scaled down.
+     The swell pattern is indexed on the FULL path length, which is
+     why the part already on the paper never changes as the rest
+     arrives.
+
+     THE BOIL. Once drawn, the line keeps moving, the way a line in
+     hand-drawn animation does: three takes of the same frame with the
+     jitter re-rolled, cycled a few times a second. Same geometry,
+     same swell, different hand. That is the wiggle, and it is what
+     stops the control looking like a printed rectangle.
+
+   BOTH SHIP AS ONE GENERATED STYLESHEET OF DATA URIS, NOT AS FILES,
+   and that is the whole reason this function exists. A draw-on is
+   over in a third of a second; if the six stages are six URLs, the
+   first hover spends that third of a second fetching them and the
+   animation plays to an empty box. Every frame inlined in the
+   stylesheet means the sequence is already in memory before the
+   pointer arrives.
+
+   PURELY ADDITIVE ON PURPOSE. This file defines @keyframes and
+   nothing else. The resting appearance still comes from
+   ink-frame.svg in ink.css, so if this stylesheet is missing or the
+   visitor asked for reduced motion, every control still gets its
+   hand-drawn frame -- it simply appears rather than draws.
+   ------------------------------------------------------------ */
+
+/* Rounded to whole units. The source is 240px stretched onto a
+   control a third that size, so a tenth of a source pixel cannot
+   survive the mapping, and at eleven frames of each shape the
+   decimals were a quarter of the stylesheet. */
+const coarse = (svg) => svg.replace(/-?\d+\.\d+/g, (m) => String(Math.round(parseFloat(m))))
+
+const uri = (svg) =>
+  'url("data:image/svg+xml,' +
+  coarse(svg)
+    .replace(/\n/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/"/g, "'")
+    .replace(/%/g, '%25')
+    .replace(/#/g, '%23')
+    .replace(/</g, '%3C')
+    .replace(/>/g, '%3E') +
+  '")'
+
+/* Hard cuts, not a fade. Each stage owns a closed span of the
+   timeline and the next one starts a hundredth of a percent later,
+   so the browser never gets an interval to interpolate across. The
+   default handling of a discrete property (flip at the halfway
+   point) would also work, but only by accident of the spec; this
+   says what it means. */
+function steps(name, prop, frames) {
+  const span = 100 / frames.length
+  const body = frames.map((v, i) => {
+    const a = i * span
+    const b = (i + 1) * span - 0.01
+    return `  ${a.toFixed(2)}%,${Math.min(b, 100).toFixed(2)}%{${prop}:${v}}`
+  }).join('\n')
+  return `@keyframes ${name}{\n${body}\n}\n`
+}
+
+const PAPER = 'url(/assets/paper.svg)'
+
+function inkAnim() {
+  /* Six stages for the frame. Fewer and the brush teleports between
+     corners; more and the sequence outlasts a glance at a button. */
+  const drawFrame = [0.18, 0.34, 0.51, 0.68, 0.84, 1].map((u) => uri(frame(0x1a7c, u)))
+  /* Three takes. The first IS the resting frame, so the boil picks up
+     from exactly where the draw-on stopped rather than jumping on its
+     first tick. */
+  const boilFrame = [0x1a7c, 0x2f31, 0x51ad].map((sd) => uri(frame(sd)))
+
+  /* The enso is drawn at 64 points rather than 96 for the animation:
+     the same ring within a pixel, two thirds of the bytes, and there
+     are eight of these. */
+  const drawEnso = [0.24, 0.46, 0.68, 0.86, 1].map((u) => uri(enso(0x33b1, u, 64)))
+  const boilEnso = [0x33b1, 0x7c22, 0x1904].map((sd) => uri(enso(sd, 1, 64)))
+
+  return `/* GENERATED BY tools/ink.mjs -- DO NOT EDIT BY HAND.
+   Regenerate with \`npm run ink\`. Read that file's comments for why
+   these are inline data URIs and not eleven separate SVGs.
+   Keyframes only: the resting look lives in ink.css. */
+` +
+    steps('ink-draw', 'border-image-source', drawFrame) +
+    steps('ink-boil', 'border-image-source', boilFrame) +
+    steps('enso-draw', 'background-image', drawEnso.map((u) => `${u},${PAPER}`)) +
+    steps('enso-boil', 'background-image', boilEnso.map((u) => `${u},${PAPER}`))
+}
+
 write('public/assets/ink-frame.svg', frame())
 write('public/assets/enso.svg', enso())
 write('public/assets/paper.svg', paper())
+write('public/css/ink-anim.css', inkAnim())

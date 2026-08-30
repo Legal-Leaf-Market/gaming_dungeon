@@ -186,3 +186,169 @@
     text-decoration-color:var(--ink-paper);
   }
 }
+
+/* ============================================================
+   THE INK IS DRAWN, NOT PRINTED
+
+   The owner, on the section above: "I want it to be exaggerated
+   when you do the hover over with the black and white. I want the
+   buttons to animate as if they're drawing the ink... maybe even
+   wiggle the text or the borders of the buttons."
+
+   Three things, in the order they happen:
+
+     THE POP. The control comes off true. A drawn rectangle is never
+     square with the page, and half a degree of tilt does more to sell
+     "somebody drew this" than any amount of texture. This one is NOT
+     an animation -- it is the resting hover state, so a visitor who
+     asked for reduced motion still gets the hand-drawn geometry, just
+     without the movement.
+
+     THE DRAW-ON. The brush frame arrives one stage at a time,
+     travelling clockwise from the top-left corner, over three tenths
+     of a second. Six drawings of the same stroke at six lengths; see
+     tools/ink.mjs.
+
+     THE BOIL. Then the line will not sit still, the way a line in
+     hand-drawn animation does not: three takes of the frame cycling
+     three times a second, and the control's own geometry jumping with
+     them so the whole thing reads as redrawn each frame rather than
+     as a static picture being shaken.
+
+   ALL THREE SIZES ARE PER-CONTROL, VIA CUSTOM PROPERTIES, because
+   the same numbers do not work at both ends of the scale. Half a
+   degree on a 40px chip is a wink; half a degree on a 300px product
+   card is a landslide, and a 4.5% pop on that card shoves its
+   neighbours' worth of pixels around. So --ink-pop, --ink-tilt and
+   --ink-lift are set once per family and the keyframes read them.
+   Custom properties resolve against the element, not against the
+   @keyframes block, which is what makes one set of keyframes able to
+   move eleven different controls by the right amount.
+
+   THE KEYFRAMES FOR THE ARTWORK LIVE IN /css/ink-anim.css, WHICH IS
+   GENERATED. It is linked BEFORE this file on purpose: @keyframes do
+   not take part in the cascade, so nothing is lost by it going first,
+   and test/ink.test.mjs still gets to assert that THIS file has the
+   last word. If it fails to load, every `animation` below silently
+   does nothing and the resting frame from the section above is what
+   you get. That is the intended failure.
+   ============================================================ */
+@media (hover:hover){
+  :root{
+    --ink-pop:1.045;   /* how far the control comes off the page */
+    --ink-tilt:1;      /* multiplier on every angle and jitter below */
+    --ink-lift:0px;    /* preserved from the control's own hover rule */
+  }
+
+  .cta:hover,
+  .top-nav a:hover,
+  .g-chip:hover,
+  .g-more button:hover,
+  .g-reset:hover,
+  .pill:hover,
+  .ar-top a:hover,
+  .ar-bar button:hover,
+  .sis:hover,
+  .g-card:hover,
+  .ar-cab:hover{
+    transform:translateY(var(--ink-lift))
+              scale(var(--ink-pop))
+              rotate(calc(var(--ink-tilt) * -0.55deg));
+    /* A brush lays down more ink than a font does. text-stroke rather
+       than font-weight because weight reflows the label inside a
+       button that is mid-hover, and the wobble below then jumps a
+       word to a new line. */
+    -webkit-text-stroke:0.32px var(--ink-line);
+    text-shadow:0.4px 0.35px 0 rgba(21,18,14,.2);
+    /* The popped control has to sit over its neighbours or the tilt
+       clips against the next card in the grid. */
+    position:relative; z-index:6;
+    /* Flat paper is printer paper. A wash under the grain gives it a
+       lit side and a shaded one, which is what a sheet on a desk
+       actually looks like. Set as longhands: the shorthand above put
+       the colour last, and a third layer has to say which of the
+       three the blend applies to. */
+    background-color:var(--ink-paper);
+    background-image:url(/assets/paper.svg),
+      radial-gradient(118% 132% at 26% 4%,
+        rgba(255,255,255,.9), rgba(96,74,52,.17) 76%);
+    background-repeat:repeat, no-repeat;
+    background-blend-mode:multiply, multiply;
+  }
+
+  /* The big surfaces move a third as much and do not scale up: they
+     keep the lift their own hover rule gave them, so hovering a card
+     still reads as the card rising. */
+  .g-card:hover,.ar-cab:hover,.sis:hover{
+    --ink-pop:1.008; --ink-tilt:.34; --ink-lift:-3px;
+  }
+  /* Nav links sit in a row a few pixels apart; a 4.5% pop on one of
+     them reads as the row jostling. */
+  .top-nav a:hover,.ar-top a:hover{ --ink-pop:1.02; --ink-tilt:.7 }
+}
+
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .cta:hover,
+  .top-nav a:hover,
+  .g-chip:hover,
+  .g-more button:hover,
+  .g-reset:hover,
+  .pill:hover,
+  .ar-top a:hover,
+  .ar-bar button:hover,
+  .sis:hover,
+  .g-card:hover,
+  .ar-cab:hover{
+    /* ink-draw holds its last frame (`both`), then ink-boil -- later
+       in the list, so it wins -- takes the same property over at the
+       moment the draw finishes. Its delay is why it is not fighting
+       the draw-on for the first three tenths of a second: an
+       animation inside its delay with no fill mode does not apply. */
+    animation:
+      ink-draw .3s linear both,
+      ink-boil .33s linear .3s infinite,
+      ink-wobble .33s linear infinite;
+  }
+  .pin:hover .pin-dot{
+    animation:
+      enso-draw .34s linear both,
+      enso-boil .33s linear .34s infinite,
+      pin-wobble .33s linear infinite;
+  }
+  .pin:hover .pin-card{
+    animation:ink-draw .3s linear both, ink-boil .33s linear .3s infinite;
+  }
+}
+
+/* Hard cuts, three takes, no easing between them: this is a boil, not
+   a shake. Anything that eases reads as the element vibrating, which
+   is a UI tic; a line that jumps between three drawings reads as
+   somebody redrawing it. Held at 33.32% so the browser never gets an
+   interval to interpolate across. */
+@keyframes ink-wobble{
+  0%,33.32%{
+    transform:translateY(var(--ink-lift)) scale(var(--ink-pop))
+      rotate(calc(var(--ink-tilt) * -0.55deg));
+  }
+  33.33%,66.65%{
+    transform:translateY(var(--ink-lift)) scale(var(--ink-pop))
+      rotate(calc(var(--ink-tilt) * 0.42deg))
+      translate(calc(var(--ink-tilt) * 0.7px), calc(var(--ink-tilt) * -0.5px));
+  }
+  66.66%,100%{
+    transform:translateY(var(--ink-lift)) scale(var(--ink-pop))
+      rotate(calc(var(--ink-tilt) * -0.16deg))
+      translate(calc(var(--ink-tilt) * -0.6px), calc(var(--ink-tilt) * 0.45px));
+  }
+}
+
+/* The dot centres itself on a zero-size anchor with
+   translate(-50%,-50%), so its wobble has to carry that translation
+   or the pin walks off its own point on the map. Same reason the
+   card below is left alone: its transform is doing positioning work,
+   not decoration. */
+@keyframes pin-wobble{
+  0%,33.32%   { transform:translate(-50%,-50%) scale(1.14) rotate(-2deg) }
+  33.33%,66.65%{ transform:translate(-50%,-50%) scale(1.13) rotate(1.6deg) }
+  66.66%,100% { transform:translate(-50%,-50%) scale(1.145) rotate(-0.6deg) }
+}
