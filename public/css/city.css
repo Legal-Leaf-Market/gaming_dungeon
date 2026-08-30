@@ -279,12 +279,19 @@
    different intervals. Equal periods would make the three layers
    repeat together, and a pattern that repeats in lockstep reads as
    wallpaper however organic each layer is on its own. */
+/* NO OPACITY ON ANY OF THE THREE, and that is the change that made
+   the canopy look like blossom rather than like a print of blossom.
+   Distance is mixed into the PIGMENT when the plates are generated
+   (LAYER_PAL in tools/city.mjs), so a far petal is pale and cool and
+   still opaque. Half-transparent petals let the city show through
+   the flowers themselves, and the whole brief was to see it through
+   the GAPS. */
 .city .cf{
-  height:100vh; --p:-.02; opacity:.46;
+  height:100vh; --p:-.02;
   background-image:url(../assets/city-canopy-far.svg);
 }
 .city .cm{
-  height:100vh; --p:-.05; opacity:.76;
+  height:100vh; --p:-.05;
   background-image:url(../assets/city-canopy-mid.svg);
 }
 /* The nearest wood. Full opacity, and the sparsest strands of the

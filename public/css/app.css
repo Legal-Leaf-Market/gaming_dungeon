@@ -133,20 +133,29 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
    feels like a lid. */
 .top::before{
   content:'';
-  position:absolute;
-  /* FULL BLEED, NOT THE PAGE RAIL.
+  /* FULL BLEED, NOT THE PAGE RAIL, AND FIXED RATHER THAN STRETCHED.
 
-     `.top` is max-width:var(--page) centred, so `inset:...0...` bounded
-     this scrim to 1180px and it ended in two hard VERTICAL edges either
-     side of the header. On a 1912px window they land at x=366 and
-     x=1546 and they are plainly visible against the sky: the owner
+     `.top` is max-width:var(--page) centred, so `inset:...0...`
+     bounded this scrim to 1180px and it ended in two hard VERTICAL
+     edges either side of the header. On a 1912px window they land at
+     x=366 and x=1546, plainly visible against the sky: the owner
      circled both.
 
-     Stretched a viewport width past each side instead of using 100vw,
-     because 100vw includes the scrollbar and would add a horizontal
-     scroll of its own. body has overflow-x:hidden, so the overhang is
-     simply clipped. */
-  inset:-40px -100vw auto; height:190px;
+     The first fix reached a viewport width past each side. It looked
+     right and it doubled the document: `-100vw` on an absolutely
+     positioned child adds a full viewport of scrollable overflow to
+     the right, and `overflow-x:hidden` on BODY does not remove it,
+     it only stops you seeing it. Measured at 390px wide the document
+     scrolled to 780.
+
+     Fixed positioning is the honest answer. This scrim belongs to the
+     VIEWPORT, not to the header box: it is the wash the header sits
+     on. A fixed element takes no part in the document's scroll size,
+     so there is nothing to hide, and it cannot be bounded by a rail
+     it is no longer inside. `.top` is sticky at top:0, so the two
+     stay together on scroll without the scrim having to move. */
+  position:fixed;
+  left:0; right:0; top:-40px; height:190px;
   background:linear-gradient(180deg,
     rgba(10,20,32,.72) 0, rgba(10,20,32,.44) 40%,
     rgba(10,20,32,.16) 70%, transparent 100%);

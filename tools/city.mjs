@@ -134,10 +134,17 @@ const LIGHT = {
      nothing is see-through. This is also the Arizona green tea
      look the owner named -- flat opaque petals, dark wood, no
      blending anywhere. */
-  blossomFar:  '#d99ab4',
+  /* THE LIT TONE IS STILL PINK, and that is the correction that
+     stopped the canopy growing daisies. A near-white highlight next
+     to a strong gold centre does not read as a cherry flower in
+     sunlight, it reads as a different, white flower with a yellow
+     eye, and at hero scale the eye goes straight to them. Sunlit
+     blossom is BRIGHTER pink, barely warmer; the light does not
+     bleach the pigment out of it. */
+  blossomFar:  '#d493ae',
   blossom:     '#f4bcd0',
-  blossomLit:  '#fdeef3',
-  blossomCore: '#e8b06a',   // the little centre, warm
+  blossomLit:  '#ffdde1',   // sunlit: brighter pink, not cream
+  blossomCore: '#dba07d',   // the little centre, warm but not a daisy eye
   bough:       '#4a3226',   // wood, brown rather than black: it is daytime
 }
 
@@ -702,21 +709,64 @@ function nearEaves() {
 const R_STEPS = [5, 8, 11, 15, 20]
 const SHAPES = []
 
-/* Five petals around a centre. Each petal runs centre -> out one
-   side -> tip -> back the other -> centre, which winds the same way
-   as every other shape in this file (see THE VOCABULARY) so
-   overlapping flowers of one tone union instead of punching holes. */
-function flowerPath(r, rot, petals) {
+/* ------------------------------------------------------------
+   THE PETAL, AND WHY THE FIRST ONE READ AS CONFETTI
+
+   The original petal ran centre -> out one side -> tip -> back, with
+   both curves meeting at a single point. That is a pointed lens, and
+   five of them around a centre is a STAR. Rendered at hero scale and
+   multiplied by seventy thousand, the canopy came out as pink
+   confetti: the silhouette was doing the opposite of the job.
+
+   A real cherry petal is obovate and NOTCHED. It leaves the centre
+   narrow, widens past the middle, and its tip is two rounded lobes
+   with a cleft between them. That cleft is the single feature that
+   says "cherry" rather than "generic flower", and it is the one the
+   star had no way to show.
+
+   SHAPE COMPLEXITY IS FREE HERE and that is worth saying out loud,
+   because the file-size discipline everywhere else in this module
+   argues the other way. Every shape is defined ONCE in <defs>; the
+   file's weight is the <use> placements, which are identical bytes
+   whatever they point at. A four-cubic petal and a two-quadratic one
+   cost the same canopy. So these are drawn as well as they can be.
+
+   Same winding as everything else in this file (see THE VOCABULARY),
+   so overlapping flowers of one tone union rather than punching
+   holes in each other.
+   ------------------------------------------------------------ */
+function petalRing(r, rot, petals, wide, cleft, tipRound) {
   let d = ''
   for (let i = 0; i < petals; i++) {
     const a = rot + i * (Math.PI * 2 / petals)
-    const tx = Math.cos(a) * r, ty = Math.sin(a) * r
-    const w = r * (petals === 5 ? 0.66 : 0.72)
-    const px = Math.cos(a + Math.PI / 2) * w, py = Math.sin(a + Math.PI / 2) * w
-    const qx = Math.cos(a - Math.PI / 2) * w, qy = Math.sin(a - Math.PI / 2) * w
-    d += `M0 0Q${m(px)} ${m(py)} ${m(tx)} ${m(ty)}Q${m(qx)} ${m(qy)} 0 0Z`
+    const c = Math.cos(a), s = Math.sin(a)
+    /* petal space: x runs out along the axis, y across it */
+    const P = (x, y) => `${m(x * c - y * s)} ${m(x * s + y * c)}`
+    const W = r * wide
+    const N = r * (1 - cleft)          // the cleft, short of the lobes
+    const L = tipRound                 // how far the lobes bulge sideways
+    d += 'M0 0' +
+      `C${P(r * 0.10, W * 0.60)} ${P(r * 0.50, W)} ${P(r * 0.78, W * 0.82)}` +
+      `C${P(r * 0.96, W * L)} ${P(r, W * L * 0.44)} ${P(N, 0)}` +
+      `C${P(r, -W * L * 0.44)} ${P(r * 0.96, -W * L)} ${P(r * 0.78, -W * 0.82)}` +
+      `C${P(r * 0.50, -W)} ${P(r * 0.10, -W * 0.60)} 0 0Z`
   }
   return d
+}
+
+/* The full flower: five notched petals, clearly separated. */
+function sakuraPath(r, rot) {
+  return petalRing(r, rot, 5, 0.32, 0.24, 0.66)
+}
+
+/* The middle tier. Same five petals with the cleft closed and the
+   lobes fuller, which at eight or nine plate units is what a flower
+   actually resolves to: a soft rosette rather than five countable
+   petals. Keeping it a FIVE-lobed shape is the point. The tier it
+   replaces was a three-petal flower, and three petals at any size
+   reads as an arrowhead, not a blossom. */
+function rosettePath(r, rot) {
+  return petalRing(r, rot, 5, 0.42, 0.04, 0.92)
 }
 
 /* A bud: the same silhouette read from behind. Real cherry is
@@ -732,26 +782,56 @@ function blobPath(r) {
   return `M${m(-r)} 0A${m(r)} ${m(r)} 0 1 0 ${m(r)} 0A${m(r)} ${m(r)} 0 1 0 ${m(-r)} 0Z`
 }
 
-/* Built once, at module load. Three rotations per flower size so a
-   field of them does not read as a printed pattern. */
+/* Translate a finished path by baking the offset into every
+   coordinate. Cheaper at render than a transform on the <use>, and
+   it keeps every placement a bare two-number tag.
+
+   ONLY SAFE ON PATHS WHOSE NUMBERS ARE ALL COORDINATE PAIRS, which
+   means M/L/C/Q and nothing else. An arc's `A rx ry rot large sweep
+   x y` carries five numbers that are not positions, and running this
+   over one would quietly deform it. blobPath() uses arcs; do not
+   pass it here. */
+function shift(d, dx, dy) {
+  let i = 0
+  return d.replace(/-?\d+(?:\.\d+)?/g, (v) => m(Number(v) + (i++ % 2 ? dy : dx)))
+}
+
+/* Built once, at module load. Several rotations per size so a field
+   of them does not read as a printed pattern.
+
+   EVERY TIER GETS A FLOWER NOW, including the smallest. The old
+   library gave the bottom two tiers a plain circle on the reasoning
+   that petals are invisible at three screen pixels. The petals are,
+   but the EDGE is not: a mass of little circles resolves to crisp
+   dots and reads as confetti, while a mass of little rosettes
+   resolves to a soft broken edge and reads as texture. Since the
+   shape costs nothing (see THE PETAL above), the cheap thing and the
+   good thing are the same thing. */
 const LIB = R_STEPS.map((r, i) => {
+  const push = (id, d) => { SHAPES.push({ id, d }); return id }
   const set = {
-    /* the big tiers get real petals; the small ones cannot show them
-       at any size this scene renders (see DETAIL BY SIZE below) */
-    full: r >= 10 ? [0, 1, 2].map((k) => {
-      const id = 'f' + i + k
-      SHAPES.push({ id, d: flowerPath(r, k * 0.42, 5) })
-      return id
-    }) : null,
-    trio: r >= 7 ? [0, 1].map((k) => {
-      const id = 't' + i + k
-      SHAPES.push({ id, d: flowerPath(r, k * 0.6, 3) })
-      return id
-    }) : null,
-    blob: (() => { const id = 'b' + i; SHAPES.push({ id, d: blobPath(r * 0.86) }); return id })(),
-    bud: (() => { const id = 'd' + i; SHAPES.push({ id, d: budPath(r * 0.66) }); return id })(),
-    core: (() => { const id = 'c' + i; SHAPES.push({ id, d: blobPath(Math.max(0.8, r * 0.13)) }); return id })(),
-    lit: (() => { const id = 'l' + i; SHAPES.push({ id, d: blobPath(r * 0.34) }); return id })(),
+    /* the big tiers show the cleft, so they get the real flower */
+    full: r >= 10 ? [0, 1, 2].map((k) =>
+      push('f' + i + k, sakuraPath(r, k * 0.42))) : null,
+    /* everything above the very smallest gets a five-lobed rosette */
+    mid: r >= 7 ? [0, 1].map((k) =>
+      push('t' + i + k, rosettePath(r, k * 0.6))) : null,
+    small: push('b' + i, rosettePath(r * 0.9, 0.31)),
+    bud: push('d' + i, budPath(r * 0.66)),
+    core: push('c' + i, blobPath(Math.max(0.8, r * 0.13))),
+    /* THE HIGHLIGHT IS A FLOWER, NOT A DOT.
+
+       It was a circle at the flower's own centre, which on a
+       five-petal bloom paints a pale disc over the middle: a hole
+       punched in the flower rather than a flower catching the sun.
+       Now it is the same silhouette at two-thirds size, shifted up
+       and left toward the low sun, so what lights up is one SIDE of
+       the bloom and the shaded petals still read underneath. The
+       offset is baked into the path so the placement stays a bare
+       <use x y> with no transform on it. */
+    lit: push('l' + i, shift(
+      r >= 10 ? sakuraPath(r * 0.74, 0.2) : rosettePath(r * 0.72, 0.2),
+      -r * 0.13, -r * 0.15)),
   }
   return set
 })
@@ -798,8 +878,8 @@ function boughSystem(rand, opts) {
     const pick = (list) => list[Math.floor(rand() * list.length)]
     const bloom = () => (
       set.full ? pick(set.full)
-      : set.trio ? pick(set.trio)
-      : set.blob
+      : set.mid ? pick(set.mid)
+      : set.small
     )
     const roll = rand()
     if (roll < 0.34) { far.push(place(bloom(), x, y)); return }
@@ -819,9 +899,14 @@ function boughSystem(rand, opts) {
        A highlight is a flower catching the low sun, and on a real
        tree that is a scattering, not a coat. One in four, and the
        gold centre rarer still. */
-    if (depth <= 1 && i >= 3 && rand() < 0.26) {
+    /* RARER THAN IT WAS, because the highlight stopped being a dot.
+       At 0.26 a small pale disc was a scattering; the same rate on a
+       whole flower-shaped highlight painted the top of the canopy
+       cream. The rate is doing a different job now and had to move
+       with the shape. */
+    if (depth <= 1 && i >= 3 && rand() < 0.13) {
       lit.push(place(set.lit, x, y))
-      if (rand() < 0.5) cores.push(place(set.core, x, y))
+      if (rand() < 0.28) cores.push(place(set.core, x, y))
     }
   }
 
@@ -878,7 +963,7 @@ function boughSystem(rand, opts) {
   return { wood, far, near, lit, cores, branch, bloomAt }
 }
 
-function paint(sys) {
+function paint(sys, pal) {
   /* far flowers, then the wood, then near, then the highlights.
      Wood between the two flower tones is the whole trick. */
   const defs = SHAPES.map((sh) => `<path id="${sh.id}" d="${sh.d}"/>`).join('')
@@ -896,13 +981,65 @@ function paint(sys) {
      gzipped interleaved, and a third of that sorted. Nothing about
      what is drawn changed. */
   const group = (list) => list.slice().sort().join('')
+  const P = pal || LAYER_PAL(0)
   return `
   <defs>${defs}</defs>
-  <g fill="${LIGHT.blossomFar}">${group(sys.far)}</g>
-  <path fill="${LIGHT.bough}" d="${sys.wood.join('')}"/>
-  <g fill="${LIGHT.blossom}">${group(sys.near)}</g>
-  <g fill="${LIGHT.blossomLit}">${group(sys.lit)}</g>
-  <g fill="${LIGHT.blossomCore}">${group(sys.cores)}</g>`
+  <g fill="${P.far}">${group(sys.far)}</g>
+  <path fill="${P.bough}" d="${sys.wood.join('')}"/>
+  <g fill="${P.near}">${group(sys.near)}</g>
+  <g fill="${P.lit}">${group(sys.lit)}</g>
+  <g fill="${P.core}">${group(sys.cores)}</g>`
+}
+
+/* ------------------------------------------------------------
+   AERIAL PERSPECTIVE AS PIGMENT, NOT AS OPACITY
+
+   The three canopy plates used to be separated by CSS opacity: .46,
+   .76, 1. That is the cheap way to say "further away" and it costs
+   two real things.
+
+   It bleeds the city THROUGH the flowers. Distant blossom is not
+   translucent; you see the quarter through the GAPS between strands,
+   which is exactly what the owner asked for, and a half-transparent
+   petal is the one thing that cannot say it.
+
+   And it flattens the far layer toward whatever is behind it, so the
+   layer that should read as pale, cool and still full of contrast
+   instead reads as a grey smear.
+
+   So the mix happens here, at generate time, against the haze the
+   scene actually has, and every plate then paints at full opacity.
+   `t` is how far into the distance the layer sits, 0 near, 1 gone.
+   ------------------------------------------------------------ */
+/* TWO HAZE TARGETS, because distance does not desaturate everything
+   toward the same colour. Wood recedes toward the SKY, which here is
+   a cool blue, and goes nearly all the way. Blossom recedes toward
+   the warm pale the low sun is putting into the air, and mixing it
+   toward the blue instead is what turned the far layer a dusty
+   mauve: technically hazier, and the wrong hue for the hour. */
+const HAZE = '#c3d8e8'
+const HAZE_WARM = '#efdfe0'
+
+function mixHex(a, b, t) {
+  const c = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
+  const [ar, ag, ab] = c(a), [br, bg, bb] = c(b)
+  const q = (x, y) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0')
+  return `#${q(ar, br)}${q(ag, bg)}${q(ab, bb)}`
+}
+
+function LAYER_PAL(t) {
+  return {
+    far: mixHex(LIGHT.blossomFar, HAZE_WARM, t * 0.82),
+    near: mixHex(LIGHT.blossom, HAZE_WARM, t * 0.72),
+    lit: mixHex(LIGHT.blossomLit, HAZE_WARM, t * 0.5),
+    core: mixHex(LIGHT.blossomCore, HAZE_WARM, t),
+    /* WOOD GOES FURTHEST, and it is the tell that gives a flat
+       painting away when it is missing. Dark values lose contrast to
+       haze faster than light ones, so a distant branch is nearly the
+       colour of the sky while a distant petal has barely moved. Same
+       brown at three depths is three branches at the same depth. */
+    bough: mixHex(LIGHT.bough, HAZE, Math.min(1, t * 1.45)),
+  }
 }
 
 /* ============================================================
@@ -970,7 +1107,14 @@ function strand(sys, rand, x0, y0, len, wid, sway, opts) {
        limb and loose at the end */
     const x = x0 + Math.sin(phase + t * 2.6) * sway * t * t
     const y = y0 + len * t
-    const wd = Math.max(0.5, wid * (1 - t * 0.86))
+    /* THE WHIP HAS TO REACH ZERO, and the half-pixel floor that used
+       to be here is why the last pass looked like it had wires in
+       it. Once the blossom tapers off (see the knot loop below), any
+       wood still drawn past it is a bare line hanging the full
+       height of the window with nothing on it. Squared falloff so
+       the thinning happens late: a whip is stiff for most of its
+       length and then gives out. */
+    const wd = wid * (1 - t) * (1 - t)
     L.push([x - wd, y]); R.push([x + wd, y])
   }
   let d = `M${m(L[0][0])} ${m(L[0][1])}`
@@ -998,12 +1142,24 @@ function strand(sys, rand, x0, y0, len, wid, sway, opts) {
     const t = Math.min(0.99, (k + 0.5) / knots + (rand() - 0.5) * 0.5 / knots)
     const cx = x0 + Math.sin(phase + t * 2.6) * sway * t * t
     const cy = y0 + len * t
-    const per = 7 + Math.floor(rand() * 10)
+    /* THE WHIP TAPERS, and this is the line that lets the city be
+       seen at all.
+
+       Every knot used to carry the same seven to sixteen flowers
+       from the limb to the tip, which draws a ribbon of even width
+       a full window tall. Three of those layers is a curtain, and
+       the brief was a canopy you look THROUGH. A real weeping cherry
+       carries its weight near the limb and thins to almost nothing
+       at the end, so the mass stays where it is wanted, at the top
+       of the frame, and the bottom of every strand opens into the
+       gaps the quarter shows through. Cheaper too: the flowers this
+       removes are the ones that were covering the picture. */
+    const per = Math.max(2, Math.round((7 + rand() * 10) * (1 - t * 0.62)))
     for (let i = 0; i < per; i++) {
       sys.bloomAt(
-        cx + (rand() - 0.5) * opts.spread,
+        cx + (rand() - 0.5) * opts.spread * (1 - t * 0.4),
         cy + (rand() - 0.5) * opts.spread * 0.8,
-        (opts.r[0] + rand() * (opts.r[1] - opts.r[0])) * (1 - t * 0.22),
+        (opts.r[0] + rand() * (opts.r[1] - opts.r[0])) * (1 - t * 0.3),
         t > 0.55 ? 2 : 1
       )
     }
@@ -1074,7 +1230,7 @@ function canopyLayer(w, h, seed, opts, anchors) {
     }
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${paint(all)}
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${paint(all, LAYER_PAL(opts.depthT || 0))}
 </svg>\n`
 }
 
@@ -1084,6 +1240,7 @@ function canopyLayer(w, h, seed, opts, anchors) {
    second tree in front of you. This is the layer that puts blossom
    over the CITY instead of only over the sky. */
 const canopyFar = () => canopyLayer(2400, 1900, 0x51a3, {
+  depthT: 0.52,
   bloomFrom: 2, perTwig: [6, 11], spread: 54, r: [5, 11],
   minLen: 26, sink: 0.62, depth: 3, aim: 1.16, fan: 0.9,
   len: [170, 290], wid: [8, 14],
@@ -1096,6 +1253,7 @@ const canopyFar = () => canopyLayer(2400, 1900, 0x51a3, {
 
 /* THE MIDDLE. Where most of the mass is. */
 const canopyMid = () => canopyLayer(2400, 1650, 0x7b2e, {
+  depthT: 0.24,
   bloomFrom: 2, perTwig: [10, 17], spread: 50, r: [6.5, 14],
   minLen: 22, sink: 0.56, depth: 3, aim: 1.08, fan: 1.0,
   len: [140, 235], wid: [10, 17],
@@ -1124,95 +1282,282 @@ const canopyNear = () => canopyLayer(2400, 1450, 0x3c7f, {
 }, [155, 262])
 
 /* ============================================================
-   THE QUARTER, IN PLAN
+   THE PLAN OF THE QUARTER -- assets/quarter.svg
 
-   The map used to be nine rectangles in a grid, which is a table of
-   contents wearing a hat. The owner: "the map is really boring right
-   now, it's just a bunch of rectangles... make it an actual map with
-   the different destinations on there."
+   The map plate under the ten destinations. It is a BACKDROP and it
+   is also a map, and the first version only managed the first half:
+   a near-black rectangle with a soft blue smear for a river and
+   fifty isolated diamonds scattered over it. The owner's note was
+   "it's just a bunch of rectangles... make it an actual map".
 
-   So this is the ground those destinations stand on: a plan view of
-   the valley, drawn once and served as one plate. Terraces as
-   contour bands, the river the bridge crosses, field walls, and a
-   scattering of roofs seen from above.
+   WHAT MAKES A DRAWING READ AS A MAP is not detail, it is
+   RELATIONSHIPS. Buildings gather into blocks; blocks sit along
+   lanes; lanes run to a bridge because that is where the river can
+   be crossed; fields take the contour because water does. Scatter
+   the same number of marks at random and you get noise at any
+   density. So this is built in that order: land, then water, then
+   the crossings, then the lanes that want them, then the districts
+   that grow on the lanes, and only then the texture in what is left.
 
-   IT CARRIES NO DESTINATIONS AND NO PATHS. Those are drawn in the
+   THE VALUE RANGE STAYS NARROW, for the reason it always did: ten
+   coloured pins have to read on top of every part of it, and the
+   first plate ran #12202e to #26445d, on which the pins looked
+   either invisible or like stickers. What changed is that the
+   reading is now carried by LINES rather than by fills. A hairline
+   two steps lighter than its ground is legible where a filled shape
+   two steps lighter is barely there, and it costs the pins nothing.
+
+   IT CARRIES NO DESTINATIONS AND NO TRAIL. Those are drawn in the
    DOM by app.js from the same coordinates the markers use, so the
-   trail cannot drift away from the places it connects. A path baked
-   into this file would be a second copy of those numbers, and it
-   would be wrong the first time anybody moved a room.
-
-   Muted on purpose: it is a backdrop for ten coloured markers, and
-   a busy one would fight them.
+   trail cannot drift away from the places it joins. Baked in here
+   they would be a second copy of those numbers, wrong the first
+   time anybody moved a room.
    ============================================================ */
 function quarterPlan() {
   const w = 1600, h = 900
   const rand = rng(0x9d4c)
-  const land = [], water = [], walls = [], roofs = []
+  const pick = (a) => a[Math.floor(rand() * a.length)]
 
-  /* Contour bands: the valley floor rising to the north. Each is a
-     wobbling horizontal ribbon, and the wobble is what stops them
-     reading as a stack of shelves. */
+  /* ---------------------------------------------------- the land
+     Five terraces rising north. Each is a wobbling ribbon and each
+     gets a CREST: a hairline along its own top edge, a step lighter
+     than the band it caps. Without that the five bands differed by
+     four values and merged into one dark field, which is why the
+     old plate looked empty. */
+  const bandFill = ['#131f2b', '#16232f', '#192734', '#1c2b39', '#1f2f3e']
+  const crestInk = ['#25384a', '#2a3f52', '#2f465a', '#344c63', '#3a536c']
+  const contourAt = (i, x) =>
+    h - 40 - i * 138 + Math.sin(x / 190 + i * 1.7) * 26 + Math.sin(x / 61 + i) * 9
+
+  const bands = [], crests = []
   for (let i = 0; i < 5; i++) {
-    const base = h - 40 - i * 138
-    let d = `M0 ${n(h)}L0 ${n(base)}`
-    for (let x = 0; x <= w; x += 40) {
-      d += `L${n(x)} ${n(base + Math.sin(x / 190 + i * 1.7) * 26 + Math.sin(x / 61 + i) * 9)}`
+    let d = `M0 ${n(h)}L0 ${n(contourAt(i, 0))}`
+    let c = `M0 ${n(contourAt(i, 0))}`
+    for (let x = 0; x <= w; x += 24) {
+      d += `L${n(x)} ${n(contourAt(i, x))}`
+      c += `L${n(x)} ${n(contourAt(i, x))}`
     }
     d += `L${n(w)} ${n(h)}Z`
-    land.push({ d, i })
+    bands.push(`<path fill="${bandFill[i]}" d="${d}"/>`)
+    crests.push(`<path fill="none" stroke="${crestInk[i]}" stroke-width="1.4" d="${c}"/>`)
   }
 
-  /* The river, and the same river the mid band's bridge crosses. */
-  let rv = ''
+  /* --------------------------------------------------- the river
+     A real bank rather than a smear: a dark channel, a lighter
+     shallow inside it, and a hairline down each side. The centre
+     line is shared with everything that has to know where the water
+     is, so nothing can drift off it. */
   const cx = (t) => 430 + Math.sin(t * 3.1) * 250 + t * 180
-  for (let side = 0; side < 2; side++) {
-    const off = side ? 34 : -34
+  const ty = (y) => (y - h * 0.02) / (h * 1.02)
+  const riverAt = (y) => cx(ty(y))
+  const ribbon = (wide) => {
+    let d = ''
     const pts = []
-    for (let k = 0; k <= 20; k++) {
-      const t = k / 20
-      pts.push([cx(t) + off, h * 0.02 + t * h * 1.02])
+    for (let k = 0; k <= 28; k++) {
+      const t = k / 28
+      pts.push([cx(t), h * 0.02 + t * h * 1.02, wide * (0.72 + t * 0.5)])
     }
-    if (!side) { rv += `M${n(pts[0][0])} ${n(pts[0][1])}`; for (const q of pts) rv += `L${n(q[0])} ${n(q[1])}` }
-    else { for (let k = pts.length - 1; k >= 0; k--) rv += `L${n(pts[k][0])} ${n(pts[k][1])}` }
+    d += `M${n(pts[0][0] - pts[0][2])} ${n(pts[0][1])}`
+    for (const [x, y, q] of pts) d += `L${n(x - q)} ${n(y)}`
+    for (let k = pts.length - 1; k >= 0; k--) {
+      const [x, y, q] = pts[k]; d += `L${n(x + q)} ${n(y)}`
+    }
+    return d + 'Z'
   }
-  water.push(rv + 'Z')
-
-  /* Field walls and terraces: short strokes that give the plan a
-     grain so the empty parts are not blank. */
-  for (let i = 0; i < 90; i++) {
-    const x = rand() * w, y = 90 + rand() * (h - 140)
-    if (Math.abs(x - cx((y - h * 0.02) / (h * 1.02))) < 70) continue
-    const len = 30 + rand() * 110
-    const a = (rand() - 0.5) * 0.5 + (rand() > 0.5 ? 0 : Math.PI / 2)
-    walls.push(`M${n(x)} ${n(y)}L${n(x + Math.cos(a) * len)} ${n(y + Math.sin(a) * len)}` +
-      `L${n(x + Math.cos(a) * len)} ${n(y + Math.sin(a) * len + 2.4)}L${n(x)} ${n(y + 2.4)}Z`)
-  }
-
-  /* Roofs from above: a diamond with a ridge line, which is what a
-     hipped roof looks like on a plan. */
-  for (let i = 0; i < 54; i++) {
-    const x = rand() * w, y = 70 + rand() * (h - 120)
-    if (Math.abs(x - cx((y - h * 0.02) / (h * 1.02))) < 62) continue
-    const rw = 9 + rand() * 15, rh = rw * (0.6 + rand() * 0.3)
-    roofs.push(`M${n(x - rw)} ${n(y)}L${n(x)} ${n(y - rh)}L${n(x + rw)} ${n(y)}L${n(x)} ${n(y + rh)}Z`)
+  const bankLine = (side) => {
+    let d = ''
+    for (let k = 0; k <= 28; k++) {
+      const t = k / 28
+      const q = 34 * (0.72 + t * 0.5)
+      d += (k ? 'L' : 'M') + `${n(cx(t) + side * q)} ${n(h * 0.02 + t * h * 1.02)}`
+    }
+    return d
   }
 
-  /* THE VALUE RANGE IS DELIBERATELY NARROW. The first version ran
-     from #12202e to #26445d, and ten pins had to read on both ends
-     of that: on the dark bands they vanished and on the light ones
-     they looked like stickers. A map is a backdrop, so the terraces
-     step by about four levels and the pins own all the contrast. */
-  const bands = land.map((L) =>
-    `<path fill="${['#131f2b', '#16232f', '#192734', '#1c2b39', '#1f2f3e'][L.i]}" d="${L.d}"/>`
-  ).join('')
+  /* ------------------------------------------------- the bridges
+     TWO, and they are the reason the lanes go where they go. A road
+     network drawn first and a river drawn second cross each other
+     wherever they happen to, which is exactly what a map never
+     does. */
+  const BRIDGES = [0.30, 0.72].map((t) => ({
+    t, x: cx(t), y: h * 0.02 + t * h * 1.02, wide: 34 * (0.72 + t * 0.5),
+  }))
+  const bridges = BRIDGES.map((b) => {
+    /* SQUARE TO THE FLOW, not to the page. Drawn as a horizontal bar
+       it crossed a river running at sixty degrees, which reads as a
+       grey rectangle lying on top of the map rather than as a
+       crossing. The tangent comes from the same centre line the
+       water does, so the two can never disagree. */
+    const dt = 0.001
+    const dx = cx(b.t + dt) - cx(b.t - dt)
+    const dy = (h * 1.02) * dt * 2
+    const L = Math.hypot(dx, dy) || 1
+    const ux = -dy / L, uy = dx / L          // across the water
+    const vx = dx / L, vy = dy / L           // along it
+    const q = b.wide + 9, th = 4.2
+    const P = (a, c) => `${n(b.x + ux * a + vx * c)} ${n(b.y + uy * a + vy * c)}`
+    let d = `M${P(-q, -th)}L${P(q, -th)}L${P(q, th)}L${P(-q, th)}Z`
+    /* the planking, which is what says bridge and not culvert */
+    for (let k = 1; k < 6; k++) {
+      const a = -q + (q * 2) * (k / 6)
+      d += `M${P(a, -th)}L${P(a + 1.4, -th)}L${P(a + 1.4, th)}L${P(a, th)}Z`
+    }
+    return d
+  }).join('')
+
+  /* ---------------------------------------------------- the town
+     Eight districts on the dry ground either side of the water.
+     Placed by hand rather than sampled, because a settlement's
+     shape is a decision: two banks, a cluster at each bridgehead,
+     and outliers thinning toward the high ground. */
+  const DISTRICTS = [
+    { x: 190, y: 700, r: 74, n: 44 }, { x: 355, y: 470, r: 62, n: 32 },
+    { x: 300, y: 235, r: 52, n: 22 }, { x: 640, y: 300, r: 58, n: 28 },
+    { x: 700, y: 700, r: 68, n: 36 }, { x: 1010, y: 470, r: 65, n: 34 },
+    { x: 1270, y: 300, r: 56, n: 26 }, { x: 1330, y: 730, r: 71, n: 40 },
+    /* three more, and they are placed where the plate READ as empty
+       rather than where a generator would have put them: the top
+       left shoulder, the far right shelf and the low middle. An
+       even scatter is not what a valley looks like, but neither is
+       a third of the frame with nothing on it. */
+    { x: 120, y: 380, r: 46, n: 18 }, { x: 1520, y: 460, r: 44, n: 17 },
+    { x: 980, y: 830, r: 54, n: 22 },
+  ]
+
+  const roofs = [], yards = []
+  for (const D of DISTRICTS) {
+    /* ONE ORIENTATION PER DISTRICT. Roofs at random angles read as
+       rubble; roofs agreeing with their neighbours read as streets,
+       and the agreement is the only thing doing that work. */
+    const ang = rand() * Math.PI
+    const ca = Math.cos(ang), sa = Math.sin(ang)
+    const placed = []
+    let guard = 0
+    while (placed.length < D.n && guard++ < D.n * 40) {
+      /* packed along the district axis, so blocks come out longer
+         than they are wide, the way a street frontage does */
+      const u = (rand() - 0.5) * D.r * 2
+      const v = (rand() - 0.5) * D.r * 1.15
+      const x = D.x + u * ca - v * sa
+      const y = D.y + u * sa + v * ca
+      if (Math.abs(x - riverAt(y)) < 58) continue
+      if (x < 40 || x > w - 40 || y < 60 || y > h - 40) continue
+      if (placed.some((p) => Math.hypot(p[0] - x, p[1] - y) < 13)) continue
+      placed.push([x, y])
+      /* SMALLER THAN THEY WANT TO BE. At fifteen units a roof is a
+         slab, and a block of slabs at one angle is a barcode: the
+         first pass drew exactly that. A building on a plan at this
+         scale is a mark, and the district is what you read. */
+      const rw = 6 + rand() * 7, rh = rw * (0.5 + rand() * 0.26)
+      /* AGREEING, NOT IDENTICAL. One angle for the whole district is
+         what makes a block read as streets, and one angle EXACTLY is
+         what makes it read as a lattice. A few degrees of slop per
+         building is the difference between a village and a circuit
+         board. */
+      const ja = ang + (rand() - 0.5) * 0.24
+      const jc = Math.cos(ja), js = Math.sin(ja)
+      roofs.push(
+        `M${n(x - rw * jc)} ${n(y - rw * js)}` +
+        `L${n(x - rh * js)} ${n(y + rh * jc)}` +
+        `L${n(x + rw * jc)} ${n(y + rw * js)}` +
+        `L${n(x + rh * js)} ${n(y - rh * jc)}Z`
+      )
+    }
+    /* the yard wall around the block, drawn as an open ring so it
+       reads as an enclosure rather than as another building */
+    let ring = ''
+    for (let k = 0; k <= 26; k++) {
+      const a = (k / 26) * Math.PI * 2
+      const rr = D.r * (1.04 + Math.sin(a * 3 + D.x) * 0.05)
+      ring += (k ? 'L' : 'M') + `${n(D.x + Math.cos(a) * rr)} ${n(D.y + Math.sin(a) * rr * 0.78)}`
+    }
+    yards.push(ring)
+  }
+
+  /* --------------------------------------------------- the lanes
+     Each district joins its nearest neighbour, and anything on the
+     far bank routes through a bridge. That single rule is what
+     turns eight blobs into a place somebody could walk. */
+  const lanes = []
+  const side = (p) => (p.x < riverAt(p.y) ? -1 : 1)
+  const path = (pts) => {
+    let d = `M${n(pts[0][0])} ${n(pts[0][1])}`
+    for (let k = 1; k < pts.length; k++) {
+      const [x0, y0] = pts[k - 1], [x1, y1] = pts[k]
+      const mx = (x0 + x1) / 2 + (rand() - 0.5) * 40
+      const my = (y0 + y1) / 2 + (rand() - 0.5) * 40
+      d += `Q${n(mx)} ${n(my)} ${n(x1)} ${n(y1)}`
+    }
+    return d
+  }
+  for (let i = 0; i < DISTRICTS.length; i++) {
+    for (let j = i + 1; j < DISTRICTS.length; j++) {
+      const A = DISTRICTS[i], B = DISTRICTS[j]
+      if (Math.hypot(A.x - B.x, A.y - B.y) > 340) continue
+      if (side(A) === side(B)) { lanes.push(path([[A.x, A.y], [B.x, B.y]])); continue }
+      const br = BRIDGES.reduce((best, b) =>
+        Math.hypot(A.x - b.x, A.y - b.y) + Math.hypot(B.x - b.x, B.y - b.y) <
+        Math.hypot(A.x - best.x, A.y - best.y) + Math.hypot(B.x - best.x, B.y - best.y) ? b : best)
+      lanes.push(path([[A.x, A.y], [br.x, br.y], [B.x, B.y]]))
+    }
+  }
+
+  /* -------------------------------------------------- the fields
+     Hatched patches, and each patch takes the CONTOUR rather than a
+     random angle: terraced ground follows the slope because water
+     does, and parallel lines that ignore the hillside are the tell
+     that a map was generated rather than surveyed. */
+  const fields = []
+  for (let i = 0; i < 26; i++) {
+    const fx = 70 + rand() * (w - 140), fy = 120 + rand() * (h - 200)
+    if (Math.abs(fx - riverAt(fy)) < 80) continue
+    if (DISTRICTS.some((D) => Math.hypot(D.x - fx, D.y - fy) < D.r * 1.3)) continue
+    const fw = 34 + rand() * 52, fh = 22 + rand() * 34
+    /* the local slope, read off the contour the patch sits on */
+    const slope = (contourAt(2, fx + 30) - contourAt(2, fx - 30)) / 60
+    const rows = 2 + Math.floor(rand() * 3)
+    for (let k = 0; k < rows; k++) {
+      const yy = fy - fh / 2 + (fh * (k + 0.5)) / rows
+      fields.push(
+        `M${n(fx - fw / 2)} ${n(yy - slope * fw / 2)}` +
+        `L${n(fx + fw / 2)} ${n(yy + slope * fw / 2)}` +
+        `L${n(fx + fw / 2)} ${n(yy + slope * fw / 2 + 1.8)}` +
+        `L${n(fx - fw / 2)} ${n(yy - slope * fw / 2 + 1.8)}Z`
+      )
+    }
+  }
+
+  /* -------------------------------------------------- the groves
+     Cherry, since that is what the whole site is standing in. Small
+     stipple clusters, kept off the roofs and out of the water. */
+  const groves = []
+  for (let i = 0; i < 22; i++) {
+    const gx = 60 + rand() * (w - 120), gy = 90 + rand() * (h - 150)
+    if (Math.abs(gx - riverAt(gy)) < 54) continue
+    if (DISTRICTS.some((D) => Math.hypot(D.x - gx, D.y - gy) < D.r)) continue
+    for (let k = 0; k < 5 + Math.floor(rand() * 7); k++) {
+      const a = rand() * 6.3, rr = rand() * 26
+      const tx = gx + Math.cos(a) * rr, tyy = gy + Math.sin(a) * rr * 0.8
+      const q = 2.6 + rand() * 2
+      groves.push(`M${n(tx - q)} ${n(tyy)}A${n(q)} ${n(q)} 0 1 0 ${n(tx + q)} ${n(tyy)}` +
+        `A${n(q)} ${n(q)} 0 1 0 ${n(tx - q)} ${n(tyy)}Z`)
+    }
+  }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
-  <rect width="${w}" height="${h}" fill="#111c27"/>
-  ${bands}
-  <path fill="#24455a" opacity=".8" d="${water.join('')}"/>
-  <path fill="#38617a" opacity=".34" d="${walls.join('')}"/>
-  <path fill="#0c1620" opacity=".55" d="${roofs.join('')}"/>
+  <rect width="${w}" height="${h}" fill="#101a24"/>
+  ${bands.join('')}
+  ${crests.join('')}
+  <path fill="#2e4b60" opacity=".26" d="${fields.join('')}"/>
+  <path fill="#1b3346" opacity=".55" d="${groves.join('')}"/>
+  <path fill="none" stroke="#33526a" stroke-width="1.2" stroke-dasharray="7 6" opacity=".34" d="${yards.join('')}"/>
+  <path fill="none" stroke="#4c6d85" stroke-width="1.8" stroke-linecap="round" opacity=".56" d="${lanes.join('')}"/>
+  <path fill="#16303f" d="${ribbon(34)}"/>
+  <path fill="#1e4358" opacity=".8" d="${ribbon(20)}"/>
+  <path fill="none" stroke="#3d6076" stroke-width="1.2" opacity=".5" d="${bankLine(-1) + bankLine(1)}"/>
+  <path fill="#3f5f75" opacity=".6" d="${bridges}"/>
+  <path fill="#294459" opacity=".82" d="${roofs.join('')}"/>
+  <path fill="none" stroke="#0d1922" stroke-width=".7" opacity=".5" d="${roofs.join('')}"/>
 </svg>\n`
 }
 
