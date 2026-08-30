@@ -821,6 +821,65 @@ one commit.
 
 ---
 
+## 8c. The ink layer: everything you hover over becomes brush and ink
+
+The owner's idea, and the best one the site has had: *"leave everything
+default, but anything you hover over make this black and white thing. And not
+just black and white, I don't want it sterile. I want black and white ink hand
+drawn type shit. Every button, everything you hover over."*
+
+**It is the site's own story, not an effect bolted on.** The boot plate is a
+brush enso on black; the studio's mark is a brush V inside a brush ring. The
+colour world is what the ink lifts to reveal, so peeling a control back to
+paper and ink for as long as you touch it is the same idea at the scale of a
+button.
+
+Four things together make it read as drawn rather than as a filter, and
+dropping any one of them takes it back to a greyscale filter:
+
+| | |
+|---|---|
+| **Paper, not white** | `#f2efe4` plus `assets/paper.svg` grain, blended `multiply`. A flat `#fff` is a dialog box; paper is a material. |
+| **Ink, not black** | `#15120e`, the colour of a dried stroke. |
+| **A brush edge** | `assets/ink-frame.svg` through `border-image: … 34 / 3px / 0 round`. A drawn line swells and thins; a border has one width, and one width is what "sterile" means. |
+| **The enso on round things** | `assets/enso.svg`, the logo's own gesture, on the map pins. A rectangle's `border-image` squeezed into a circle stops looking drawn. |
+
+`tools/ink.mjs` generates all three assets, zero dependencies, same shape as
+`tools/city.mjs`. `brush()` builds **filled geometry, not a stroke**, because a
+brush has no single width: the outline is walked out and back with the width
+varying along it.
+
+### `/css/ink.css` IS THE LAST STYLESHEET ON EVERY PAGE, and that is the point
+
+Every page here carries a local `<style>` for its own components, and those
+sit after the `<link>` to `app.css`, so at equal specificity **the page wins**.
+With the ink layer living inside `app.css`, `.ar-top a:hover` kept its jade
+text and only the `border-image` came through: a paper tile with green writing
+on it. Loading the ink last makes it a layer *over* the site instead of one
+more voice in the cascade arguing with the page. `test/ink.test.mjs` asserts
+the ordering per page, on the real markup, because nothing about that failure
+is visible in a diff.
+
+### Two things that only turn up when you look
+
+- **Ink on a dark plate is not there.** The enso was first drawn on the pin
+  anchor, ringing the dot from outside: `#15120e` over the map's near-black
+  plate, invisible at every size. The only ground it reads against is the
+  paper the dot has just turned into, so it is a background layer *of the dot*,
+  sized inside the rim, with the room glyph in the ring the way the leaf sits
+  in the mark.
+- **Every coloured thing inside a control has to be named.** One jade
+  placeholder initial or one orange slot number left on the paper gives the
+  whole thing away as a filter rather than a redraw. `.ar-glyph`, `.ar-slot`,
+  `.ar-soon`, `.g-noimg`, `.g-oos`, `.g-save`, `.g-zoom` each set their own
+  colour and each needed saying.
+
+Gated on `@media (hover:hover)` throughout: a touch device has no way to leave
+a hover state, and a control stuck mid-transformation is worse than no
+treatment at all.
+
+---
+
 ## 8b. The workflow layer, and the sister sites it came from
 
 **The look was finished before the interface was.** The owner's words after
@@ -1288,3 +1347,9 @@ before you trust it.
   the pairing (§10b).
 - Do NOT copy `api/subscribe.js` or `api/track.js` back from a sister site
   (§10b).
+- Do NOT link a stylesheet, or open a `<style>`, after `/css/ink.css` on any
+  page. It has to keep the last word or the hover treatment half-applies (§8c).
+- Do NOT draw ink on anything but paper. `#15120e` on the site's own grounds is
+  invisible, and it fails silently (§8c).
+- Do NOT add a control to the site without adding it to the one hover list in
+  `ink.css`, descendants and all (§8c).

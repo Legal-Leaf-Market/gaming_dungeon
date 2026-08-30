@@ -1,0 +1,159 @@
+/* ============================================================
+   THE INK SHOWS THROUGH  --  ALWAYS THE LAST STYLESHEET
+
+   THIS FILE IS LINKED AFTER EVERY PAGE'S OWN <style> BLOCK, AND THAT
+   IS THE WHOLE REASON IT IS A FILE. Every page here carries a local
+   <style> for its own components (arcade.html's cabinets, collect's
+   table), and those rules sit after the <link> to app.css, so at
+   equal specificity they win. With the ink layer inside app.css,
+   `.ar-top a:hover` kept its jade text and only the border-image
+   came through: a paper tile with green writing on it. Loading the
+   ink last makes it a layer over the site rather than one more
+   voice in the cascade arguing with the page.
+
+   The owner's idea, and the best one this site has had: everything
+   you hover over turns to black-and-white ink for as long as you are
+   touching it. Not greyscale, which is sterile, but brush-and-ink
+   hand-drawn.
+
+   IT IS NOT AN EFFECT BOLTED ON, IT IS THE SITE'S OWN STORY. The
+   boot plate is a brush enso on black; the studio's mark is a brush
+   V inside a brush ring; the colour world is what the ink lifts to
+   reveal. Peeling a control back to paper and ink for the moment you
+   touch it is that same idea, at the scale of a button.
+
+   Four things together make it read as drawn rather than as a filter:
+
+     PAPER, not white. A warm off-white with grain on it, because a
+     flat #fff is a dialog box and paper is a material.
+     INK, not black. #15120e is the colour of a dried brush stroke.
+     A BRUSH EDGE, via border-image. A hand-drawn frame has a line
+     that swells and thins; a border has one width, and one width is
+     the entire tell.
+     NO SHADOW. Ink on paper does not float. Every lift and glow is
+     removed for the duration, which is also what makes the change
+     feel like a different medium rather than a different colour.
+
+   Behind a (hover:hover) query, so a touch device never gets stuck
+   showing a control mid-transformation with no way to leave it.
+   ============================================================ */
+:root{
+  --ink-paper:#f2efe4;
+  --ink-line:#15120e;
+}
+
+@media (hover:hover){
+  /* One list, so the treatment cannot drift between controls. Any
+     new control that should do this is added here and nowhere else. */
+  .cta:hover,
+  .top-nav a:hover,
+  .g-chip:hover,
+  .g-more button:hover,
+  .g-reset:hover,
+  .pill:hover,
+  .ar-top a:hover,
+  .ar-bar button:hover,
+  .sis:hover,
+  .g-card:hover,
+  .ar-cab:hover{
+    background:var(--ink-paper) url(/assets/paper.svg) repeat;
+    background-blend-mode:multiply;
+    color:var(--ink-line);
+    /* the brush frame: 34px slices keep the corners' character and
+       repeat the sides, so one drawing fits every control */
+    border-image:url(/assets/ink-frame.svg) 34 / 3px / 0 round;
+    box-shadow:none;
+    transition:none;
+  }
+
+  /* Everything inside goes to ink too. Colour that survives on a
+     paper ground reads as a mistake rather than as an accent. */
+  .sis:hover strong,.sis:hover span,.sis:hover::after,
+  .g-card:hover .g-title,.g-card:hover .g-shop,
+  .g-card:hover .g-price,.g-card:hover .g-rar,
+  .ar-cab:hover .ar-by,.ar-cab:hover .ar-blurb,.ar-cab:hover .ar-weight,
+  .ar-cab:hover .ar-meta h2,
+  .g-chip:hover .g-n{
+    color:var(--ink-line);
+  }
+  .g-card:hover .g-rar{ opacity:.72 }
+
+  /* A photograph becomes an ink wash: desaturated, pushed to
+     contrast, and lightened so it sits ON the paper rather than as a
+     dark hole punched in it. */
+  .g-card:hover .g-shot img,
+  .ar-cab:hover .ar-screen img{
+    filter:grayscale(1) contrast(1.5) brightness(1.12);
+  }
+  .g-card:hover .g-shot,.ar-cab:hover .ar-screen{
+    background:var(--ink-paper);
+  }
+  /* The cabinet's own furniture: the placeholder initial, the slot
+     number and the SOON badge each set their own colour, so each
+     needs saying. A single coloured numeral left on the paper is
+     what gives the whole thing away as a filter. */
+  .ar-cab:hover .ar-glyph,
+  .g-card:hover .g-noimg{ color:var(--ink-line); opacity:.3 }
+  /* the out-of-stock strap is a dark plate with its own backdrop
+     blur, which on paper is a black bar across the picture */
+  .g-card:hover .g-oos{
+    background:rgba(242,239,228,.86); color:var(--ink-line);
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
+  .ar-cab:hover .ar-slot{ color:var(--ink-line); opacity:.55; text-shadow:none }
+  .ar-cab:hover .ar-soon{
+    color:var(--ink-line); border-color:var(--ink-line);
+    background:rgba(242,239,228,.72);
+  }
+  /* The card's own controls invert with it. */
+  .g-card:hover .g-save,.g-card:hover .g-zoom{
+    color:var(--ink-line); border-color:var(--ink-line);
+    background:rgba(242,239,228,.72);
+  }
+
+  /* --------------------------------------------------- the pins
+     Round things get the ENSO instead of the frame: the same
+     gesture as the logo, one stroke with a gap where the brush
+     lifted. A rectangle's border-image would have to be squeezed
+     into a circle and would stop looking drawn. */
+  /* The enso rides ON the paper, not around it. Drawn on the plan's
+     own dark plate the ring was ink-black on near-black and simply
+     did not exist; the only ground it reads against is the paper the
+     dot has just turned into. So it is a background layer of the dot,
+     sized inside the rim, and the room glyph sits in the ring the way
+     the leaf sits in the logo. */
+  .pin:hover .pin-dot,.pin:focus-visible .pin-dot{
+    background-color:var(--ink-paper);
+    background-image:url(/assets/enso.svg), url(/assets/paper.svg);
+    background-repeat:no-repeat, repeat;
+    background-position:center, center;
+    background-size:86% 86%, auto;
+    background-blend-mode:multiply, multiply;
+    border-color:transparent;
+    box-shadow:none;
+    /* a quiet room's dot is dimmed, which on paper reads as grey card
+       stock rather than as a quiet room, so the paper comes up full */
+    opacity:1;
+  }
+  .pin:hover .pin-ico,.pin:focus-visible .pin-ico{ color:var(--ink-line) }
+  /* The label and the card come with it, or the pin is ink and its
+     name is still floating in the coloured world beside it. */
+  .pin:hover .pin-name{ color:var(--ink-paper) }
+  .pin:hover .pin-count{ color:var(--ink-paper); opacity:.8 }
+  .pin:hover .pin-card{
+    background:var(--ink-paper) url(/assets/paper.svg) repeat;
+    background-blend-mode:multiply;
+    border-image:url(/assets/ink-frame.svg) 34 / 3px / 0 round;
+    box-shadow:none;
+  }
+  .pin:hover .pin-epithet,.pin:hover .pin-blurb{ color:var(--ink-line) }
+  .pin:hover .pin-epithet{ opacity:.78 }
+
+  /* Links in running text get an ink underline rather than the whole
+     paper treatment: turning a word inside a sentence into a paper
+     tile would break the line it sits on. */
+  .foot a:hover,.doc a:hover,.back:hover,.empty a:hover{
+    color:var(--ink-paper);
+    text-decoration-color:var(--ink-paper);
+  }
+}
