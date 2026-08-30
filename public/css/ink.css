@@ -59,9 +59,30 @@
     background:var(--ink-paper) url(/assets/paper.svg) repeat;
     background-blend-mode:multiply;
     color:var(--ink-line);
-    /* the brush frame: 34px slices keep the corners' character and
-       repeat the sides, so one drawing fits every control */
-    border-image:url(/assets/ink-frame.svg) 34 / 3px / 0 round;
+    /* THE BRUSH FRAME, and all three numbers here were arrived at by
+       looking rather than by reasoning.
+
+       6px, not 3px: the border-image WIDTH is what the corner slice
+       is drawn into, so at 3px the drawing's corner arc was squashed
+       to nothing and the frame came out a hairline rectangle. At 6px
+       the line has weight and the corners are corners.
+
+       `stretch`, not `round`: `round` fits an integer number of
+       repeats of the side slice, and the source line does not meet
+       the slice edge exactly, so a button's top edge came out as
+       three separate strokes with gaps between them. Stretched, the
+       single line thins as it lengthens, which on a tall card gives
+       a fine line and on a short button a fat one. That is what a
+       brush does.
+
+       AND THE FILL HAS TO AGREE WITH IT. border-image ignores
+       border-radius, so on a pill (--r-pill is 999px) the paper
+       stayed a capsule while the drawing round it kept its corners
+       and stuck out past the fill at both ends: a misregistered
+       print. Every inked control takes a radius the frame can sit
+       inside. */
+    border-image:url(/assets/ink-frame.svg) 34 / 6px / 0 stretch;
+    border-radius:var(--r-sm);
     box-shadow:none;
     transition:none;
   }
@@ -143,7 +164,7 @@
   .pin:hover .pin-card{
     background:var(--ink-paper) url(/assets/paper.svg) repeat;
     background-blend-mode:multiply;
-    border-image:url(/assets/ink-frame.svg) 34 / 3px / 0 round;
+    border-image:url(/assets/ink-frame.svg) 34 / 6px / 0 stretch;
     box-shadow:none;
   }
   .pin:hover .pin-epithet,.pin:hover .pin-blurb{ color:var(--ink-line) }
