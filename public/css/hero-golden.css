@@ -33,10 +33,41 @@
 
 .hero-golden{
   position:relative;
-  /* The design is 1680x936. Holding that aspect on a wide window
-     keeps the composition the art director approved rather than
-     letting the sides stretch. */
-  min-height:min(100svh, 100vw * 936 / 1680);
+  /* THE SECTION IS THE ARTBOARD, EXACTLY, AT EVERY WINDOW SIZE, AND
+     TWO OTHER THINGS IN THIS FILE DEPEND ON THAT BEING LITERALLY
+     TRUE: the hit targets are percentages of the painting, and the
+     painting contains its own copy. Any size at which the section is
+     not 1680:936 is a size at which `cover` crops, which moves the
+     painted buttons out from under the transparent ones and slides
+     the painted words under the live header.
+
+     It was written as `min-height:min(100svh, 100vw*936/1680)`, which
+     holds the aspect only while the window is TALLER than 1680:936.
+     On a 1920x900 window the section became 2.13:1, `cover` ate 85px
+     off the top and bottom, and the transparent control for "Walk the
+     map" sat 60px above the button it is supposed to be over.
+
+     Width from the height, aspect from the width, and nothing in
+     between: the plate is as wide as the window or as wide as the
+     window is tall will allow, whichever is smaller, and it is never
+     any shape but the artboard's. A short wide window gets a margin
+     of page either side, which is the honest outcome -- the
+     alternative is cropping an approved composition, and this one is
+     left-heavy, so a centred crop takes the headline off it.
+
+     100% and not 100vw: 100vw includes the scrollbar, and a hero one
+     scrollbar-width wider than the page gives the whole document a
+     horizontal one. */
+  width:min(100%, 100svh * 1680 / 936);
+  aspect-ratio:1680/936;
+  /* .ink-hero carries min-height:min(90vh,780px) for the generated
+     scene, and a min-height beats an aspect-ratio: at 1280x860 it
+     held the plate at 774px against the 713 the artboard asks for,
+     so the section was 1.65:1, `cover` cropped, and the hit targets
+     drifted. The plate takes its height from its width and from
+     nothing else. */
+  min-height:0;
+  margin-inline:auto;
   display:block;
   padding:0;
   background-color:#1a2233;
@@ -132,6 +163,15 @@ body:has(.hero-golden) .top{
      the live one is sized and placed to land ON the painted one and
      the two read as a single, slightly crisper header. */
   padding:30px 4.35% 30px 4.345%;
+  /* AND IT TRACKS THE PLATE, not the window. Those percentages are
+     measured off the artboard, so on a short wide window -- where the
+     plate is narrower than the viewport and centred -- a full-width
+     header puts the invisible brand link a hundred pixels off the
+     painted brand it is supposed to be the hit area for. Nothing
+     looks wrong, because nothing here is drawn; the link just stops
+     being where the thing you are clicking is. */
+  width:min(100%, 100svh * 1680 / 936);
+  margin-inline:auto;
 }
 /* AND THE LIVE HEADER IS NOT DRAWN OVER THE PAINTING.
 
@@ -172,25 +212,46 @@ body:has(.hero-golden) .top::before{ display:none }
 /* ------------------------------------------------------------
    NARROW: THE WORDS COME BACK
 
-   The composition is left-heavy and any crop is centred, so a phone
-   showing this image at its own height crops the left third away,
-   which is the entire headline and body. The plan's "symmetric
-   horizontal crop" is right for the picture and loses the page.
+   Below a certain width the painting's own copy is too small to
+   read: it is set at about 16px on a 1680 artboard, so it scales
+   with the window and at 1000px wide it is 9.5px. So under 1280 the
+   painted words stop being the words and the live ones take over,
+   which is what they always were before the render arrived. Same
+   words, same order, same routes. Second arm for a window that is
+   short rather than narrow: the plate is height-driven, so at 400px
+   tall it would be a 718px painting adrift in the middle of a wide
+   window.
 
-   So below the design aspect the art becomes the part worth keeping
-   -- the mountain and the blossom above it -- and the copy is set
-   live over the top, which is what it always was before the render
-   arrived. Same words, same order, same routes.
+   IT IS A WIDTH, NOT AN ASPECT RATIO, AND THE DIFFERENCE WAS A
+   VISIBLE BUG ON ORDINARY LAPTOPS. This branch used to fire whenever
+   the window was narrower in aspect than 1680:936, on the assumption
+   that a narrower window crops the painting's left third away and
+   takes the headline with it. That is true on a phone and false on a
+   laptop: at 1440x900 the plate is 1440x802, which is the artboard's
+   own aspect, so nothing is cropped at all -- the painted headline,
+   the painted body copy and the painted buttons were all fully on
+   screen, and this branch drew the live ones over the top of them.
+   Every word of the hero appeared twice, offset, on the single most
+   common desktop window there is.
+
+   AND THE PAINTED COPY HAS TO BE PUT OUT, NOT JUST CROPPED AT.
+   Wherever this branch fires the painting is still the background,
+   and `background-position` alone cannot be relied on to push the
+   words off frame: at 1279x900 a `cover` crop only removes about an
+   eighth of the artboard's width, and the headline reaches 36% of
+   it. So the scrim below is not a scrim any more, it is a blot: near
+   opaque down the left where every painted word lives, and across
+   the top where the painting keeps its own header. What is left is a
+   dark panel with the live copy on it and the mountain beside it,
+   which is a composition rather than a compromise.
    ------------------------------------------------------------ */
-/* STRICTLY LESS THAN, and the strictness is the point. Written as
-   `max-aspect-ratio: 1680/936` this branch fires AT 1680x936, because
-   max- is inclusive and the artboard is exactly the boundary. That is
-   the one viewport the handoff names for QA, so the golden
-   composition was being replaced by the narrow fallback at precisely
-   the size it was supposed to be checked against. Range syntax says
-   what is meant. */
-@media (aspect-ratio < 1680/936){
+/* The old form of this query, `max-aspect-ratio: 1680/936`, also
+   fired AT 1680x936, because max- is inclusive and the artboard is
+   exactly the boundary: the golden composition was replaced by the
+   fallback at precisely the viewport the handoff names for QA. */
+@media (width < 1280px), (height < 560px){
   .hero-golden{
+    width:100%; aspect-ratio:auto;
     min-height:100svh;
     display:flex; align-items:flex-end;
     padding:120px 0 clamp(40px,7vh,88px);
@@ -204,26 +265,102 @@ body:has(.hero-golden) .top::before{ display:none }
     white-space:normal; clip-path:none;
   }
   .hero-golden .golden-hit{ display:none }
-  /* the painting's own copy is off-frame at this crop, so the live
-     copy needs the scrim it used to have */
+
+  /* THE BLOT AND THE READING SCRIM ARE TWO PSEUDO-ELEMENTS BECAUSE
+     THEY WANT OPPOSITE MASKS.
+
+     .ink-hero::before is masked with
+     `linear-gradient(#000 62%, transparent 98%)` so that the scrim
+     cannot draw a ruled line the width of the page where the section
+     ends. That is right for a scrim and fatal for a cover: every
+     word the painting puts in its bottom third -- three lines of
+     body copy and both buttons -- lives under that fade, and with
+     the blot on the same element it inherited it. At 88% of the hero
+     the blot was down to a quarter of its alpha and the painted
+     buttons were legible through it. So the scrim keeps the mask it
+     was written for, and the cover gets its own, shaped to where the
+     painted words actually are.
+
+     ::before, MASKED AT THE BOTTOM -- the top band and the scrim.
+     The band puts out the painting's own header, because the live
+     one comes back on this branch and the two would otherwise sit a
+     few pixels apart saying the same thing. The painted header's
+     bottom edge is at 8% of the artboard and this crop never pushes
+     it lower than 8% of the section, which at the tallest window
+     this branch sees is 84px. */
   .hero-golden::before{
     content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
-    background:linear-gradient(180deg,
-      rgba(12,20,32,.10) 0%, rgba(12,20,32,.52) 46%,
-      rgba(12,20,32,.80) 100%);
+    background:
+      linear-gradient(180deg,
+        rgba(12,20,32,1) 0, rgba(12,20,32,1) 84px,
+        rgba(12,20,32,.72) 128px, rgba(12,20,32,.3) 192px,
+        rgba(12,20,32,0) 260px),
+      linear-gradient(180deg,
+        rgba(12,20,32,.06) 0%, rgba(12,20,32,.46) 54%, rgba(12,20,32,.84) 100%);
+  }
+
+  /* ::after, MASKED AT BOTH ENDS -- the cover.
+
+     THE PANEL puts out the painted headline, body copy and buttons.
+     The rightmost painted word ends at 43% of the artboard, and the
+     crop can only ever move that LEFT: the offset is 0.62 of the
+     overflow, so the edge lands at 0.62 - 0.19*(displayed width /
+     section width) of the section, which is at most 0.43 and falls
+     from there. Opaque to 43%, then a long eased ramp rather than a
+     short one, and eased out of rather than turned off. At
+     `1 to 44%, .5 to 68%` the change of slope AT 44% read as a ruled
+     vertical line down the page: a gradient with a corner in it
+     draws that corner, which is the same mistake the mask above
+     exists to prevent, turned ninety degrees. The stops after 43%
+     leave almost flat and steepen, so there is no point along the
+     ramp where the rate of change jumps.
+
+     OPAQUE, NOT NEARLY OPAQUE. At 0.96 the painted headline measured
+     18-25 out of 255 against a ground of 18-20: about seven levels,
+     which is nothing on a chart and a legible grey ghost on a dark
+     screen, because the eye's contrast sensitivity is at its highest
+     down there. There is no reason to leave any of it -- the left of
+     this composition is a panel for the live copy, so it is a panel.
+
+     THE CORNER is the painted seal, which the live one is hidden in
+     favour of on this page. At this crop it sits half off the right
+     edge, and half a seal reads as a rendering fault.
+
+     AND THE MASK IS WHAT KEEPS THE PANEL FROM BEING A BLACK BOX.
+     The painted words start at 31% of the section and end at 92%, so
+     the cover is only needed between those. Fading it in over the
+     top fifth gives the blossom in the top left back, which is the
+     part of the painting this crop would otherwise throw away. The
+     ramp finishes at 18%, well clear of 31%, and clear too of the
+     21% the words rise to on the short-window arm of this query,
+     where the crop is vertical. */
+  .hero-golden::after{
+    content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+    background:
+      radial-gradient(58% 40% at 100% 100%,
+        rgba(12,20,32,.94), rgba(12,20,32,0) 72%),
+      linear-gradient(90deg,
+        rgba(12,20,32,1) 0, rgba(12,20,32,1) 43%,
+        rgba(12,20,32,.995) 46%, rgba(12,20,32,.97) 50%,
+        rgba(12,20,32,.92) 55%, rgba(12,20,32,.80) 61%,
+        rgba(12,20,32,.62) 68%, rgba(12,20,32,.42) 76%,
+        rgba(12,20,32,.22) 86%, rgba(12,20,32,.07) 100%);
+    -webkit-mask-image:linear-gradient(180deg,
+      transparent 3%, #000 18%, #000 98%, transparent 100%);
+    mask-image:linear-gradient(180deg,
+      transparent 3%, #000 18%, #000 98%, transparent 100%);
   }
   .hero-golden .hero-in{ position:relative; z-index:2 }
 
   /* AND THE HEADER IS VISIBLE AGAIN, for the same reason the copy is:
-     this crop cuts the painting's own header off the top, so there is
-     nothing left to read and nothing to double with. Without this the
+     the painting's own is under the top band above, so there is
+     nothing left to read and nothing to double with. Without this a
      phone gets a page with no brand and no way to the arcade above
-     the fold, which is the failure mode of hiding a live element in
-     favour of a painted one and then cropping the painting. */
+     the fold. */
   body:has(.hero-golden) .top{
     position:sticky;
     padding:18px var(--pad);
-    max-width:var(--page); margin:0 auto;
+    width:auto; max-width:var(--page); margin:0 auto;
   }
   body:has(.hero-golden) .top .brand-mark,
   body:has(.hero-golden) .top .brand-name,
