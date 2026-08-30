@@ -38,32 +38,50 @@
 
      Realms 10 to 12 are deliberately unspent: they are the top of
      the game's ladder and no room here earns them yet. */
+  /* mx/my ARE WHERE THE ROOM STANDS ON THE MAP, as percentages of
+     the plan; nx/ny are where it stands on the narrow one, which is
+     a trail read top to bottom instead of a valley read across.
+
+     Two coordinate sets rather than one plus arithmetic, because a
+     map is a composition: on a wide board these places sit where the
+     valley puts them, and on a phone they have to be a legible
+     single-file walk. No formula turns one into the other, and
+     pretending otherwise produces a map where half the markers
+     overlap at 390px.
+
+     nx/ny FOLLOW THE WALK ORDER rather than the declaration order,
+     so the narrow trail zig-zags cleanly down the board instead of
+     crossing itself four times. Reorder WALK and these move with it.
+
+     They live only here and not in ROOMS_META (api/_scene.js). That
+     file is the server's claim about what a room MEANS; where its
+     pin sits is presentation, and the server has no opinion on it. */
   var ROOMS = [
-    { key:'arcade',        path:'/arcade-floor',  name:'The Arcade Floor', realm:5, band:'#e8be50',
+    { mx:26, my:54, nx:70, ny:16, key:'arcade',        path:'/arcade-floor',  name:'The Arcade Floor', realm:5, band:'#e8be50',
       epithet:'A sun the size of a seed.',
       blurb:'Cabinets, sticks, and everything that used to eat quarters.' },
-    { key:'play',          path:'/play',          name:'Play',             realm:2, band:'#78aadc',
+    { mx:12, my:77, nx:27, ny:7, key:'play',          path:'/play',          name:'Play',             realm:2, band:'#78aadc',
       epithet:'Breath by breath, the sea fills.',
       blurb:'Games, keys and the things you actually play.' },
-    { key:'tabletop',      path:'/tabletop',      name:'The Table',        realm:3, band:'#60b496',
+    { mx:17, my:27, nx:28, ny:25, key:'tabletop',      path:'/tabletop',      name:'The Table',        realm:3, band:'#60b496',
       epithet:'What is built on stone endures.',
       blurb:'Dice, decks, minis and the four hours you lost to them.' },
-    { key:'battlestation', path:'/battlestation', name:'Battlestation',    realm:4, band:'#5896eb',
+    { mx:42, my:69, nx:28, ny:43, key:'battlestation', path:'/battlestation', name:'Battlestation',    realm:4, band:'#5896eb',
       epithet:'A whirlpool learns to hold its center.',
       blurb:'The desk. Boards, mice, screens, chairs.' },
-    { key:'workshop',      path:'/workshop',      name:'The Workshop',     realm:1, band:'#9b948a',
+    { mx:39, my:22, nx:70, ny:34, key:'workshop',      path:'/workshop',      name:'The Workshop',     realm:1, band:'#9b948a',
       epithet:'Flesh is the first furnace.',
       blurb:'Parts, printers and the rig you keep almost finishing.' },
-    { key:'audio',         path:'/audio',         name:'Audio',            realm:9, band:'#8cdcdc',
+    { mx:57, my:45, nx:70, ny:52, key:'audio',         path:'/audio',         name:'Audio',            realm:9, band:'#8cdcdc',
       epithet:'The way walks with you now.',
       blurb:'Amps, cans and speakers worth the shelf.' },
-    { key:'power',         path:'/power',         name:'Power',            realm:8, band:'#6e6ea0',
+    { mx:73, my:75, nx:28, ny:79, key:'power',         path:'/power',         name:'Power',            realm:8, band:'#6e6ea0',
       epithet:'Emptiness, polished until it shines.',
       blurb:'Chargers, cables, and the brick you keep losing.' },
-    { key:'vault',         path:'/vault',         name:'The Vault',        realm:6, band:'#be82eb',
+    { mx:69, my:20, nx:28, ny:61, key:'vault',         path:'/vault',         name:'The Vault',        realm:6, band:'#be82eb',
       epithet:'The self that steps outside the self.',
       blurb:'Figures, manga, plush and things kept in the box.' },
-    { key:'wardrobe',      path:'/wardrobe',      name:'The Wardrobe',     realm:7, band:'#e278b4',
+    { mx:88, my:50, nx:70, ny:70, key:'wardrobe',      path:'/wardrobe',      name:'The Wardrobe',     realm:7, band:'#e278b4',
       epithet:'The river forgets it was rain.',
       blurb:'What you wear to the thing.' }
   ];
@@ -97,79 +115,123 @@
     return n;
   }
 
-  /* ------------------------------------------------------------- map */
+  /* ------------------------------------------------------------- map
+     AN ACTUAL MAP, NOT NINE RECTANGLES.
+
+     What was here was a responsive grid of cards, which is a table of
+     contents with a stripe on it. The site's whole thesis is that you
+     WANDER rather than search, and a grid is the one layout that
+     says the opposite: it has a reading order, it has a first cell
+     and a last, and it looks like every other shop.
+
+     So the rooms are places now. They stand on a plan of the valley
+     (assets/quarter.svg, generated) at coordinates that are theirs,
+     joined by a trail drawn through them in the order somebody would
+     actually walk it.
+
+     THE TRAIL IS COMPUTED FROM THE MARKERS' OWN COORDINATES, not
+     drawn into the plate. A path baked into the artwork is a second
+     copy of those numbers and it goes wrong the first time anybody
+     moves a room; this way the line cannot come away from the places
+     it connects.
+
+     Still ten links with text in them, in document order, so a
+     screen reader gets a list of destinations and a keyboard gets a
+     tab sequence. The map is how it looks, not what it is. */
   function renderMap() {
     var published = state.stores.length;
-    var html = ROOMS.map(function (r, i) {
+    var narrow = window.matchMedia && window.matchMedia('(max-width: 720px)').matches;
+
+    var pins = ROOMS.map(function (r) {
       var n = countIn(r.key);
       /* THE NARRATOR NEVER LIES ABOUT STOCK. Every label below still
-         reads as its literal fact: no answer means the catalogue did
-         not respond, bare means nothing is published, empty means
-         this room in particular has nothing. Flavour wraps the truth
-         and never replaces it, because the one thing a shop can do
-         that is genuinely dishonest is make an empty shelf sound
-         like a full one. */
-      /* FIVE STATES NOW, and the new one is the one every visitor
-         actually sees. The map renders before the fetch lands, and
-         with only four states that first paint labelled all ten
-         doors "no answer" -- the site telling you it is broken for
-         as long as the request takes, then quietly correcting
-         itself. A door that is being counted says so. */
+         reads as its literal fact: counting means the catalogue has
+         not answered yet, no answer means it did not, bare means
+         nothing is published, empty means this room in particular
+         has nothing. Flavour wraps the truth and never replaces it,
+         because the one thing a shop can do that is genuinely
+         dishonest is make an empty shelf sound like a full one. */
       var label = state.loading ? 'counting\u2026'
                 : !state.reached ? 'no answer'
                 : published === 0 ? 'shelves bare'
                 : n === 0 ? 'nothing here'
                 : n + (n === 1 ? ' thing' : ' things');
-      /* The band is set as a custom property rather than a class, so
-         adding a room needs no CSS. --band is read by .door::before. */
-      /* A ROOM IS A SLOT ON YOUR BAR. The game's hotbar is six dark
-         rounded squares with a numeral in the corner, and the map is
-         the same shape for the same reason: these are the things you
-         can reach. The index is 1-based because the game's is.
+      return {
+        r: r, label: label, has: n > 0,
+        x: narrow ? r.nx : r.mx,
+        y: narrow ? r.ny : r.my
+      };
+    });
 
-         The glyph is the room's own ink drawing, from the sprite
-         inlined at the top of index.html. It takes currentColor, so
-         the card sets the colour and the drawing follows: one file,
-         two contexts, nothing to keep in step. */
-      /* --i is the entrance stagger, read by the riseIn animation in
-         app.css. Set from the render index rather than by an
-         :nth-child rule so the arcade door below, which is appended
-         separately, keeps the same sequence. */
-      return '<a class="door slot' + (state.loading ? ' waiting' : '') +
-        '" href="' + r.path + '" style="--band:' + esc(r.band) +
-        ';--i:' + i + '">' +
-        '<span class="n">' + (i + 1) + '</span>' +
-        '<svg class="door-ico" viewBox="0 0 64 64" aria-hidden="true">' +
-          '<use href="#ico-' + esc(r.key) + '"></use>' +
-        '</svg>' +
-        '<h3>' + esc(r.name) + '</h3>' +
-        '<p class="epithet">' + esc(r.epithet) + '</p>' +
-        '<p>' + esc(r.blurb) + '</p>' +
-        '<span class="count' + (n ? '' : ' shut') + '">' + esc(label) + '</span>' +
-      '</a>';
-    }).join('');
+    /* The arcade is a destination on the map like any other, because
+       it is one. It is also the only one that works today. Immortal
+       Ascension, the eleventh realm, is the one high band spent
+       anywhere on this site, on the room that sells nothing:
+       "the last stair has no rail." */
+    pins.push({
+      r: { key:'arcade-stick', path:'/arcade', name:'The Arcade', band:'#ffe2a0',
+           epithet:'The last stair has no rail.',
+           blurb:'Cabinets in the corner. Free play, nothing for sale, no sign-up.' },
+      label: 'open', has: true, cabinet: true,
+      x: narrow ? 68 : 90, y: narrow ? 90 : 76
+    });
 
-    /* The arcade is a door on the map like any other room, because
-       it is one. It is also the only door that works today, which is
-       worth something: a dungeon with one open room is still a place
-       you can visit. */
-    /* Immortal Ascension, the eleventh realm, is the one high band
-       spent anywhere on this site -- on the room that sells nothing.
-       "The last stair has no rail." */
-    html += '<a class="door slot cabinet" href="/arcade" style="--band:#ffe2a0;--i:' +
-      ROOMS.length + '">' +
-      '<span class="n">' + (ROOMS.length + 1) + '</span>' +
-      '<svg class="door-ico" viewBox="0 0 64 64" aria-hidden="true">' +
-        '<use href="#ico-arcade-stick"></use>' +
+    /* THE TRAIL IS A WALK, NOT THE ARRAY ORDER. The pins are in the
+       order rooms are declared, which is the order a reader tabs
+       through them and is right for that; joining them in the same
+       order draws a line that crosses itself four times. WALK is the
+       order somebody would actually take on foot. Keys, so moving a
+       room's pin moves the trail with it and neither can go stale. */
+    var WALK = ['play', 'arcade', 'tabletop', 'workshop', 'battlestation',
+                'audio', 'vault', 'wardrobe', 'power', 'arcade-stick'];
+    var byKey = {};
+    pins.forEach(function (p) { byKey[p.r.key] = p });
+    var trail = WALK.map(function (k) {
+      var p = byKey[k];
+      return p ? p.x + ',' + p.y : '';
+    }).filter(Boolean).join(' ');
+
+    var html =
+      '<svg class="map-trail" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
+        '<polyline points="' + trail + '"/>' +
       '</svg>' +
-      '<h3>The Arcade</h3>' +
-      '<p class="epithet">The last stair has no rail.</p>' +
-      '<p>Cabinets in the corner. Free play, nothing for sale, no sign-up.</p>' +
-      '<span class="count">open</span>' +
-    '</a>';
+      pins.map(function (p, i) {
+        return '<a class="pin' + (p.cabinet ? ' cabinet' : '') +
+          (p.has ? '' : ' quiet') + '" href="' + p.r.path + '"' +
+          ' style="--band:' + esc(p.r.band) + ';--x:' + p.x + ';--y:' + p.y + ';--i:' + i + '">' +
+          '<span class="pin-dot" aria-hidden="true">' +
+            '<svg class="pin-ico" viewBox="0 0 64 64"><use href="#ico-' + esc(p.r.key) + '"></use></svg>' +
+          '</span>' +
+          /* NAME AND COUNT ARE ALWAYS ON THE MAP. A map you have to
+             hover to read is not a map, it is a guessing game with
+             pictures: the whole advantage of places over a list is
+             that you can see all of them at once. The epithet and
+             the blurb wait for approach, because those are what you
+             read when you have already picked somewhere. */
+          '<span class="pin-label">' +
+            '<span class="pin-name">' + esc(p.r.name) + '</span>' +
+            '<span class="pin-count">' + esc(p.label) + '</span>' +
+          '</span>' +
+          '<span class="pin-card">' +
+            '<span class="pin-epithet">' + esc(p.r.epithet) + '</span>' +
+            '<span class="pin-blurb">' + esc(p.r.blurb) + '</span>' +
+          '</span>' +
+        '</a>';
+      }).join('');
 
+    $('#doors').className = 'plan' + (narrow ? ' plan-narrow' : '');
     $('#doors').innerHTML = html;
   }
+
+  /* The map is a composition, and the composition differs above and
+     below 720px, so a resize across that line has to rebuild it.
+     Debounced: a drag-resize fires this continuously otherwise. */
+  var mapT = null;
+  addEventListener('resize', function () {
+    if (!$('#doors') || $('#roomView') && !$('#roomView').hidden) return;
+    clearTimeout(mapT);
+    mapT = setTimeout(renderMap, 180);
+  });
 
   /* ------------------------------------------------------------ room */
   /* ------------------------------------------------------------ room

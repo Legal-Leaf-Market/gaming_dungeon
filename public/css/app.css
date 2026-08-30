@@ -911,3 +911,170 @@ a.g-card:active{ transform:translateY(-1px) }
     to  { opacity:1; transform:none }
   }
 }
+
+/* ============================================================
+   THE MAP
+
+   Ten destinations standing on a plan of the valley, joined by a
+   trail. It replaced a responsive grid of cards, and the reason is
+   the site's own thesis: this is a place you WANDER, and a grid is
+   the one layout that says the opposite. A grid has a reading order,
+   a first cell and a last, and it looks like every other shop.
+
+   The pins are real links with their text inside them, in document
+   order, so the map is how this looks rather than what it is: a
+   screen reader still gets a list of destinations and a keyboard
+   still gets a tab sequence through them.
+   ============================================================ */
+.plan{
+  position:relative;
+  aspect-ratio:2/1;
+  border-radius:var(--r-lg);
+  border:1px solid var(--line);
+  background:url(/assets/quarter.svg) center/cover no-repeat, var(--void);
+  box-shadow:var(--lift-2);
+  overflow:hidden;
+  /* the plan is a dark plate and the page is dark: a soft inner edge
+     stops it reading as a hole rather than as a surface */
+  isolation:isolate;
+}
+.plan::after{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+  box-shadow:inset 0 0 90px rgba(0,0,0,.55);
+  border-radius:inherit;
+}
+
+/* THE TRAIL, drawn from the pins' own coordinates in app.js rather
+   than baked into the plate, so it cannot come away from the places
+   it joins. preserveAspectRatio is none because the viewBox is a
+   percentage space, not a drawing. */
+.map-trail{
+  position:absolute; inset:0; width:100%; height:100%; z-index:0;
+  overflow:visible; pointer-events:none;
+}
+/* non-scaling-stroke means these numbers are PIXELS, not viewBox
+   units. At .34 the trail was a third of a pixel wide and simply did
+   not draw; the dash pattern has to be in the same units. */
+.map-trail polyline{
+  fill:none; stroke:rgba(var(--jade-rgb),.42);
+  stroke-width:1.8px; stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:2 8;
+  vector-effect:non-scaling-stroke;
+}
+
+/* --------------------------------------------------------- the pin
+   BRIGHT ENOUGH TO OWN THE PLAN. The plate under these is
+   deliberately a narrow band of near-blacks so that all the contrast
+   in the picture belongs to the destinations. */
+.pin{
+  position:absolute; left:calc(var(--x) * 1%); top:calc(var(--y) * 1%);
+  /* A zero-size anchor point. The dot and the label centre
+     themselves on it, which is why there is no transform here: on a
+     0x0 box translate(-50%,-50%) moves nothing. */
+  z-index:2; display:block; width:0; height:0;
+}
+.pin-dot{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:50px; height:50px; border-radius:50%;
+  display:grid; place-items:center;
+  border:2px solid color-mix(in srgb, var(--band) 74%, transparent);
+  background:radial-gradient(circle at 50% 34%,
+    color-mix(in srgb, var(--band) 20%, rgba(9,16,25,.96)),
+    rgba(7,12,20,.97));
+  box-shadow:0 4px 16px rgba(0,0,0,.62),
+    0 0 0 7px color-mix(in srgb, var(--band) 10%, transparent);
+  transition:transform var(--fast), box-shadow var(--fast), border-color var(--fast);
+}
+.pin-ico{ width:26px; height:26px; color:var(--band) }
+/* A room with nothing on its shelves is still a place you can go, so
+   it is dimmed rather than removed or greyed out of use. */
+.pin.quiet .pin-dot{ opacity:.72 }
+.pin.cabinet .pin-dot{ border-style:dashed }
+
+.pin:hover .pin-dot,.pin:focus-visible .pin-dot{
+  transform:translate(-50%,-50%) scale(1.12);
+  border-color:var(--band);
+  box-shadow:0 6px 22px rgba(0,0,0,.7),
+    0 0 0 11px color-mix(in srgb, var(--band) 18%, transparent);
+}
+
+/* THE LABEL, ALWAYS ON. Sits under the pin, centred, and is the
+   thing that makes this a map rather than ten mystery buttons. */
+.pin-label{
+  position:absolute; left:50%; top:32px; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:1px;
+  width:max-content; max-width:150px; text-align:center; pointer-events:none;
+}
+.pin-name{
+  font-family:var(--sans); font-weight:600; font-size:12.5px; color:var(--text);
+  text-shadow:0 1px 4px rgba(0,0,0,.9), 0 0 12px rgba(0,0,0,.7);
+  white-space:nowrap;
+}
+.pin-count{
+  font-family:var(--sans); font-weight:600; font-size:9.5px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--jade);
+  text-shadow:0 1px 4px rgba(0,0,0,.9);
+}
+.pin.quiet .pin-count{ color:var(--text-faint); font-weight:500 }
+.pin.cabinet .pin-count{ color:var(--lantern) }
+
+/* THE CARD OPENS ON APPROACH and carries only what you read once you
+   have already chosen: the epithet and what the room stocks. */
+.pin-card{
+  position:absolute; left:50%; bottom:36px; transform:translate(-50%,6px);
+  width:224px; padding:12px 15px;
+  border-radius:var(--r); border:1px solid var(--line-2);
+  background:rgba(10,17,26,.96);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  box-shadow:var(--lift-3);
+  display:flex; flex-direction:column; gap:5px;
+  opacity:0; visibility:hidden; pointer-events:none;
+  transition:opacity var(--fast), transform var(--fast), visibility var(--fast);
+}
+.pin:hover .pin-card,.pin:focus-visible .pin-card{
+  opacity:1; visibility:visible; transform:translate(-50%,0);
+}
+.pin-epithet{
+  font-family:var(--display); font-style:italic; font-size:15px;
+  color:color-mix(in srgb, var(--band) 76%, var(--text-dim));
+}
+.pin-blurb{ color:var(--text-dim); font-size:13.5px; line-height:1.5 }
+
+/* Pins near an edge would open their card off the plan, so the card
+   swings to the inside. Percentages, because the pin coordinates
+   are percentages and this has to hold at any plan size. */
+.pin[style*="--x:8"] .pin-card,.pin[style*="--x:1"] .pin-card{ left:0; transform:translate(0,6px) }
+.pin[style*="--x:8"]:hover .pin-card,.pin[style*="--x:1"]:hover .pin-card{ transform:translate(0,0) }
+.pin[style*="--x:9"] .pin-card,.pin[style*="--x:88"] .pin-card{ left:auto; right:0; transform:translate(0,6px) }
+.pin[style*="--x:9"]:hover .pin-card,.pin[style*="--x:88"]:hover .pin-card{ transform:translate(0,0) }
+/* and one near the top opens downward instead */
+.pin[style*="--y:2"] .pin-card,.pin[style*="--y:7;"] .pin-card{ bottom:auto; top:34px }
+
+/* ------------------------------------------------- the narrow plan
+   A TRAIL READ TOP TO BOTTOM, not a squeezed valley. Ten markers on
+   a 16:9 board at phone width are 30px apart and unusable, so the
+   plan becomes tall and the walk becomes single file. app.js hands
+   over the second coordinate set; nothing here has to compute it. */
+.plan-narrow{
+  aspect-ratio:10/21;
+  background-position:center;
+}
+.plan-narrow .pin-dot{ width:46px; height:46px }
+.plan-narrow .pin-ico{ width:24px; height:24px }
+/* On touch there is no hover, so the cards are simply open, sitting
+   beside their pin. A tap has to go straight to the room; a tap that
+   only reveals a label is a tap the visitor has to make twice. */
+/* On touch there is no hover, so the card never opens and the label
+   is all there is. That is the right trade: a tap has to go straight
+   to the room, and a tap that only reveals a caption is a tap the
+   visitor has to make twice. */
+.plan-narrow .pin-card{ display:none }
+.plan-narrow .pin-label{ top:28px; max-width:40vw }
+.plan-narrow .pin-name{ font-size:12px }
+
+/* NO ENTRANCE ANIMATION ON THE PINS, deliberately. A staggered fade
+   looked good once and then re-ran every time renderMap() rebuilt
+   the map, which is on every retry of the catalogue fetch and on
+   every resize across the narrow breakpoint. A map that re-animates
+   while you are reading it is a map that keeps taking itself away.
+   The doors below still rise in; they are built once. */

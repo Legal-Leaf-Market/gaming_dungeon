@@ -866,7 +866,7 @@ function boughSystem(rand, opts) {
     }
   }
 
-  return { wood, far, near, lit, cores, branch }
+  return { wood, far, near, lit, cores, branch, bloomAt }
 }
 
 function paint(sys) {
@@ -918,6 +918,75 @@ function paint(sys) {
    above it. You look at the quarter THROUGH branches, which is the
    whole brief.
    ============================================================ */
+/* ------------------------------------------------------------
+   A WEEPING STRAND
+
+   The reference is shidarezakura, the weeping cherry: long thin
+   whips that fall almost straight down from a high limb with
+   blossom strung along their whole length, not bunched at the tip.
+
+   This is what fills a hero. A branching system alone spends its
+   length going sideways, so however many generations you give it
+   the mass stays near the top and the bottom two thirds of the
+   window is sky. Strands go DOWN, and the gaps between them are the
+   gaps you see the city through -- which is the thing being asked
+   for. Curved, tapering, and swaying on their own phase so no two
+   hang alike.
+
+   Built as one closed path down the left side and back up the
+   right, which winds the same way as everything else in this file
+   (see THE VOCABULARY).
+   ------------------------------------------------------------ */
+function strand(sys, rand, x0, y0, len, wid, sway, opts) {
+  const steps = 12
+  const phase = rand() * 6.3
+  const L = [], R = []
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps
+    /* the sway grows with t: a whip is stiff where it leaves the
+       limb and loose at the end */
+    const x = x0 + Math.sin(phase + t * 2.6) * sway * t * t
+    const y = y0 + len * t
+    const wd = Math.max(0.5, wid * (1 - t * 0.86))
+    L.push([x - wd, y]); R.push([x + wd, y])
+  }
+  let d = `M${m(L[0][0])} ${m(L[0][1])}`
+  for (let i = 1; i <= steps; i++) d += `L${m(L[i][0])} ${m(L[i][1])}`
+  for (let i = steps; i >= 0; i--) d += `L${m(R[i][0])} ${m(R[i][1])}`
+  sys.wood.push(d + 'Z')
+
+  /* BLOSSOM IN CLUSTERS ALONG THE WHOLE WHIP, and both halves of
+     that matter.
+
+     ALONG: bunched at the end is a bell-pull, not a cherry.
+
+     IN CLUSTERS: the first version scattered twenty singles evenly
+     down a 1700-unit strand, which at render scale is one flower
+     every thirty pixels. The result was a bare stick with a few
+     dots on it -- a bead curtain. Real weeping cherry carries
+     blossom in tight knots every few inches with wood showing
+     between them, so the strand is mostly flower and the gaps are
+     small and irregular. */
+  const knots = opts.per[0] + Math.floor(rand() * (opts.per[1] - opts.per[0]))
+  for (let k = 0; k < knots; k++) {
+    /* Evenly spaced down the strand and then jittered, rather than
+       uniformly random: pure random leaves long bald stretches by
+       chance, which is what a whip must not have. */
+    const t = Math.min(0.99, (k + 0.5) / knots + (rand() - 0.5) * 0.5 / knots)
+    const cx = x0 + Math.sin(phase + t * 2.6) * sway * t * t
+    const cy = y0 + len * t
+    const per = 6 + Math.floor(rand() * 9)
+    for (let i = 0; i < per; i++) {
+      sys.bloomAt(
+        cx + (rand() - 0.5) * opts.spread,
+        cy + (rand() - 0.5) * opts.spread * 0.8,
+        (opts.r[0] + rand() * (opts.r[1] - opts.r[0])) * (1 - t * 0.22),
+        t > 0.55 ? 2 : 1
+      )
+    }
+  }
+}
+
 function canopyLayer(w, h, seed, opts, anchors) {
   const seeds = rng(seed)
   const all = { wood: [], far: [], near: [], lit: [], cores: [] }
@@ -954,6 +1023,34 @@ function canopyLayer(w, h, seed, opts, anchors) {
       for (const k of Object.keys(all)) all[k] = all[k].concat(sys[k])
     }
   }
+
+  /* THE STRANDS, hung on their own even-ish spacing rather than off
+     the branch tips. Tips cluster where the branching happened to
+     fork, which leaves wide bald columns between them; the hero has
+     to be filled edge to edge, so these are placed across the width
+     and only jittered. Same replay trick for the tiling copy. */
+  if (opts.vines) {
+    const v = opts.vines
+    let vx = -60
+    while (vx < w + 80) {
+      const seed2 = Math.floor(seeds() * 0xffffff)
+      const y0 = v.top[0] + seeds() * (v.top[1] - v.top[0])
+      const len = v.len[0] + seeds() * (v.len[1] - v.len[0])
+      const wid = v.wid[0] + seeds() * (v.wid[1] - v.wid[0])
+      const sway = v.sway * (0.4 + seeds() * 1.2)
+      const xs2 = [vx]
+      if (vx < w * 0.5) xs2.push(vx + w); else xs2.push(vx - w)
+      for (const px of xs2) {
+        const sys = boughSystem(rng(seed2), opts)
+        strand(sys, rng(seed2 ^ 0x5bd1), px, y0, len, wid, sway, {
+          per: v.per, spread: v.spread, r: v.r,
+        })
+        for (const k of Object.keys(all)) all[k] = all[k].concat(sys[k])
+      }
+      vx += v.gap[0] + seeds() * (v.gap[1] - v.gap[0])
+    }
+  }
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${paint(all)}
 </svg>\n`
 }
@@ -963,27 +1060,136 @@ function canopyLayer(w, h, seed, opts, anchors) {
    so it reads as branches several metres off rather than as a
    second tree in front of you. This is the layer that puts blossom
    over the CITY instead of only over the sky. */
-const canopyFar = () => canopyLayer(2400, 1500, 0x51a3, {
+const canopyFar = () => canopyLayer(2400, 1900, 0x51a3, {
   bloomFrom: 2, perTwig: [4, 8], spread: 48, r: [3.5, 8],
   minLen: 26, sink: 0.62, depth: 3, aim: 1.16, fan: 0.9,
   len: [170, 290], wid: [7, 12],
+  /* the longest strands, reaching the floor of the plate */
+  vines: {
+    gap: [126, 215], top: [90, 380], len: [900, 1750], wid: [2.4, 4.2],
+    sway: 104, per: [24, 40], spread: 34, r: [4.5, 9.5],
+  },
 }, [150, 265])
 
 /* THE MIDDLE. Where most of the mass is. */
-const canopyMid = () => canopyLayer(2400, 1120, 0x7b2e, {
+const canopyMid = () => canopyLayer(2400, 1650, 0x7b2e, {
   bloomFrom: 2, perTwig: [7, 13], spread: 44, r: [4.5, 11],
   minLen: 22, sink: 0.56, depth: 3, aim: 1.08, fan: 1.0,
   len: [140, 235], wid: [9, 15],
+  vines: {
+    gap: [156, 262], top: [110, 400], len: [620, 1320], wid: [3, 5],
+    sway: 92, per: [18, 30], spread: 40, r: [5.5, 11],
+  },
 }, [124, 205])
 
 /* THE NEAR CANOPY. Heavy wood, the biggest flowers, full opacity,
    and the shortest hang: this is the wood you would be sitting on,
    so it crowds the top of the frame and thins fast. */
-const canopyNear = () => canopyLayer(2400, 780, 0x3c7f, {
+const canopyNear = () => canopyLayer(2400, 1450, 0x3c7f, {
   bloomFrom: 2, perTwig: [9, 17], spread: 52, r: [6, 15],
   minLen: 22, sink: 0.5, depth: 3, aim: 0.98, fan: 1.05,
   len: [130, 220], wid: [14, 24],
+  /* Fewer and heavier: this is the wood nearest the viewer, and a
+     forest of thick strands across the front would curtain the city
+     off rather than let you peek through. */
+  vines: {
+    gap: [244, 400], top: [90, 300], len: [500, 1080], wid: [4, 6.4],
+    sway: 76, per: [13, 22], spread: 48, r: [7, 14],
+  },
 }, [155, 262])
+
+/* ============================================================
+   THE QUARTER, IN PLAN
+
+   The map used to be nine rectangles in a grid, which is a table of
+   contents wearing a hat. The owner: "the map is really boring right
+   now, it's just a bunch of rectangles... make it an actual map with
+   the different destinations on there."
+
+   So this is the ground those destinations stand on: a plan view of
+   the valley, drawn once and served as one plate. Terraces as
+   contour bands, the river the bridge crosses, field walls, and a
+   scattering of roofs seen from above.
+
+   IT CARRIES NO DESTINATIONS AND NO PATHS. Those are drawn in the
+   DOM by app.js from the same coordinates the markers use, so the
+   trail cannot drift away from the places it connects. A path baked
+   into this file would be a second copy of those numbers, and it
+   would be wrong the first time anybody moved a room.
+
+   Muted on purpose: it is a backdrop for ten coloured markers, and
+   a busy one would fight them.
+   ============================================================ */
+function quarterPlan() {
+  const w = 1600, h = 900
+  const rand = rng(0x9d4c)
+  const land = [], water = [], walls = [], roofs = []
+
+  /* Contour bands: the valley floor rising to the north. Each is a
+     wobbling horizontal ribbon, and the wobble is what stops them
+     reading as a stack of shelves. */
+  for (let i = 0; i < 5; i++) {
+    const base = h - 40 - i * 138
+    let d = `M0 ${n(h)}L0 ${n(base)}`
+    for (let x = 0; x <= w; x += 40) {
+      d += `L${n(x)} ${n(base + Math.sin(x / 190 + i * 1.7) * 26 + Math.sin(x / 61 + i) * 9)}`
+    }
+    d += `L${n(w)} ${n(h)}Z`
+    land.push({ d, i })
+  }
+
+  /* The river, and the same river the mid band's bridge crosses. */
+  let rv = ''
+  const cx = (t) => 430 + Math.sin(t * 3.1) * 250 + t * 180
+  for (let side = 0; side < 2; side++) {
+    const off = side ? 34 : -34
+    const pts = []
+    for (let k = 0; k <= 20; k++) {
+      const t = k / 20
+      pts.push([cx(t) + off, h * 0.02 + t * h * 1.02])
+    }
+    if (!side) { rv += `M${n(pts[0][0])} ${n(pts[0][1])}`; for (const q of pts) rv += `L${n(q[0])} ${n(q[1])}` }
+    else { for (let k = pts.length - 1; k >= 0; k--) rv += `L${n(pts[k][0])} ${n(pts[k][1])}` }
+  }
+  water.push(rv + 'Z')
+
+  /* Field walls and terraces: short strokes that give the plan a
+     grain so the empty parts are not blank. */
+  for (let i = 0; i < 90; i++) {
+    const x = rand() * w, y = 90 + rand() * (h - 140)
+    if (Math.abs(x - cx((y - h * 0.02) / (h * 1.02))) < 70) continue
+    const len = 30 + rand() * 110
+    const a = (rand() - 0.5) * 0.5 + (rand() > 0.5 ? 0 : Math.PI / 2)
+    walls.push(`M${n(x)} ${n(y)}L${n(x + Math.cos(a) * len)} ${n(y + Math.sin(a) * len)}` +
+      `L${n(x + Math.cos(a) * len)} ${n(y + Math.sin(a) * len + 2.4)}L${n(x)} ${n(y + 2.4)}Z`)
+  }
+
+  /* Roofs from above: a diamond with a ridge line, which is what a
+     hipped roof looks like on a plan. */
+  for (let i = 0; i < 54; i++) {
+    const x = rand() * w, y = 70 + rand() * (h - 120)
+    if (Math.abs(x - cx((y - h * 0.02) / (h * 1.02))) < 62) continue
+    const rw = 9 + rand() * 15, rh = rw * (0.6 + rand() * 0.3)
+    roofs.push(`M${n(x - rw)} ${n(y)}L${n(x)} ${n(y - rh)}L${n(x + rw)} ${n(y)}L${n(x)} ${n(y + rh)}Z`)
+  }
+
+  /* THE VALUE RANGE IS DELIBERATELY NARROW. The first version ran
+     from #12202e to #26445d, and ten pins had to read on both ends
+     of that: on the dark bands they vanished and on the light ones
+     they looked like stickers. A map is a backdrop, so the terraces
+     step by about four levels and the pins own all the contrast. */
+  const bands = land.map((L) =>
+    `<path fill="${['#131f2b', '#16232f', '#192734', '#1c2b39', '#1f2f3e'][L.i]}" d="${L.d}"/>`
+  ).join('')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+  <rect width="${w}" height="${h}" fill="#111c27"/>
+  ${bands}
+  <path fill="#24455a" opacity=".8" d="${water.join('')}"/>
+  <path fill="#38617a" opacity=".34" d="${walls.join('')}"/>
+  <path fill="#0c1620" opacity=".55" d="${roofs.join('')}"/>
+</svg>\n`
+}
 
 /* ------------------------------------------------------------
    THE SKY, AS CUSTOM PROPERTIES
@@ -1035,4 +1241,5 @@ write('public/assets/city-near.svg', nearEaves().svg(BAND.near))
 write('public/assets/city-canopy-far.svg', canopyFar())
 write('public/assets/city-canopy-mid.svg', canopyMid())
 write('public/assets/city-canopy-near.svg', canopyNear())
+write('public/assets/quarter.svg', quarterPlan())
 write('public/css/city-sky.css', skyCss())
