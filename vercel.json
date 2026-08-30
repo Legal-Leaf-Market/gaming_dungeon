@@ -112,6 +112,24 @@
       ]
     },
     {
+      "source": "/api/events",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/api/admin-stats",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
       "source": "/css/(.*)",
       "headers": [
         {

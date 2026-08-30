@@ -1024,12 +1024,67 @@ audience. Do not add reciprocal links on the assumption they are symmetrical.
 
 | Var | Gates |
 |---|---|
-| `ADMIN_PASSCODE` | `/api/capture` POST and `?report`. **Unset returns 503** — fails closed. |
-| `DATABASE_URL` | Neon Postgres: the capture store and the catalogue cache. Without it captures cannot be stored and every request pays a cold scrape. Same provider Herbal Leaf uses. |
+| `ADMIN_PASSCODE` | `/api/capture` POST and `?report`, `/api/probe`, and `/api/admin-stats`. **Unset returns 503** — fails closed. |
+| `DATABASE_URL` | Neon Postgres: the capture store, the catalogue cache, and `site_events`. Without it captures cannot be stored, every request pays a cold scrape, and `/admin` records nothing. Same provider Herbal Leaf uses. |
 
 The passcode is typed into the collector's panel and used for one request. It is
 **never** in the bookmarklet URL, which lives in a bookmarks bar in plain sight
 forever, and never on `/collect`, which anybody can load.
+
+---
+
+## 10b. `/admin` — what the site is doing
+
+`public/admin.html` + `/api/events` + `/api/admin-stats` + `/js/events.js`, ported
+from Kawaii Katz. `site_events` has the **identical shape** to that site's table,
+for the reason `kv` matches Herbal Leaf's: two sites that may share a database
+later should not need a reconciliation first.
+
+**It wires itself, and nothing in `grid.js`, `app.js` or `hub.js` was edited.**
+Every event comes from a delegated listener on `document`, matching markup those
+files already emit: `a[rel~="sponsored"]` is an outbound click, `[data-save]` is a
+save, `[data-zoom]` is a zoom, `#gQ` is a search. Delegation is what `grid.js`
+already does for save and zoom, for the reason it gives there: the grid re-renders
+on every keystroke.
+
+**Those selectors are the contract.** Rename `data-save` in `grid.js` and saves
+stop being recorded, silently, with nothing failing. That trade is deliberate,
+because analytics must never break the shelf, but it means the check after
+touching card markup is `/admin`, not the page.
+
+**The product id is the URL with the query stripped**, which is what
+`_capture.js`'s `identity()` already uses, so a product's id here matches its id
+in the capture store. Stripping is load-bearing twice: `it.url` arrives from
+`row()` already carrying `?ref=` (section 5), and commission paperwork should no
+more be copied into an analytics table than into `publicStores()`; and a ref
+change would otherwise turn every product into a new row and silently reset its
+history.
+
+**An outbound click is the GOAL, not a leak.** It is the only event on this site
+that can earn anything, and it is also the last thing observable, because this
+site never takes payment. The funnel marks that step `goal` and annotates it as a
+win. The Kawaii Katz version printed "lost N here" under it in alarm red, which
+read as attrition and had it exactly backwards; the drop-off note also now renders
+ABOVE the bar it precedes, because printed underneath it read as a property of the
+step it sat under.
+
+**Every funnel step counts DISTINCT `sid`, not events.** A funnel counted in
+events lies: one person setting six filters and clicking nothing looks like six
+steps of engagement. A session is a TAB, so one person over two visits is two
+sessions. Good for shape, wrong for "how many humans", and nothing claims the
+latter.
+
+`sid` is a random value in sessionStorage: no IP, no cookie, no fingerprint. That
+is also why `/api/events` is not rate limited by IP, since limiting by IP means
+holding one. The clamps bound it instead (name allow-list, length caps, 40 events
+per request) and a 120-day sweep runs on roughly one request in two hundred.
+
+**`/api/events` and `/api/admin-stats` need `no-store` in `vercel.json`.** The
+catch-all `/api/(.*)` rule sets `s-maxage=600`, which on the stats endpoint would
+serve one operator's numbers to the next reader from the CDN.
+
+`admin.html` links `/css/ink.css` last like every other page (section 8c), and
+`test/ink.test.mjs` caught it when it did not.
 
 ### The datastore is Neon, and the one dependency is the driver
 
