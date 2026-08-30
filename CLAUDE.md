@@ -880,6 +880,57 @@ treatment at all.
 
 ---
 
+## 8d. The realism pass: what actually made the scene read as real
+
+Owner: *"make this all sexier and cleaner, more realistic, try again on every
+single element."* Four findings, and each one is a rule rather than a tweak.
+
+**SHAPE COMPLEXITY IS FREE IN THIS SCENE.** Every blossom is defined once in
+`<defs>` and placed with `<use>`. The file's weight is the placements, and a
+placement is identical bytes whatever it points at. The old library rationed
+detail as if it cost something: a plain circle at the small tiers, a
+three-petal flower at the middle one. Both were paying a realism price for a
+saving that does not exist. Draw every tier as well as it can be drawn.
+
+**THE PETAL WAS A STAR, and that was the whole confetti problem.** Centre, out
+one side, tip, back, with both curves meeting at a point, is a pointed lens;
+five of them is a star. A cherry petal is obovate and NOTCHED. Draw a
+candidate at sixty units next to the current one before believing any
+reasoning about it, including this paragraph.
+
+**AERIAL PERSPECTIVE IS PIGMENT, NOT OPACITY.** The three canopy plates were
+separated by CSS opacity. That bleeds the city through the flowers when the
+brief is to see it through the GAPS, and flattens the far layer toward
+whatever is behind it. `LAYER_PAL(t)` mixes distance in at generate time
+against TWO haze targets: wood recedes toward the cool sky and goes nearly all
+the way, blossom recedes toward the warm pale the low sun puts in the air.
+Mixing blossom toward the blue is what made the far layer dusty mauve.
+
+**A MAP READS THROUGH RELATIONSHIPS, NOT DETAIL.** Buildings gather into
+blocks, blocks sit on lanes, lanes run to a bridge because that is where the
+river can be crossed, fields take the contour because water does. `quarterPlan()`
+builds in that order. Each district has ONE orientation give or take a few
+degrees: agreement is what turns marks into streets, and exactness is what
+turns them into a circuit board.
+
+Two things that keep coming back and now have tests (`test/copy.test.mjs`):
+
+- **No em dashes in shipped copy.** Four had crept back in, including every
+  control hint an opened cabinet prints.
+- **The workshop does not talk in front of the customer.** The arcade's empty
+  state told a visitor which source file to paste a place id into. The site
+  had been cleaned of exactly this once already.
+
+**And the exemption in that test is the part to read.** `collect.html` is the
+operator console and neither rule applies to it. Working that out from the
+page's robots meta looks right and is wrong: `arcade.html` is also noindex, for
+a completely different reason, and has real visitors arriving from the header.
+That inference silently exempted the page the test was written for, and it
+passed while doing it. Operator pages are NAMED. `noindex` means "do not
+crawl", never "nobody reads it".
+
+---
+
 ## 8b. The workflow layer, and the sister sites it came from
 
 **The look was finished before the interface was.** The owner's words after
@@ -1353,3 +1404,12 @@ before you trust it.
   invisible, and it fails silently (§8c).
 - Do NOT add a control to the site without adding it to the one hover list in
   `ink.css`, descendants and all (§8c).
+- Do NOT ration shape detail in `tools/city.mjs` to save bytes. The `<use>`
+  placements are the file; the `<defs>` are free (§8d).
+- Do NOT separate the canopy plates with CSS opacity again. Distance is mixed
+  into the pigment by `LAYER_PAL` (§8d).
+- Do NOT infer "operator page" from `noindex` in `test/copy.test.mjs`.
+  `arcade.html` is noindex and has visitors (§8d).
+- Do NOT stretch an absolutely positioned scrim past the viewport to escape the
+  page rail. `overflow-x:hidden` on body hides the overflow, it does not remove
+  it, and the document ends up twice its own width. Position it fixed (§8d).
