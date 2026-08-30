@@ -128,3 +128,81 @@ test('inlining does not corrupt the regex escape in the robots parser', () => {
   assert.ok(source.includes("replace(/[.+^${}()|[\\]\\\\?]/g, '\\\\$&')"),
     'the robots escape was mangled during inlining')
 })
+
+/* ------------------------------------------------------------------
+   WHY A DOOR DID NOT OPEN.
+
+   The scanner used to collapse every failure into one null value, so
+   a shop with its feed switched off, a shop returning 403, and a path
+   robots.txt forbids all produced the identical outcome: "the scan
+   found nothing". Reproduced in a real browser against a fixture whose
+   products.json answers 200 with storefront HTML, whose Woo endpoint
+   404s and whose sitemap 403s, the operator was told nothing at all.
+   These pin each reason to its own words.
+   ------------------------------------------------------------------ */
+
+function scanBody() {
+  return scanSource.toString()
+}
+
+test('every HTTP status an operator has to act on differently is worded differently', () => {
+  const src = scanBody()
+  const meaning = src.slice(src.indexOf('function meaning('), src.indexOf('function get('))
+  const fn = new Function(`${meaning}; return meaning`)()
+
+  /* 402 is the one nobody guesses: a frozen Shopify store, not a
+     payment the crawler is being asked for. */
+  assert.match(fn(402), /frozen or unpaid/)
+  assert.match(fn(403), /refused, not missing/)
+  assert.match(fn(401), /refused, not missing/)
+  assert.match(fn(404), /no such endpoint/)
+  assert.match(fn(429), /rate limited/)
+  assert.match(fn(503), /worth one retry/)
+
+  /* A refusal and an absence must never read alike: one means stop,
+     the other means try another door. */
+  assert.notEqual(fn(403), fn(404))
+})
+
+test('a feed that answers with HTML is reported as off, not as missing', () => {
+  const src = scanBody()
+  assert.match(src, /answered with HTML, not JSON: the feed is off or behind a wall/)
+  /* It has to be decided by PARSING, not by the status: the shop
+     returns 200 and its own storefront, so the status is fine. */
+  assert.match(src, /JSON\.parse\(body\)/)
+})
+
+test('an endpoint that answers and is empty is not the same as one that is absent', () => {
+  assert.match(scanBody(), /answered, and the shop is empty/)
+})
+
+test('the shut doors are reported, so a fruitless scan says which were tried', () => {
+  const src = scanBody()
+  assert.match(src, /Doors tried: /)
+  /* And they travel with the capture, so the reason a merchant
+     produced nothing is stored rather than just the zero. */
+  assert.match(src, /doors: doors/)
+})
+
+test('bot management is read off the page, never probed for', () => {
+  const src = scanBody()
+  assert.match(src, /Akamai Bot Manager/)
+  assert.match(src, /DataDome/)
+  /* Read from what the page already set. A probe for a wall would be
+     the exact request this is trying to avoid making. */
+  assert.match(src, /document\.cookie/)
+  assert.ok(!/fetch\((['"])\/(cdn-cgi|_bm)/.test(src), 'must not probe for a wall')
+})
+
+test('an empty scan still hands its notes back to the panel', () => {
+  const { source } = collectorSource('https://example.test')
+  /* The panel returned early on an empty scan and never redrew, so
+     every reason the scanner had just worked out was discarded. */
+  const branch = source.slice(source.indexOf('if (!res || !res.products.length)'))
+  const guard = branch.slice(0, branch.indexOf('res.build = BUILD'))
+  assert.match(guard, /redrawCounts\(\)/)
+  assert.match(guard, /coverage\.notes/)
+  /* But it must NOT adopt the scan's empty product list over a page
+     capture that holds real rows. */
+  assert.ok(!/capture = res/.test(guard), 'an empty scan must not replace the page capture')
+})

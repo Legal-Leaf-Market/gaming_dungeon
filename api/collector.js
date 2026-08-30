@@ -555,8 +555,29 @@ const OPERATOR_SOURCE = `
       scanning = false;
       $("gd-scan").textContent = "Scan everything";
       if (!res || !res.products.length) {
+        /* THE ONE RUN WHERE THE DIAGNOSTICS MATTER MOST WAS THE ONE
+           RUN THAT BINNED THEM. This branch returned before
+           redrawCounts(), so a scan that found nothing computed why —
+           feed switched off, sitemap forbidden, robots disallowing the
+           path, a bot wall — handed it back in res.coverage.notes, and
+           the panel dropped the whole object on the floor. The
+           operator was told "Scan found nothing" and nothing else, and
+           the reason never reached the capture store either.
+
+           The products are NOT replaced here: the plain page capture
+           may hold real rows and an empty scan must not wipe them.
+           Only the reasons are taken. */
+        if (res) {
+          var already = capture.coverage.notes;
+          var extra = (res.coverage && res.coverage.notes) || [];
+          for (var n = 0; n < extra.length; n++) {
+            if (already.indexOf(extra[n]) === -1) already.push(extra[n]);
+          }
+          capture.scan = res.scan;
+          redrawCounts();
+        }
         out.textContent = "Scan found nothing. The plain capture above still holds " +
-          capture.products.length + ".";
+          capture.products.length + ". The notes say which doors were tried.";
         return;
       }
       /* THE SCAN REPLACES THE CAPTURE RATHER THAN ADDING TO IT. It is

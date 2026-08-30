@@ -368,3 +368,48 @@ test('a properly typed catalogue still gets a real include list', async () => {
   assert.equal(file.coverage.wouldDrop, 1, 'the gift card is the one it drops')
   assert.equal(file.coverage.pct, 75)
 })
+
+/* ------------------------------------------------------------------
+   WHAT THE SUMMARY REFUSES TO STATE CONFIDENTLY.
+
+   From a real triage run over 40 merchants. Three of them were routed
+   to a room on nothing whatever, because every product carried an
+   empty product_type and the fallback filled the column that a human
+   reads as a classification.
+   ------------------------------------------------------------------ */
+
+test('a feed that is mostly untyped is reported as unclassified, not as classified', () => {
+  const rows = []
+  for (let i = 0; i < 40; i++) {
+    rows.push({ title: 'Whiskey Decanter ' + i, product_type: '', price: 20, available: true, image: 'x' })
+  }
+  const s = summarise(rows)
+  assert.ok(s.notes.some(n => /UNCLASSIFIED/.test(n)), 'should refuse to imply a room')
+})
+
+test('a properly typed feed is not accused of being unclassified', () => {
+  const rows = []
+  for (let i = 0; i < 40; i++) {
+    rows.push({ title: 'Mouse Pad ' + i, product_type: 'Mouse Pads', price: 20, available: true, image: 'x' })
+  }
+  assert.ok(!summarise(rows).notes.some(n => /UNCLASSIFIED/.test(n)))
+})
+
+test('platform and app rows are named, not silently counted as stock', () => {
+  const rows = [
+    { title: 'Custom Mice', product_type: 'CUSTOM_PRODUCT', price: 10, available: true, image: 'x' },
+    { title: 'Points', product_type: 'Mileage_Product', price: 1, available: true, image: 'x' },
+    { title: 'A real pad', product_type: 'Mouse Pads', price: 30, available: true, image: 'x' },
+  ]
+  const note = summarise(rows).notes.find(n => /NOT PRODUCTS/.test(n))
+  assert.ok(note, 'should name them')
+  assert.match(note, /CUSTOM_PRODUCT/)
+  assert.match(note, /Mileage_Product/)
+  /* Named rather than dropped: the count is still the merchant's own. */
+  assert.equal(summarise(rows).products, 3)
+})
+
+test('an empty feed is distinguished from no feed at all', () => {
+  const note = summarise([]).notes.find(n => /THE FEED ANSWERED AND IS EMPTY/.test(n))
+  assert.ok(note, 'zero products with a live feed is its own finding')
+})

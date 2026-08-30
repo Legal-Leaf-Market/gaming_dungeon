@@ -130,6 +130,15 @@ export function summarise(rows) {
   const vendors = tally(rows.map(r => (r.vendor || '').trim() || '(none)'))
 
   const notes = []
+  /* A FEED THAT ANSWERS AND HOLDS NOTHING IS NOT A FEED THAT IS
+     MISSING. One triage run reported Critical Dice as "0 products"
+     in the same column as seventeen merchants reported as NO FEED,
+     and only one of the two is worth looking at again. */
+  if (!rows.length) {
+    notes.push('THE FEED ANSWERED AND IS EMPTY. That is different from no feed at all: the shop ' +
+      'may be unpublished, between catalogues, or paginating in a way this reader does not ' +
+      'follow. Worth one look in a browser before dropping the merchant.')
+  }
   if (!priced.length && rows.length) {
     notes.push('NOTHING IS PRICED. That is usually a brand site rather than a storefront; ' +
       'a shelf of cards with no price on them is not worth shipping.')
@@ -141,6 +150,37 @@ export function summarise(rows) {
   if (noImage > rows.length / 4) {
     notes.push(`${noImage} of ${rows.length} products have no image. This shelf will look broken.`)
   }
+  /* WHEN MOST OF A FEED CARRIES NO product_type, THE ROOM NEXT TO IT
+     IS A FALLBACK RATHER THAN A CLASSIFICATION, and the brief prints
+     it in the same confident column either way.
+
+     Three merchants in one triage run were routed on nothing at all:
+     Fairy's Gifts at 454 of 454 untyped (whiskey decanters and beach
+     umbrellas, sorted into the vault), Noam Audio at 114 of 115
+     (marine and UTV speakers, sorted into audio), Mazz Comics at 572
+     of 674. Each read exactly like a classified store. This is the
+     same rule the sister site applies to a market price under its
+     minimum sample: below the threshold, publish the absence rather
+     than a number with nothing behind it. */
+  const untyped = rows.filter(r => !(r.product_type || '').trim()).length
+  if (rows.length >= 20 && untyped > rows.length / 2) {
+    notes.push(`UNCLASSIFIED: ${untyped} of ${rows.length} products carry no product_type, so any ` +
+      'room shown for this merchant is the fallback rather than a reading of the catalogue. ' +
+      'Decide it from the sample titles, not from the histogram.')
+  }
+
+  /* Platform and app rows are not products, and they are not gift
+     cards either, so the existing refusal never sees them. Named
+     rather than dropped: widening an exclusion without looking at
+     live values is how real inventory disappears quietly. */
+  const JUNK = /^(custom_product|mileage_product|gift ?cards?|shipping|retailers sales tools|donation|sample)$/i
+  const junk = types.filter(([t]) => JUNK.test(t.replace(/[_\s]+/g, ' ').trim()) || JUNK.test(t))
+  if (junk.length) {
+    notes.push('NOT PRODUCTS: ' + junk.map(([t, n]) => `${t} x${n}`).join(', ') +
+      '. These are platform or app rows (custom-product builders, loyalty mileage, shipping ' +
+      'upsells). Exclude them before counting this merchant.')
+  }
+
   /* The registry warns that twenty of the anime domains are one
      operator's dropship catalogue. A single `vendor` value across a
      whole feed does not prove that, but it is the cheapest tell there

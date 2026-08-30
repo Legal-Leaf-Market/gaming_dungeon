@@ -97,6 +97,16 @@ export function scanSource(extract, onProgress, opts) {
   var sitemapProductUrls = 0
   var platform = null
   var stopped = false
+  /* WHY EACH DOOR DID NOT OPEN.
+     Every request in here used to collapse into one null value: a 403, a
+     404, a store that answers products.json with its own HTML, and a
+     path robots.txt forbids were all the same value. So a scan that
+     found nothing reported "the scan found nothing", and the four
+     facts that would have told the operator WHICH it was had already
+     been read and thrown away. The probe has said "NO FEED (got HTML,
+     not JSON)" and "HTTP 402" for as long as it has existed; there
+     was no reason for the scanner to say less. */
+  var doors = []
 
   function note(s) { if (notes.indexOf(s) === -1) notes.push(s) }
   function say(s) { try { if (onProgress) onProgress(s) } catch (e) {} }
@@ -168,18 +178,36 @@ export function scanSource(extract, onProgress, opts) {
      Every network request in this file goes through here, so the
      cap, the robots check, the throttle and the stop button are
      impossible to route around by accident. */
-  function get(url, asText) {
-    if (stopped || shouldStop()) { stopped = true; return Promise.resolve(null) }
-    if (fetched >= MAX_URLS) return Promise.resolve(null)
+  function door(label, outcome) {
+    if (label) doors.push({ door: label, outcome: outcome })
+  }
+
+  /* What an HTTP status MEANS to an operator deciding whether to try
+     again, walk the shop by hand, or drop the merchant. A bare number
+     makes them go and look it up; several of these are not what the
+     number suggests. */
+  function meaning(status) {
+    if (status === 401 || status === 403) return 'HTTP ' + status + ' (refused, not missing: the shop is blocking this)'
+    if (status === 402) return 'HTTP 402 (the Shopify store is frozen or unpaid)'
+    if (status === 404) return 'HTTP 404 (no such endpoint here)'
+    if (status === 429) return 'HTTP 429 (rate limited: slow the scan down or come back later)'
+    if (status >= 500) return 'HTTP ' + status + ' (the shop errored, this may be worth one retry)'
+    return 'HTTP ' + status
+  }
+
+  function get(url, asText, label) {
+    if (stopped || shouldStop()) { stopped = true; door(label, 'stopped by the operator'); return Promise.resolve(null) }
+    if (fetched >= MAX_URLS) { door(label, 'not tried: the request cap was already spent'); return Promise.resolve(null) }
 
     var u
-    try { u = new URL(url, location.href) } catch (e) { return Promise.resolve(null) }
-    if (u.origin !== ORIGIN) return Promise.resolve(null)
+    try { u = new URL(url, location.href) } catch (e) { door(label, 'not a usable URL'); return Promise.resolve(null) }
+    if (u.origin !== ORIGIN) { door(label, 'off-site, so not fetched'); return Promise.resolve(null) }
     if (visited[u.href]) return Promise.resolve(null)
     visited[u.href] = 1
 
     if (robots.present && !allowed(u.pathname + u.search)) {
       robotsSkipped++
+      door(label, 'robots.txt disallows ' + u.pathname)
       return Promise.resolve(null)
     }
 
@@ -187,9 +215,27 @@ export function scanSource(extract, onProgress, opts) {
     return wait(delay()).then(function () {
       return fetch(u.href, { headers: { accept: asText ? 'text/html,application/xml' : 'application/json' } })
     }).then(function (r) {
-      if (!r || !r.ok) return null
-      return asText ? r.text() : r.json()
-    }).catch(function () { return null })
+      if (!r) { door(label, 'no response'); return null }
+      if (!r.ok) { door(label, meaning(r.status)); return null }
+      var type = (r.headers && r.headers.get && r.headers.get('content-type')) || ''
+      if (asText) return r.text()
+      /* THE ONE THAT LOOKS LIKE SUCCESS. A shop with its feed switched
+         off answers /products.json with 200 and its own storefront
+         HTML, so the status is fine, the parse throws, and without
+         this the operator is told nothing at all. */
+      return r.text().then(function (body) {
+        try {
+          var parsed = JSON.parse(body)
+          door(label, 'ok')
+          return parsed
+        } catch (e) {
+          door(label, /^\s*</.test(body)
+            ? 'answered with HTML, not JSON: the feed is off or behind a wall'
+            : 'answered with something that is not JSON (' + (type || 'no content-type') + ')')
+          return null
+        }
+      })
+    }).catch(function () { door(label, 'the request failed outright (network, DNS or CORS)'); return null })
   }
 
   /* ------------------------------------------------- 1. products.json
@@ -200,8 +246,16 @@ export function scanSource(extract, onProgress, opts) {
   function shopifyJson(page) {
     page = page || 1
     say('reading /products.json page ' + page + '…')
-    return get('/products.json?limit=250&page=' + page).then(function (j) {
-      if (!j || !j.products || !j.products.length) return null
+    return get('/products.json?limit=250&page=' + page, false, page === 1 ? '/products.json' : null).then(function (j) {
+      if (!j || !j.products || !j.products.length) {
+        /* An endpoint that ANSWERS and holds nothing is a different
+           fact from one that is not there, and only one of the two is
+           worth a second look. */
+        if (j && j.products && !j.products.length && page === 1) {
+          door('/products.json', 'answered, and the shop is empty (0 products)')
+        }
+        return products.length ? true : null
+      }
       platform = 'shopify'
       var list = j.products
       for (var i = 0; i < list.length; i++) {
@@ -225,6 +279,11 @@ export function scanSource(extract, onProgress, opts) {
       /* A full page means there is probably another. */
       if (list.length >= 250 && page < 20) return shopifyJson(page + 1)
       return true
+      /* Note the "products.length ? true : null" above: a shop whose
+         last page is EXACTLY full runs one more page, gets an empty
+         one, and used to return null all the way back up, so the
+         WooCommerce probe then ran against a Shopify store that had
+         just handed over its whole catalogue. */
     })
   }
 
@@ -232,8 +291,9 @@ export function scanSource(extract, onProgress, opts) {
   function wooJson(page) {
     page = page || 1
     say('reading the WooCommerce Store API, page ' + page + '…')
-    return get('/wp-json/wc/store/products?per_page=100&page=' + page).then(function (j) {
-      if (!j || !j.length) return null
+    return get('/wp-json/wc/store/products?per_page=100&page=' + page, false,
+      page === 1 ? '/wp-json/wc/store/products' : null).then(function (j) {
+      if (!j || !j.length) return products.length ? true : null
       platform = 'woocommerce'
       for (var i = 0; i < j.length; i++) {
         var pr = j[i]
@@ -265,7 +325,7 @@ export function scanSource(extract, onProgress, opts) {
      number that stops a sample being mistaken for a catalogue. */
   function readSitemap() {
     say('reading sitemap.xml…')
-    return get('/sitemap.xml', true).then(function (xml) {
+    return get('/sitemap.xml', true, '/sitemap.xml').then(function (xml) {
       if (!xml) return []
       var maps = locs(xml, 'sitemap')
       var urls = locs(xml, 'url')
@@ -344,6 +404,50 @@ export function scanSource(extract, onProgress, opts) {
     return out
   }
 
+  /* ------------------------------------------------------ bot wall
+     A SHOP CAN TELL YOU IT DOES NOT WANT THIS, AND IT IS WORTH
+     LISTENING BEFORE WALKING IT, NOT AFTER.
+
+     Read off the page the operator already has open: cookies these
+     products set, and the script paths they load. NEVER by probing,
+     which would be the very thing being avoided. The distinction is
+     the one this whole tool rests on: reading the page in front of
+     you is unaffected, because a person loaded it in their own
+     browser having passed whatever was asked. Walking pages 2..N from
+     inside that session is a different act, it is exactly what these
+     products exist to catch, and the session and address they flag
+     belong to the OPERATOR rather than to us. */
+  function botWall() {
+    var found = []
+    var cookie = ''
+    try { cookie = document.cookie || '' } catch (e) {}
+    if (/(^|;\s*)(ak_bmsc|bm_sv|bm_sz|_abck)=/.test(cookie)) found.push('Akamai Bot Manager')
+    if (/(^|;\s*)(__cf_bm|cf_clearance)=/.test(cookie)) found.push('Cloudflare bot management')
+    if (/(^|;\s*)datadome=/.test(cookie)) found.push('DataDome')
+    if (/(^|;\s*)(incap_ses|visid_incap)/.test(cookie)) found.push('Imperva')
+    if (/(^|;\s*)_px(hd|vid|cts)?=/.test(cookie)) found.push('PerimeterX')
+    try {
+      var scripts = document.querySelectorAll('script[src]')
+      for (var i = 0; i < scripts.length; i++) {
+        var src = scripts[i].getAttribute('src') || ''
+        if (/akam|_bm\/|bm-verify/i.test(src) && found.indexOf('Akamai Bot Manager') === -1) {
+          found.push('Akamai Bot Manager')
+        }
+        if (/datadome/i.test(src) && found.indexOf('DataDome') === -1) found.push('DataDome')
+        if (/perimeterx|px-cloud/i.test(src) && found.indexOf('PerimeterX') === -1) found.push('PerimeterX')
+      }
+    } catch (e) {}
+    return found
+  }
+
+  var wall = botWall()
+  if (wall.length) {
+    note('THIS SHOP RUNS ' + wall.join(' and ') + '. Reading the page you are on is unaffected. ' +
+      'Walking the rest of the shop from inside your own session is what that product is built to ' +
+      'catch, and it is YOUR session and address it flags. Stop unless there is an arrangement ' +
+      'with this merchant.')
+  }
+
   /* --------------------------------------------------------- run */
   say('reading robots.txt…')
   return fetch('/robots.txt').then(function (r) {
@@ -393,6 +497,17 @@ export function scanSource(extract, onProgress, opts) {
       note('The sitemap lists ' + sitemapProductUrls + ' products and this scan holds ' +
            products.length + '. That is a SAMPLE, not a catalogue.')
     }
+    /* SAY WHICH DOORS WERE TRIED AND WHAT EACH ONE ANSWERED. This is
+       the difference between "the scan found nothing" and "the feed
+       is switched off, the sitemap is forbidden, and there are no
+       collection links on this page", which are the same run and only
+       one of them tells the operator what to do next. */
+    var shut = []
+    for (var d = 0; d < doors.length; d++) {
+      if (doors[d].outcome !== 'ok') shut.push(doors[d].door + ' -> ' + doors[d].outcome)
+    }
+    if (shut.length) note('Doors tried: ' + shut.join('; ') + '.')
+
     if (!products.length) {
       note('The scan found nothing. Try the plain capture on a collection page instead: some ' +
            'shops serve their grid only to a real navigation.')
@@ -406,7 +521,17 @@ export function scanSource(extract, onProgress, opts) {
       platform: platform,
       products: products,
       bySource: bySource,
-      scan: { requests: fetched, robotsSkipped: robotsSkipped, robotsPresent: robots.present },
+      scan: {
+        requests: fetched,
+        robotsSkipped: robotsSkipped,
+        robotsPresent: robots.present,
+        /* Structured as well as prose, so the capture store keeps the
+           reason a merchant produced nothing rather than just the
+           zero. A row saying "0 products" is indistinguishable from a
+           shop that has none. */
+        doors: doors,
+        botWall: wall,
+      },
       coverage: {
         /* The sitemap's count is a far better claimedTotal than a
            number scraped off a results header, so it wins when we
