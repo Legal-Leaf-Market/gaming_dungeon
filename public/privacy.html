@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Privacy | Verda Studio</title>
-<meta name="description" content="Verda Studio sets no cookies, runs no analytics, and has no accounts. What little leaves your browser, and who it goes to."/>
+<meta name="description" content="Verda Studio sets no cookies and has no accounts. What we count about how the site is used, what that record does not contain, and what stays in your browser."/>
 <meta name="theme-color" content="#080d16"/>
 <meta name="color-scheme" content="dark"/>
 <link rel="icon" href="/favicon.ico" sizes="32x32"/>
@@ -58,6 +58,10 @@
 <!-- The ink layer is deliberately the last stylesheet on the page: it has
      to sit above this page's own <style> block, not argue with it. -->
 <link rel="stylesheet" href="/css/ink.css"/>
+<!-- First-party analytics. Loaded before the page's own scripts so
+     window.GDTrack exists by the time they want it, and deferred so it
+     never blocks the paint. public/js/events.js says what it keeps. -->
+<script src="/js/events.js" defer></script>
 </head>
 <body>
 
@@ -70,9 +74,9 @@
 <main class="doc">
   <section class="hero">
     <h1>Privacy.</h1>
-    <p class="lead">We set no cookies, run no analytics, and have no accounts.
-    There is nothing to log into and nothing to unsubscribe from. This page
-    exists to say what little does happen, rather than to pad that out.</p>
+    <p class="lead">We set no cookies and have no accounts. There is nothing to log
+    into and nothing to unsubscribe from. We do count what the site itself is
+    doing, and this page says exactly what that means rather than padding it out.</p>
   </section>
 
   <h2>WE DO NOT COLLECT PERSONAL DATA</h2>
@@ -82,17 +86,55 @@
   <p>The database this site does have holds merchants' product catalogues.
   There is not a single field in it about a person.</p>
 
-  <h2>WE SET NO COOKIES AND RUN NO ANALYTICS</h2>
+  <h2>WE SET NO COOKIES AND SEND NOTHING TO ANYBODY ELSE</h2>
   <p>No Google Analytics, no Meta pixel, no Plausible, no heatmaps, no session
-  recording, no A/B testing. We do not know how many of you there are, and we
-  have decided we can live with that.</p>
+  recording, no A/B testing, no advertising network. Nothing about your visit
+  is sent to another company, because nothing about your visit leaves this
+  site.</p>
+
+  <h2>WE DO COUNT WHAT THE SITE IS DOING</h2>
+  <p>We keep a record of how the site is used: pages opened, things searched
+  for, cards opened, things kept in a satchel, and clicks through to a shop. We
+  read it to find out where this site is failing people, which is a thing we
+  cannot see any other way. <strong>The searches that come back empty are the
+  most useful part of it</strong>, because that is a list of what you came here
+  for and we did not have.</p>
+  <p>To make that readable we have to be able to tell one visit's steps from
+  another's, so each visit gets a random number kept in your browser's tab
+  memory under <code>gd_sid</code>. <strong>It is thrown away the moment you
+  close the tab</strong>, it is never sent anywhere but here, and it cannot
+  follow you between visits or across devices. The record carries <strong>no
+  cookie, no IP address, no name and nothing about your device</strong>, and it
+  is deleted after 120 days.</p>
+  <p>That is the least we could keep and still answer the question. We are not
+  trying to work out who you are; we are trying to work out which door people
+  walk past.</p>
 
   <h2>THE ONE THING STORED IN YOUR BROWSER</h2>
-  <p>If you play Shelf Invaders in the <a href="/arcade">arcade</a>, your best
-  score is saved in your own browser's local storage under
-  <code>gd_arcade_invaders</code>. <strong>It never leaves your device and we
-  never see it.</strong> Clearing your browser data deletes it. That is the
-  complete list.</p>
+  <p>Two things are saved in your own browser's local storage, and both stay
+  there:</p>
+  <ul>
+    <li><code>verda_satchel</code>, the things you have kept. This is the most
+      personal thing this site holds and it is <strong>held by you, not by
+      us</strong>: it never leaves your browser and there is no copy here.</li>
+    <li><code>gd_arcade_invaders</code>, your best score if you play Shelf
+      Invaders in the <a href="/arcade">arcade</a>.</li>
+  </ul>
+  <p><strong>We never see either.</strong> Clearing your browser data deletes
+  them.</p>
+  <p>Three more live in your browser's <em>tab</em> memory, which is wiped the
+  moment you close the tab:</p>
+  <ul>
+    <li><code>gd_sid</code>, the random visit number described above</li>
+    <li><code>verda_boot</code>, so the opening title card plays once a visit
+      rather than every time you move between pages</li>
+    <li><code>verda_paint</code>, which of the painted background plates your
+      browser found, so it does not have to check again on the next page</li>
+  </ul>
+  <p>None of those leaves your device except <code>gd_sid</code>, which is sent
+  here and nowhere else. Those five are the complete list, and a test in this
+  repository fails the build if the code ever stores something this page does
+  not name.</p>
 
   <h2>WHAT THIRD PARTIES SEE, WHICH IS THE HONEST PART</h2>
   <p>Loading any page necessarily tells a few other companies that a browser

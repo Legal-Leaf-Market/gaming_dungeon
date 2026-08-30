@@ -17,6 +17,7 @@ import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { OPERATOR_PAGES } from './_pages.mjs'
 import { dirname, join } from 'node:path'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -88,10 +89,21 @@ test('underscore helpers are NOT served, matching Vercel', async () => {
 
 test('room URLs from vercel.json all serve the dungeon', async () => {
   /* The rewrites are read from vercel.json rather than restated here,
-     so this checks the parsing rather than a second copy of the list. */
+     so this checks the parsing rather than a second copy of the list.
+
+     ROOM rewrites, which is every rewrite whose destination is "/".
+     That is not a filter invented to let something through: it is the
+     definition of the thing being tested. A room URL is a pretty name
+     for the dungeon, and /admin is a pretty name for a different page
+     entirely. Discriminating on the destination keeps this derived
+     from the config rather than from a list somebody maintains, so a
+     room added tomorrow is still covered and an operator route added
+     tomorrow still is not. */
   await boot()
   const cfg = JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'))
-  for (const r of cfg.rewrites) {
+  const rooms = cfg.rewrites.filter(r => r.destination === '/')
+  assert.ok(rooms.length >= 9, 'the room rewrites have gone missing from vercel.json')
+  for (const r of rooms) {
     const path = r.source.replace(/:(\w+)/g, 'sample')
     const res = await fetch(BASE + path)
     assert.equal(res.status, 200, path + ' should rewrite to the app')
@@ -102,6 +114,15 @@ test('room URLs from vercel.json all serve the dungeon', async () => {
        load-bearing. #doors is the map container, it exists on every
        rewrite target by definition, and it survives the next rename. */
     assert.ok(html.includes('id="doors"'), path + ' did not serve index.html')
+  }
+
+  /* Everything else in the list still has to resolve. Dropping the
+     non-room rewrites from the loop above would otherwise mean a
+     rewrite pointing at a file that does not exist is now untested,
+     which is a worse hole than the one being fixed. */
+  for (const r of cfg.rewrites.filter(r => r.destination !== '/')) {
+    const res = await fetch(BASE + r.source.replace(/:(\w+)/g, 'sample'))
+    assert.equal(res.status, 200, r.source + ' -> ' + r.destination + ' does not serve')
   }
 })
 
@@ -199,7 +220,16 @@ test('the privacy policy does not describe things the site does not do', () => {
   const claimsNoCookies = /set no cookies/i.test(priv)
   assert.ok(claimsNoCookies, 'the policy should say we set no cookies')
 
-  const pages = readdirSync(join(ROOT, 'public')).filter(f => f.endsWith('.html'))
+  /* VISITOR-FACING FILES ONLY. This page describes what happens to a
+     VISITOR, so the operator console's own storage is not in scope:
+     /admin keeps the typed passcode in sessionStorage so a refresh
+     does not sign you out, and listing `gd_admin_pass` on a public
+     privacy page would be a category error rather than candour.
+
+     Scoped rather than special-cased on the key name, or the next
+     operator-only key is a silent exemption. See test/_pages.mjs. */
+  const pages = readdirSync(join(ROOT, 'public'))
+    .filter(f => f.endsWith('.html') && !OPERATOR_PAGES.has(f))
   const js = readdirSync(join(ROOT, 'public', 'js')).filter(f => f.endsWith('.js'))
   const all = [...pages.map(f => join(ROOT, 'public', f)),
                ...js.map(f => join(ROOT, 'public', 'js', f))]
@@ -212,12 +242,51 @@ test('the privacy policy does not describe things the site does not do', () => {
       tracker + ' is present but the privacy policy says there is no analytics')
   }
 
-  /* The one storage key the policy names, asserted to be the only one
-     and to be the key it actually names. */
-  const keys = [...all.matchAll(/localStorage\.(?:get|set)Item\(\s*["']([^"']+)/g)].map(m => m[1])
-  assert.deepEqual([...new Set(keys)], ['gd_arcade_invaders'],
-    'the privacy policy names exactly one storage key; the code disagrees')
-  assert.ok(priv.includes('gd_arcade_invaders'), 'the policy must name the key it stores')
+  /* Keys are read through ONE HOP of indirection as well as inline,
+     because `var SID_KEY = 'gd_sid'` at the top of a file is how
+     anybody normally writes this and a literal-only scan simply does
+     not see it. That is not a hypothetical: events.js was invisible
+     to the first version of this and the guard passed while missing
+     the one key it had been extended to find. A guard with a blind
+     spot is worse than no guard, because it is trusted. */
+  const consts = new Map(
+    [...all.matchAll(/(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*["']([^"']+)["']/g)]
+      .map(m => [m[1], m[2]]))
+  const keysOf = (which) => new Set(
+    [...all.matchAll(new RegExp(which + '\\.(?:get|set)Item\\(\\s*([^,)]+)', 'g'))]
+      .map(m => {
+        const arg = m[1].trim()
+        const lit = /^["']([^"']+)["']$/.exec(arg)
+        if (lit) return lit[1]
+        return consts.get(arg) || null
+      })
+      /* An unresolved argument is a FAILURE, not something to skip: it
+         means the code stores a key this test cannot name, which is
+         precisely the state the policy page must never be in. */
+      .map(k => k === null ? '(unresolvable key expression)' : k))
+
+  const local = keysOf('localStorage')
+  const session = keysOf('sessionStorage')
+
+  /* TWO, and the second one was found by teaching this guard to
+     follow a constant. verda_satchel is what somebody has kept, held
+     on their own device and never sent here, and it was the most
+     personal thing this site stores while being the one key the
+     policy did not name. */
+  assert.deepEqual([...local].sort(), ['gd_arcade_invaders', 'verda_satchel'],
+    'the privacy policy names every localStorage key; the code disagrees')
+  /* Three, and finding that out is what this half of the guard was
+     for. verda_boot (has the splash played this visit) and verda_paint
+     (which painted plates this browser found) both predate it and
+     neither was on the policy page, which said "that is the complete
+     list" while being two keys short. Harmless keys, and that is not
+     the point: a page whose whole claim is completeness has to be
+     complete or it is worth less than saying nothing. */
+  assert.deepEqual([...session].sort(), ['gd_sid', 'verda_boot', 'verda_paint'],
+    'the privacy policy names every sessionStorage key; the code disagrees')
+  for (const k of [...local, ...session]) {
+    assert.ok(priv.includes(k), 'the policy must name every key it stores, and does not name ' + k)
+  }
 })
 
 test('no endpoint accepts personal data', () => {

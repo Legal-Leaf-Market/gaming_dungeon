@@ -54,6 +54,10 @@
     {
       "source": "/shop/:key",
       "destination": "/"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
     }
   ],
   "redirects": [

@@ -43,6 +43,27 @@ import { join } from 'node:path'
    without the other creates a loop. */
 export const SITE = process.env.SITE_URL || 'https://verdastudio.store'
 
+/* Does the file behind this path ask not to be indexed? One reader,
+   used by both loops below.
+
+   IT USED TO BE USED BY ONLY ONE OF THEM, and that was a real hole
+   rather than a tidiness point: standalone pages were checked and
+   rewrites were added unconditionally, so the first rewrite pointing
+   at a noindex page listed it. /admin found that the day it was
+   added. A rewrite is a pretty name for a file, and the file is still
+   the authority on whether it wants to be indexed. */
+function noindexed(root, file) {
+  try {
+    const html = readFileSync(join(root, 'public', file), 'utf8')
+    return /name=["']robots["'][^>]*noindex/i.test(html)
+  } catch {
+    /* No such file: the rewrite points at something generated or at
+       nothing. Not this function's business to decide, and "cannot
+       read it" must not read as "it consented to being indexed". */
+    return false
+  }
+}
+
 export function routes(root = process.cwd()) {
   const out = new Set(['/'])
 
@@ -54,14 +75,17 @@ export function routes(root = process.cwd()) {
        not currently regenerate this -- so it is left out rather than
        guessed at. Worth revisiting when the first shop ships. */
     if (r.source.includes(':')) continue
+    const dest = String(r.destination || '/')
+    const file = dest === '/' ? 'index.html'
+      : dest.replace(/^\//, '') + (/\.html$/.test(dest) ? '' : '.html')
+    if (noindexed(root, file)) continue
     out.add(r.source)
   }
 
   /* Standalone pages, minus anything that asked not to be indexed. */
   for (const f of readdirSync(join(root, 'public'))) {
     if (!f.endsWith('.html') || f === 'index.html') continue
-    const html = readFileSync(join(root, 'public', f), 'utf8')
-    if (/name=["']robots["'][^>]*noindex/i.test(html)) continue
+    if (noindexed(root, f)) continue
     out.add('/' + f.replace(/\.html$/, ''))
   }
 
