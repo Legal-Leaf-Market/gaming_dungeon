@@ -14,8 +14,12 @@
      PROSPECTS  merchants worth having that have no self-serve
                 programme. Kept so the outreach list is a file rather
                 than somebody's memory.
-     REJECTED   merchants deliberately turned down, WITH REASONS, so
-                nobody rediscovers them in six months and signs up.
+     REJECTED   merchants that are not going on the shelf, WITH
+                REASONS, so nobody rediscovers them in six months and
+                signs up. BOTH DIRECTIONS live here: ones we turned
+                down, and ones that turned US down. The second kind
+                is easier to lose, because the row reads as a good
+                merchant right up until you remember the reply.
 
    The last one is a Kawaii Katz pattern and it earns its place: the
    four highest-commission gaming rows in the entire 22,290-merchant
@@ -330,11 +334,6 @@ export const STORES = [
   /* ==========================================================
      AUDIO.
      ========================================================== */
-  { key:'fosiaudio', name:'Fosi Audio', room:'audio', domain:'fosiaudio.com',
-    platform:'shopify', ref:'', rate:'8%', cookie:30, tier:1, pending:false,
-    note:'Budget hi-fi amps with a real cult following: heavily researched, badly covered ' +
-         'by everybody else. The single best brand fit in the electronics cut.' },
-
   { key:'slickaudio', name:'Slick Audio', room:'audio', domain:'store.slickaudio.com',
     platform:'shopify', ref:'', rate:'5%', cookie:30, tier:1, pending:true },
 
@@ -546,6 +545,12 @@ export const REJECTED = [
     why:'False positive. Dog puzzle toys.' },
   { name:'Board Game Design Course', terms:'20%',
     why:'An info product, not a shop.' },
+  { name:'Fosi Audio', terms:'8%, 30d',
+    why:'THEY declined us, 2026-08-30. Not a judgement on the merchant: it was the best ' +
+        'brand fit in the whole electronics cut, which is exactly why it will look worth ' +
+        're-applying to. It is not, until something about our side changes. Stocking it ' +
+        'unattributed was possible and is not wanted here: the room already carries two ' +
+        'pending audio merchants, so the shelf loses nothing by waiting for one that pays.' },
   { name:'Tokyo Tiger', terms:'n/a',
     why:'Kawaii Katz measured it at HTTP 403 from Vercel IPs with a real browser UA. Host-level ' +
         'bot protection, not a User-Agent problem. Do not re-run that experiment; a row here ' +

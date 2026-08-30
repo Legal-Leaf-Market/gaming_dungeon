@@ -565,7 +565,7 @@ async function get(url, ms = 12000) {
    Gaming Gears, and without this `brandFrom` would file it as
    "Pulsar". */
 const MULTIWORD = new RegExp('^(' + [
-  "pulsar gaming", "fosi audio", "slick audio", "noam audio",
+  "pulsar gaming", "slick audio", "noam audio",
   "creative arcades", "mixbox arcade", "frontline gaming", "games burner",
   "krazed gaming", "awkward games", "waffle cone", "odin gaming",
   "custom gaming", "ficmax gaming", "anime keycaps", "anime mousepads",
@@ -1089,7 +1089,7 @@ const MAGENTO_NOT_BRAND = /^(black|white|red|blue|green|pink|purple|silver|gold|
 /* The only brands here that are genuinely two words. Everything else is
    one, so a blind "take two capitalised tokens" turns "FRE Wintergreen
    9mg" into its own brand and splits FRE's 58 products across cards. */
-const MULTIWORD_BRAND = /^(pulsar gaming|fosi audio|creative arcades|frontline gaming)/i
+const MULTIWORD_BRAND = /^(pulsar gaming|creative arcades|frontline gaming)/i
 
 function magentoBrand(p) {
   const cats = (p.categories || []).map(c => String(c.name || '').trim())

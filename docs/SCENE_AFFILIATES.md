@@ -267,8 +267,12 @@ Which is not a dead end, because the *good* version of this site was never
 "cheaper Best Buy". It is the long tail nobody covers properly — and four of
 these are genuinely that:
 
-- **Fosi Audio** — budget hi-fi amps with a real cult following, heavily
-  researched, badly covered. The single best brand fit in this list.
+- ~~**Fosi Audio**~~ — budget hi-fi amps with a real cult following, heavily
+  researched, badly covered. It was the single best brand fit in this list, and
+  on **2026-08-30 they declined the application**. Moved to `REJECTED` in
+  `api/_stores.js` with the reason attached, because a row this good is the one
+  somebody re-applies to by accident. The remaining audio merchants are Slick
+  Audio and NOAM Audio, both still pending a capture.
 - **ANYCUBIC** and **LONGER** — major 3D-printer brands, and LONGER carries a
   **180-day cookie**, which for a considered $300 purchase is worth more than
   double the rate.
@@ -280,7 +284,7 @@ these are genuinely that:
 | [The Portable Monitor](https://the-portable-monitor.co/) | 8% | 300 day | Displays & TV | [apply](https://theportablemonitor.goaffpro.com/create-account) |
 | [LONGER / Best 3D Printers & Laser ](https://www.longer3d.com/) | 5% | 180 day | Drones, cams & 3D | [apply](https://longer3d-old.goaffpro.com/create-account) |
 | [Miami PC Depot LLC.](https://www.miamipcdepot.com/) | 10% | 120 day | PC & components | [apply](https://miamipcdepot.goaffpro.com/create-account) |
-| [Fosi Audio](https://fosiaudio.com/) | 8% | 30 day | Audio | [apply](https://fosiaudio.goaffpro.com/create-account) |
+| ~~Fosi Audio~~ | 8% | 30 day | Audio | **declined 2026-08-30, do not re-apply** |
 | [POWOXI Solar Charger](https://powoxi.com/) | 8% | 30 day | Power & charging | [apply](https://powoxi.goaffpro.com/create-account) |
 | [Slick Audio](https://store.slickaudio.com/) | 5% | 30 day | Audio | [apply](https://affiliate.slickaudio.com/create-account) |
 | [ANYCUBIC 3D Printing](https://store.anycubic.com/) | 5% | 30 day | Drones, cams & 3D | [apply](https://anycubic3d-printer.goaffpro.com/create-account) |
