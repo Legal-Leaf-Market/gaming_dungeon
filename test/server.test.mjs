@@ -276,6 +276,9 @@ test('every local file the pages link to actually serves', async () => {
   assert.ok(seen.has('/assets/og.png'), 'no page names a share card')
 
   for (const [url, from] of seen) {
+    /* Skip Vercel infrastructure paths that are only available in
+       production, not in the local dev server. */
+    if (url.startsWith('/_vercel/')) continue
     const r = await fetch(BASE + url)
     assert.equal(r.status, 200, url + ' is linked from ' + from.join(', ') + ' but does not serve')
   }
