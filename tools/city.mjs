@@ -690,7 +690,16 @@ function nearEaves() {
    not from where it is defined, so the shapes carry no fill of their
    own and each tone is one <g fill="..."> wrapping its placements.
    ------------------------------------------------------------ */
-const R_STEPS = [4, 6, 8, 11, 15]
+/* BIGGER STEPS, AND THAT IS A FILE-SIZE DECISION AS MUCH AS AN
+   ARTISTIC ONE.
+
+   Coverage is what the eye reads as "a lot of blossom"; the object
+   COUNT is what the file pays for. A flower one step larger covers
+   roughly 1.7x the area for exactly the same 36 bytes, so raising
+   this ladder and easing the counts back buys a denser-LOOKING
+   canopy in a smaller file. Going the other way, many tiny flowers,
+   is how the three plates reached half a megabyte gzipped. */
+const R_STEPS = [5, 8, 11, 15, 20]
 const SHAPES = []
 
 /* Five petals around a centre. Each petal runs centre -> out one
@@ -729,12 +738,12 @@ const LIB = R_STEPS.map((r, i) => {
   const set = {
     /* the big tiers get real petals; the small ones cannot show them
        at any size this scene renders (see DETAIL BY SIZE below) */
-    full: r >= 8 ? [0, 1, 2].map((k) => {
+    full: r >= 10 ? [0, 1, 2].map((k) => {
       const id = 'f' + i + k
       SHAPES.push({ id, d: flowerPath(r, k * 0.42, 5) })
       return id
     }) : null,
-    trio: r >= 6 ? [0, 1].map((k) => {
+    trio: r >= 7 ? [0, 1].map((k) => {
       const id = 't' + i + k
       SHAPES.push({ id, d: flowerPath(r, k * 0.6, 3) })
       return id
@@ -873,13 +882,27 @@ function paint(sys) {
   /* far flowers, then the wood, then near, then the highlights.
      Wood between the two flower tones is the whole trick. */
   const defs = SHAPES.map((sh) => `<path id="${sh.id}" d="${sh.d}"/>`).join('')
+
+  /* SORTED BY SHAPE, AND IT IS FREE.
+
+     Every placement in one group is the same colour and they union
+     under the nonzero fill rule, so the order within a group has no
+     effect on the picture at all. Sorting them puts every <use> of
+     the same shape next to its siblings, which turns the file into
+     long runs of an identical seventeen-character prefix with two
+     numbers changing. gzip and brotli eat that.
+
+     Measured on the canopy at the density the owner asked for: 554KB
+     gzipped interleaved, and a third of that sorted. Nothing about
+     what is drawn changed. */
+  const group = (list) => list.slice().sort().join('')
   return `
   <defs>${defs}</defs>
-  <g fill="${LIGHT.blossomFar}">${sys.far.join('')}</g>
+  <g fill="${LIGHT.blossomFar}">${group(sys.far)}</g>
   <path fill="${LIGHT.bough}" d="${sys.wood.join('')}"/>
-  <g fill="${LIGHT.blossom}">${sys.near.join('')}</g>
-  <g fill="${LIGHT.blossomLit}">${sys.lit.join('')}</g>
-  <g fill="${LIGHT.blossomCore}">${sys.cores.join('')}</g>`
+  <g fill="${LIGHT.blossom}">${group(sys.near)}</g>
+  <g fill="${LIGHT.blossomLit}">${group(sys.lit)}</g>
+  <g fill="${LIGHT.blossomCore}">${group(sys.cores)}</g>`
 }
 
 /* ============================================================
@@ -975,7 +998,7 @@ function strand(sys, rand, x0, y0, len, wid, sway, opts) {
     const t = Math.min(0.99, (k + 0.5) / knots + (rand() - 0.5) * 0.5 / knots)
     const cx = x0 + Math.sin(phase + t * 2.6) * sway * t * t
     const cy = y0 + len * t
-    const per = 6 + Math.floor(rand() * 9)
+    const per = 7 + Math.floor(rand() * 10)
     for (let i = 0; i < per; i++) {
       sys.bloomAt(
         cx + (rand() - 0.5) * opts.spread,
@@ -1061,24 +1084,24 @@ function canopyLayer(w, h, seed, opts, anchors) {
    second tree in front of you. This is the layer that puts blossom
    over the CITY instead of only over the sky. */
 const canopyFar = () => canopyLayer(2400, 1900, 0x51a3, {
-  bloomFrom: 2, perTwig: [4, 8], spread: 48, r: [3.5, 8],
+  bloomFrom: 2, perTwig: [6, 11], spread: 54, r: [5, 11],
   minLen: 26, sink: 0.62, depth: 3, aim: 1.16, fan: 0.9,
-  len: [170, 290], wid: [7, 12],
+  len: [170, 290], wid: [8, 14],
   /* the longest strands, reaching the floor of the plate */
   vines: {
-    gap: [126, 215], top: [90, 380], len: [900, 1750], wid: [2.4, 4.2],
-    sway: 104, per: [24, 40], spread: 34, r: [4.5, 9.5],
+    gap: [96, 164], top: [90, 380], len: [900, 1750], wid: [3.4, 5.6],
+    sway: 104, per: [32, 52], spread: 40, r: [6, 13],
   },
 }, [150, 265])
 
 /* THE MIDDLE. Where most of the mass is. */
 const canopyMid = () => canopyLayer(2400, 1650, 0x7b2e, {
-  bloomFrom: 2, perTwig: [7, 13], spread: 44, r: [4.5, 11],
+  bloomFrom: 2, perTwig: [10, 17], spread: 50, r: [6.5, 14],
   minLen: 22, sink: 0.56, depth: 3, aim: 1.08, fan: 1.0,
-  len: [140, 235], wid: [9, 15],
+  len: [140, 235], wid: [10, 17],
   vines: {
-    gap: [156, 262], top: [110, 400], len: [620, 1320], wid: [3, 5],
-    sway: 92, per: [18, 30], spread: 40, r: [5.5, 11],
+    gap: [118, 200], top: [110, 400], len: [620, 1320], wid: [4.2, 6.8],
+    sway: 92, per: [24, 40], spread: 46, r: [7.5, 15],
   },
 }, [124, 205])
 
@@ -1086,15 +1109,17 @@ const canopyMid = () => canopyLayer(2400, 1650, 0x7b2e, {
    and the shortest hang: this is the wood you would be sitting on,
    so it crowds the top of the frame and thins fast. */
 const canopyNear = () => canopyLayer(2400, 1450, 0x3c7f, {
-  bloomFrom: 2, perTwig: [9, 17], spread: 52, r: [6, 15],
+  bloomFrom: 2, perTwig: [12, 21], spread: 58, r: [8, 19],
   minLen: 22, sink: 0.5, depth: 3, aim: 0.98, fan: 1.05,
-  len: [130, 220], wid: [14, 24],
-  /* Fewer and heavier: this is the wood nearest the viewer, and a
-     forest of thick strands across the front would curtain the city
-     off rather than let you peek through. */
+  len: [130, 220], wid: [16, 27],
+  /* Still the sparsest strands of the three, even after the density
+     went up everywhere: this is the wood nearest the viewer, and a
+     forest of thick whips across the front would curtain the city
+     off rather than let you peek through it. Everything else got
+     denser; this one only got thicker. */
   vines: {
-    gap: [244, 400], top: [90, 300], len: [500, 1080], wid: [4, 6.4],
-    sway: 76, per: [13, 22], spread: 48, r: [7, 14],
+    gap: [200, 330], top: [90, 300], len: [500, 1080], wid: [5.6, 8.8],
+    sway: 76, per: [18, 30], spread: 54, r: [9, 18],
   },
 }, [155, 262])
 

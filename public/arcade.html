@@ -92,7 +92,16 @@ a{color:inherit;text-decoration:none}
    copy over lit windows loses contrast in motion, not in a screenshot */
 .ar-hero::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(100deg,rgba(4,8,14,.76) 0%,rgba(4,8,14,.52) 24%,
-    rgba(4,8,14,.2) 50%,rgba(4,8,14,0) 70%)}
+    rgba(4,8,14,.2) 50%,rgba(4,8,14,0) 70%);
+  /* THE WASH HAS TO END AT NOTHING, NOT AT THE ELEMENT'S EDGE. The
+     gradient runs across, so at the hero's bottom the left of it was
+     still at .76 alpha and simply stopped: a hard horizontal line all
+     the way over the picture, darkest on the left and gone by the
+     right, which is exactly the shape of the seam. The mask spends
+     the last third of the hero fading the wash out, so it lands on
+     zero wherever you look. */
+  -webkit-mask-image:linear-gradient(180deg,#000 58%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 58%,transparent 100%)}
 .ar-in{position:relative;z-index:2;width:100%;max-width:var(--page);margin:0 auto;padding:0 var(--pad)}
 
 .ar-wrap{

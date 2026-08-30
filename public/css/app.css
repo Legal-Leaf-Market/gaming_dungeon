@@ -132,7 +132,21 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
    a gradient: the moment this becomes a bar, the top of the page
    feels like a lid. */
 .top::before{
-  content:''; position:absolute; inset:-40px 0 auto; height:190px;
+  content:'';
+  position:absolute;
+  /* FULL BLEED, NOT THE PAGE RAIL.
+
+     `.top` is max-width:var(--page) centred, so `inset:...0...` bounded
+     this scrim to 1180px and it ended in two hard VERTICAL edges either
+     side of the header. On a 1912px window they land at x=366 and
+     x=1546 and they are plainly visible against the sky: the owner
+     circled both.
+
+     Stretched a viewport width past each side instead of using 100vw,
+     because 100vw includes the scrollbar and would add a horizontal
+     scroll of its own. body has overflow-x:hidden, so the overhang is
+     simply clipped. */
+  inset:-40px -100vw auto; height:190px;
   background:linear-gradient(180deg,
     rgba(10,20,32,.72) 0, rgba(10,20,32,.44) 40%,
     rgba(10,20,32,.16) 70%, transparent 100%);
@@ -1034,6 +1048,10 @@ a.g-card:active{ transform:translateY(-1px) }
 .pin:hover .pin-card,.pin:focus-visible .pin-card{
   opacity:1; visibility:visible; transform:translate(-50%,0);
 }
+/* Every pin sits at the same z-index, so an open card was painted
+   under the labels of the pins beside it. The one being read comes
+   forward for as long as it is being read. */
+.pin:hover,.pin:focus-within{ z-index:5 }
 .pin-epithet{
   font-family:var(--display); font-style:italic; font-size:15px;
   color:color-mix(in srgb, var(--band) 76%, var(--text-dim));
