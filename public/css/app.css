@@ -537,11 +537,30 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
 
 .g-sort{ display:flex; align-items:center; gap:9px; flex:none;
   font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-faint) }
+/* THE ONE NATIVE CONTROL ON THE PAGE, so it is the one that looked
+   borrowed: a squared box with the platform's own arrow, sitting in
+   a row of pill-shaped chips. appearance:none takes the arrow off
+   and the background draws its own, which keeps the element a real
+   <select> (keyboard, native picker on a phone, no JS) while letting
+   it match everything beside it. The right padding is what stops the
+   longest option running under that arrow. */
 .g-sort select{
+  -webkit-appearance:none; appearance:none;
   font-family:var(--sans); font-size:13px; color:var(--text);
-  background:var(--surface-2); border:1px solid var(--line);
-  border-radius:var(--r-sm); padding:8px 12px;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--text-dim) 50%) calc(100% - 17px) 51% / 5px 5px no-repeat,
+    linear-gradient(135deg, var(--text-dim) 50%, transparent 50%) calc(100% - 12px) 51% / 5px 5px no-repeat,
+    var(--surface-2);
+  border:1px solid var(--line); border-radius:var(--r-pill);
+  padding:8px 34px 8px 15px; cursor:pointer;
+  transition:border-color var(--fast), color var(--fast);
 }
+.g-sort select:hover{ border-color:var(--line-2) }
+.g-sort select:focus-visible{ outline:2px solid rgba(var(--jade-rgb),.6); outline-offset:2px }
+/* the options themselves are drawn by the OS, so they need a colour
+   that is not the page's: without this they inherit nothing useful
+   and come out black on black on some platforms */
+.g-sort select option{ background:var(--surface-2); color:var(--text) }
 .g-count{
   font-family:var(--sans); font-weight:600; font-size:10px;
   letter-spacing:.16em; text-transform:uppercase; color:var(--text-faint);
@@ -577,10 +596,19 @@ a.g-card:active{ transform:translateY(-1px) }
   width:100%; height:100%; object-fit:cover;
   transition:transform var(--slow);
 }
+/* NO PHOTO IS A STATE, NOT A GAP. Roughly half the catalogue arrives
+   without an image, and a square of flat panel with a small grey
+   letter in it reads as a card that failed to load rather than as a
+   shop that did not supply one. A soft ground and a large, quiet
+   initial reads as a plate with a monogram on it, which is a thing
+   somebody chose. */
 .g-noimg{
   position:absolute; inset:0; display:grid; place-items:center;
-  font-family:var(--display); font-style:italic; font-size:30px;
-  color:var(--text-faint); opacity:.5;
+  font-family:var(--display); font-style:italic; font-size:54px;
+  color:var(--text-faint); opacity:.34;
+  background:
+    radial-gradient(90% 80% at 50% 34%, rgba(255,255,255,.045), transparent 70%),
+    linear-gradient(160deg, var(--surface-3), var(--void));
 }
 .g-oos{
   position:absolute; left:0; right:0; bottom:0;
