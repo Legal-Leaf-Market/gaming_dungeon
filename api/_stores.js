@@ -51,6 +51,15 @@
                 actually researches.
      tier       1 apply first | 2 worth it | 3 only if the niche fits.
      pending    TRUE UNTIL SOMEBODY HAS READ THE FEED. Always.
+     network    '' for GoAffPro/direct, or 'awin' | 'cj' | 'impact'.
+                Anything set here means the destination is WRAPPED
+                rather than having a parameter appended, and `ref` is
+                left empty. affTemplate() in products.js owns each
+                shape.
+     awinmid    the AWIN advertiser id, with network:'awin'. It is the
+                `awinmid` in any link AWIN's own generator produces,
+                and it is on the advertiser's profile page next to
+                their name. Pairs with AWIN_PUBLISHER above.
      amazon     some merchants also issue an Amazon Attribution link.
                 Stored, deliberately NOT used to build product links.
      note       anything the numbers do not say.
@@ -134,6 +143,25 @@
    correct it from the capture, never the other way round. The
    capture has been right every time.
    ============================================================ */
+
+/* ============================================================
+   THE AWIN PUBLISHER ID
+
+   The `awinaffid` in every link AWIN generates for this site. NOT a
+   secret — it rides in the URL of every outbound click — so it lives
+   in config rather than an env var, the same call the sister sites
+   made.
+
+   It is per SITE, not per merchant: Kawaii Katz is 3022399 and Herbal
+   Leaf is 3004653. Pasting another site's id here would send this
+   site's commission to that site's account and nothing would look
+   wrong from either end.
+
+   Emptied, every AWIN store falls back to a plain link to the shop:
+   the page works, the shopper arrives, and the click earns nothing.
+   `?debug` shouts about it, the same as an empty GoAffPro `ref`.
+   ============================================================ */
+export const AWIN_PUBLISHER = '3064967'
 
 export const STORES = [
   /* ==========================================================
@@ -456,6 +484,34 @@ export const STORES = [
   { key:'gamingtees', name:'Gaming Tees', room:'wardrobe', domain:'gamingtees.store',
     platform:'shopify', ref:'', rate:'10%', cookie:7, tier:3, pending:true,
     note:'Filed under Wardrobe rather than Play. It sells shirts.' },
+
+  /* ==========================================================
+     THE WALLS — canvas, wallpaper, the room itself.
+     ----------------------------------------------------------
+     THE FIRST ROOM STOCKED FROM AWIN RATHER THAN GOAFFPRO, and the
+     first merchant here who came to US: Big Wall Decor sent the
+     invitation, and the programme was already approved and paying
+     when it arrived.
+
+     It is also the first entry whose link is WRAPPED rather than
+     suffixed. Every other row in this file is a GoAffPro `?ref=`
+     append; this one is composed through awin1.com/cread.php from
+     AWIN_PUBLISHER and `awinmid`. See affTemplate() in products.js.
+     ========================================================== */
+  { key:'bigwalldecor', name:'BIG Wall Décor', room:'walls', domain:'bigwalldecor.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'65850',
+    rate:'10%', cookie:30, tier:1, pending:true,
+    note:'Awin advertiser 65850, joined 31 Aug 2026, US only. Oversized wall art, ' +
+         'canvas, metal, acrylic and peel-and-stick wallpaper, plus a custom uploader. ' +
+         'AOV $555, which is the highest on this sheet by a distance and the reason a ' +
+         '10% headline is worth more here than 38% at Waffle Cone. 30-day cookie, ' +
+         '30-day auto-validation, average payment 38 days, Exposure Level 1. ' +
+         'THEIR AWIN SHOPWINDOW IS EMPTY (0 products, never updated), so there is no ' +
+         'feed to ingest and no aw_deep_link to inherit: the capture has to come off ' +
+         'their own storefront, and `platform` is unknown rather than guessed because ' +
+         'this box could not reach the domain to check. ' +
+         'They offer custom 20% coupon codes; we have not asked for one and nothing ' +
+         'advertises a discount until a code has been applied at their real checkout.' },
 ]
 
 /* ============================================================

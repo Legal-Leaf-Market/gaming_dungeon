@@ -144,6 +144,32 @@ const ROOMS = [
     'game ?master', '\\bcampaign (book|guide)\\b',
   ].join('|'), 'i')],
 
+  /* THE WALLS. Placed above the Vault on purpose, and the boundary
+     between the two is worth writing down because it is not obvious:
+
+       THE VAULT holds what a FANDOM prints -- posters, wall scrolls,
+       tapestries, shikishi. Merch that happens to hang.
+       THE WALLS holds the wall itself -- canvas, metal, acrylic,
+       wallpaper, murals. The thing that is still there when the
+       poster comes down.
+
+     So `posters?`, `wall scroll` and `tapestry` are deliberately NOT
+     claimed here; they stay with the Vault where they have always
+     been. Taking them would empty a room to fill a new one, which is
+     the "do not broaden a pattern to make a room look fuller" rule
+     from the top of this file, run in reverse.
+
+     And nothing here is a bare \bwall\b: Power owns `wall charger`
+     and `wall adapter`, and a bare word would take both. */
+  ['walls', new RegExp([
+    'wall art', 'wall d[eé]cor', 'wall hanging', 'wall mural', '\\bmurals?\\b',
+    'wallpaper', 'peel[ -]and[ -]stick', 'peel ?& ?stick', 'removable wallpaper',
+    'canvas (print|art|wall|set)', '\\bcanvas\\b (wall|art)',
+    'metal print', 'acrylic print', 'framed (art|print|canvas)',
+    'art print', '\\btriptych\\b', '\\bdiptych\\b', 'oversized (art|print|canvas)',
+    'gallery wrap', 'picture frame', '\\bwall clock\\b',
+  ].join('|'), 'i')],
+
   ['audio', new RegExp([
     '\\bamplifiers?\\b',
     /* NOT a bare \\bamp\\b. It was, and it matched two things that are
@@ -354,6 +380,22 @@ export const ROOMS_META = [
   { key:'wardrobe',      name:'The Wardrobe',     realm:7,  band:'#e278b4',
     epithet:'The river forgets it was rain.',
     blurb:'What you wear to the thing.' },
+  /* REALM 10 IS SPENT, AND HERE IS THE CLAIM.
+
+     The note above says to leave 10 to 12 for rooms that earn them
+     rather than promoting a shelf of cables to immortality. This is
+     the first room that is not a shelf: every other room here sells
+     something you put IN the room, and this one sells the room. A
+     sixty-inch canvas over the desk outlasts three generations of the
+     gear beneath it, and "The heavens themselves object" is what a
+     piece that size does to a wall.
+
+     Band and epithet verbatim from Realms.luau, like the other nine:
+     RGB(240,240,250), which is gallery white and the only near-white
+     band on the map. */
+  { key:'walls',         name:'The Walls',        realm:10, band:'#f0f0fa',
+    epithet:'The heavens themselves object.',
+    blurb:'Canvas, wallpaper and the things that make it a room.' },
 ]
 
 /* ---- ITEM RARITY -------------------------------------------

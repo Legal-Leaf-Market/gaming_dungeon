@@ -66,7 +66,7 @@ const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
    it is an ALLOW-list rather than a deny-list on purpose — a field
    added to a store entry later is invisible by default rather than
    leaked by default. */
-import { STORES } from './_stores.js'
+import { STORES, AWIN_PUBLISHER } from './_stores.js'
 import { classify as classifyScene } from './_scene.js'
 import { publishable, reviewedKeys, readReviewed } from './_capture.js'
 import { kvGet, kvPut } from './_db.js'
@@ -209,8 +209,10 @@ function sizeImage(src, w = 500) {
    the link works, the customer buys, and the commission is zero.
 
      GoAffPro / direct   ?ref=<code> appended to the product URL
-     AWIN feeds          the feed's aw_deep_link IS the tracked link,
+     AWIN, from a feed   the feed's aw_deep_link IS the tracked link,
                          so nothing is appended (ref stays empty)
+     AWIN, no feed       WRAPPED through awin1.com/cread.php, with the
+                         destination in ?ued= — see below
      CJ Affiliate        the destination is WRAPPED, not appended:
                          anrdoezrs.net/click-<PID>-<AID>?url=<encoded>
      Impact.com          wrapped too, but the ids are in the PATH and
@@ -253,6 +255,33 @@ function affTemplate(st) {
     if (!IMPACT_LINK.test(link)) return ''
     return `${link}?subId1=gamingdungeon&u={url}`
   }
+  if (st.network === 'awin') {
+    /* AWIN HAS TWO SHAPES AND THIS IS THE SECOND ONE. An advertiser
+       who publishes a product feed hands us `aw_deep_link`, already
+       tracked, and those stores carry no network at all — the feed IS
+       the attribution. An advertiser with no feed (ShopWindow empty,
+       which is most of the small ones) needs the link composing, and
+       cread.php is how AWIN does it: our publisher id, their
+       advertiser id, and the destination in `ued`.
+
+       Composed rather than pasted, unlike Impact. AWIN hangs every
+       advertiser off ONE gateway, so the only per-merchant part is a
+       number — there is nothing to mis-paste and a wrong awinmid
+       still lands the shopper on the right page. Impact issues a
+       per-advertiser host plus two path ids that resolve as a unit,
+       which is why that one is validated and refused instead.
+
+       Both ids or nothing. buildAff() falls through to the bare
+       destination and scrapeStore() reports the store unattributed,
+       which is the standing rule everywhere here: the shopper always
+       gets where they were going. */
+    if (!st.awinmid || !AWIN_PUBLISHER) return ''
+    return 'https://www.awin1.com/cread.php' +
+      `?awinmid=${encodeURIComponent(st.awinmid)}` +
+      `&awinaffid=${encodeURIComponent(AWIN_PUBLISHER)}` +
+      '&clickref=gamingdungeon' +
+      '&ued={url}'
+  }
   if (st.network === 'cj') {
     if (!st.cjPid || !st.cjAid) return ''
     return `https://www.anrdoezrs.net/click-${st.cjPid}-${st.cjAid}?sid=gamingdungeon&url={url}`
@@ -260,8 +289,20 @@ function affTemplate(st) {
   return ''
 }
 
+const ALREADY_AWIN = /^https?:\/\/(?:www\.)?awin1\.com\//i
+
 function buildAff(st, url) {
   const base = url || `https://${st.domain}/`
+  /* A URL THAT IS ALREADY AN AWIN REDIRECT IS LEFT ALONE. Wrapping it
+     again produces an awin1.com link whose destination is another
+     awin1.com link: the shopper still arrives, eventually, and the
+     click is credited to the OUTER hop only, so the inner one earns
+     nothing. That is the untracked-store failure wearing a working
+     link as a disguise, and it is Kawaii Katz's scar, not a
+     hypothetical. It can only arise on a store that has both a feed
+     carrying aw_deep_link and a network set, which is a registry
+     mistake — so it is caught here rather than forbidden by comment. */
+  if (ALREADY_AWIN.test(base)) return base
   const tpl = affTemplate(st)
   /* encodeURIComponent escapes `$`, so no `$&` can smuggle itself into
      the replacement and rewrite the template. */

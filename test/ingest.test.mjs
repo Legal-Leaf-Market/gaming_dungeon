@@ -134,6 +134,12 @@ before(async () => {
         pending: false,
       }],
       PROSPECTS: [], REJECTED: [], ROOM_ORDER: ['arcade', 'wardrobe'],
+      /* products.js imports this for the AWIN link shape. A mocked
+         module has to carry every named export the code under test
+         imports, or the import itself throws before a single
+         assertion runs -- which is exactly what adding the AWIN
+         branch did to all seven tests in this file. */
+      AWIN_PUBLISHER: '3064967',
       isAttributed: st => !!(st && st.ref),
       byKey: k => (k === 'fixture' ? { key: 'fixture', name: 'Fixture Arcades', room: 'arcade' } : null),
       byWindow: l => l,

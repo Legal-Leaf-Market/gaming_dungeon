@@ -398,6 +398,26 @@ its directory is Shopify stores. **It is the launch mechanism, not the
 catalogue** — it gets the dungeon to a dozen live merchants in days, which is
 exactly what makes an Impact application credible three weeks later.
 
+**That worked, and the first one arrived unprompted.** Big Wall Decor invited
+this site onto AWIN on 31 Aug 2026 — approved and paying before we had asked —
+and they are the first merchant here from a network other than GoAffPro. So the
+registry now carries `network:'awin'` and `awinmid` beside `ref`, and
+`affTemplate()` in products.js owns a fourth link shape.
+
+**AWIN HAS TWO SHAPES AND ONLY ONE OF THEM IS AUTOMATIC.** An advertiser who
+publishes a product feed hands over `aw_deep_link`, already tracked, and those
+stores carry no `network` at all. An advertiser with an empty ShopWindow — which
+is most of the small ones, Big Wall Decor included — needs the link composing
+through `awin1.com/cread.php` from `AWIN_PUBLISHER` and their `awinmid`. Never
+wrap one in the other: an awin1.com link whose destination is another awin1.com
+link still delivers the shopper and credits the outer hop only. `buildAff()`
+guards it, `test/awin.test.mjs` proves the guard, and it is Kawaii Katz's scar
+rather than a hypothetical.
+
+**`AWIN_PUBLISHER` is per SITE.** This one is 3064967; Kawaii Katz is 3022399
+and Herbal Leaf 3004653. Pasting a sister's id here sends this site's commission
+to that site's account and nothing looks wrong from either end.
+
 ### The link a shopper clicks is built server-side, in `row()`
 
 `buildAff(st, url)` appends `?ref=<code>` to the product URL, or returns it

@@ -69,10 +69,10 @@
     { mx:42, my:69, nx:28, ny:43, key:'battlestation', path:'/battlestation', name:'Battlestation',    realm:4, band:'#5896eb',
       epithet:'A whirlpool learns to hold its center.',
       blurb:'The desk. Boards, mice, screens, chairs.' },
-    { mx:39, my:22, nx:70, ny:34, key:'workshop',      path:'/workshop',      name:'The Workshop',     realm:1, band:'#9b948a',
+    { mx:39, my:22, nx:70, ny:32, key:'workshop',      path:'/workshop',      name:'The Workshop',     realm:1, band:'#9b948a',
       epithet:'Flesh is the first furnace.',
       blurb:'Parts, printers and the rig you keep almost finishing.' },
-    { mx:57, my:45, nx:70, ny:52, key:'audio',         path:'/audio',         name:'Audio',            realm:9, band:'#8cdcdc',
+    { mx:57, my:45, nx:70, ny:48, key:'audio',         path:'/audio',         name:'Audio',            realm:9, band:'#8cdcdc',
       epithet:'The way walks with you now.',
       blurb:'Amps, cans and speakers worth the shelf.' },
     { mx:73, my:75, nx:28, ny:79, key:'power',         path:'/power',         name:'Power',            realm:8, band:'#6e6ea0',
@@ -81,9 +81,18 @@
     { mx:69, my:20, nx:28, ny:61, key:'vault',         path:'/vault',         name:'The Vault',        realm:6, band:'#be82eb',
       epithet:'The self that steps outside the self.',
       blurb:'Figures, manga, plush and things kept in the box.' },
-    { mx:88, my:50, nx:70, ny:70, key:'wardrobe',      path:'/wardrobe',      name:'The Wardrobe',     realm:7, band:'#e278b4',
+    { mx:88, my:50, nx:70, ny:64, key:'wardrobe',      path:'/wardrobe',      name:'The Wardrobe',     realm:7, band:'#e278b4',
       epithet:'The river forgets it was rain.',
-      blurb:'What you wear to the thing.' }
+      blurb:'What you wear to the thing.' },
+    /* THE WALLS sits in the gap between the two mountain ranges,
+       north of the river and clear of both. The narrow column below
+       it was re-spaced rather than extended: the right-hand ladder
+       ran 16/34/52/70 with the free arcade at 90, so a tenth stop at
+       88 would have landed on top of it. 16/32/48/64/80 fits five
+       with the same gap at the bottom. */
+    { mx:55, my:16, nx:70, ny:80, key:'walls',         path:'/walls',         name:'The Walls',        realm:10, band:'#f0f0fa',
+      epithet:'The heavens themselves object.',
+      blurb:'Canvas, wallpaper and the things that make it a room.' }
   ];
 
 
