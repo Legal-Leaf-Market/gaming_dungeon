@@ -538,6 +538,8 @@ export const STORES = [
        TOZO       8.28% x 15%   the best row here, and it was
                                 nowhere near the top on either
                                 number by itself
+       EasySMX   13.44% x  8%   third, NOT first: its 15% is a
+                                voucher group and this is a shelf
        DubsLabs   6.66% x 18%   second, on Bedphones
        Zygo       5.33% x 17%   third, plus the fastest payment at
                                 34 days. Nothing on customer
@@ -548,6 +550,14 @@ export const STORES = [
        DOSS       2.49% x 20%   thin conversion, best rate
        Status     8.84% x 1%    the second-best conversion of the
                                 twenty-two, and axed. See REJECTED
+
+     AND A RATE IS A GROUP, NOT A NUMBER. EasySMX publishes three:
+     8% default, 15% on a voucher group, 4% on a rule nobody has
+     explained. A voucher group pays coupon and deal sites; nothing
+     here is one, so the default is the number to plan on and the
+     headline is somebody else's. Maono and Nank publish groups too.
+     Where a single figure is recorded on a row below, it is the
+     default group unless the note says otherwise.
 
      BASKET SIZE IS STILL THE THIRD TERM AND WE DO NOT HAVE IT.
      HIFIMAN and Meze both pay 5%, which puts them near the bottom of
@@ -755,9 +765,9 @@ export const STORES = [
 
   { key:'easysmx', name:'EasySMX', room:'battlestation', domain:'www.easysmx.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
-    rate:'unread', cookie:30, tier:1, pending:true,
+    rate:'8% default (15% voucher group, 4% rule 2)', cookie:30, tier:1, pending:true,
     note:'AWIN application sent 31 Aug 2026. Advertiser id 90411 when it clears. ' +
-         '13.44% CONVERSION, the highest of the twenty-two by five points, with 100% approval and EPC 0.80. Controllers, mice and headsets, so it is filed at the desk and the classifier will scatter it across three rooms.' },
+         '13.44% conversion, the highest of the intake by five points, 100% approval, EPC 0.80, feed yes. Controllers, mice and headsets, so it is filed at the desk and the classifier will scatter it across three rooms. ITS RATE IS THREE RATES, AND THE HEADLINE ONE IS NOT OURS: default 8%, a \'15.0 Voucher Rate\' group at 15%, and a \'Rule 2- 57909\' group at 4%. A voucher group is for coupon and deal sites; this is a shelf, so 8% is the number to plan on and 15% is the number a different kind of publisher gets. Assume the default until the advertiser says otherwise. That drops it from first on rate times conversion to third, which is still the top of the list and no longer a number that was never on offer.' },
 
   { key:'zygo', name:'Zygo', room:'audio', domain:'www.shopzygo.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
