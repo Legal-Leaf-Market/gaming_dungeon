@@ -530,6 +530,15 @@ export const STORES = [
      fix is to not create it: paste the id on approval, which is the
      one-line edit this file is built around. Until then the number
      lives in prose where no code can read it.
+
+     AND DO NOT RANK THIS ROOM ON THE PERCENTAGE. The rates came back
+     on 31 Aug and they invert against basket size: Status Audio pays
+     1% on a $100 pair, which is a dollar; Meze pays 5% on a $300 to
+     $3,000 pair, which is fifteen to a hundred and fifty. HIFIMAN's
+     5% is worth more per sale than Maono's 10%, and Maono's 20% on
+     two named product groups beats both. The one number that is
+     comparable across rows is the cookie, which is why this file
+     sorts on it first, and the one that is not is the rate.
      ========================================================== */
   { key:'basnaudio', name:'BASN Audio', room:'audio', domain:'www.basnaudio.com',
     platform:'unknown', ref:'verdastudio', rate:'10%', cookie:7, tier:2, pending:true,
@@ -563,8 +572,11 @@ export const STORES = [
      after a capture. */
   { key:'beyerdynamic', name:'beyerdynamic', room:'audio', domain:'north-america.beyerdynamic.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
-    rate:'unpublished', cookie:365, tier:1, pending:true,
+    rate:'6%', cookie:365, tier:1, pending:true,
     note:'AWIN application sent 31 Aug 2026. Advertiser id 95259 when it clears. ' +
+         'SIX PER CENT, read off the commission manager 31 Aug. Low as a headline and the ' +
+         'best row on the sheet anyway, because it is six per cent against a 365-day ' +
+         'window: twelve times the norm here, on a brand people research for months. ' +
          'A 365-DAY COOKIE, which is twelve times the norm on this sheet and the longest ' +
          'window in the portfolio by a distance. Studio and gaming headphones made by ' +
          'hand in Heilbronn since 1924; their Creator and Gamer lines are the same shopper ' +
@@ -572,32 +584,51 @@ export const STORES = [
 
   { key:'maono', name:'Maono', room:'audio', domain:'www.maono.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
-    rate:'unpublished', cookie:90, tier:1, pending:true,
+    rate:'10% default, 20% on named lines', cookie:90, tier:1, pending:true,
     note:'AWIN application sent 31 Aug 2026. Advertiser id 83571 when it clears. ' +
+         'COMMISSION GROUPS, read off the commission manager 31 Aug: 10% is the default, ' +
+         'and TWO GROUPS PAY DOUBLE — GM Neo and DM40 at 20%, and PD200W, PD200X, PD400X, ' +
+         'T5 and the bundle at 20%. That is the best rate anywhere on this sheet and it ' +
+         'sits on the best earnings-per-click, which makes this the row to get. ' +
+         'The groups are recorded here and NOT modelled anywhere in code: nothing on this ' +
+         'site computes an expected commission, and a per-product rate table would be a ' +
+         'second copy of AWIN\'s that goes stale silently the first time they retune it. ' +
          'Best earnings-per-click of the five at 1.10, 90-day window, 90% approval rate, ' +
          'and a product feed. Microphones, mixers and boom arms as much as headphones, so ' +
          'it stocks this room and the Battlestation off one approval.' },
 
   { key:'hifiman', name:'HIFIMAN', room:'audio', domain:'store.hifiman.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
-    rate:'unpublished', cookie:15, tier:2, pending:true,
+    rate:'5%', cookie:15, tier:2, pending:true,
     note:'AWIN application sent 31 Aug 2026. Advertiser id 88881 when it clears. ' +
+         'FIVE PER CENT, read off the commission manager 31 Aug. Small next to Maono\'s ' +
+         '10 and worth more per sale than it: these are $300 to $2,000 headphones, so 5% ' +
+         'is $15 to $100 a time against $6 on a $60 microphone. Percentage is the wrong ' +
+         'unit to compare rows on in this room. ' +
          'Planar magnetic, the deep end of the audiophile shelf, 100% approval rate and a ' +
          'feed. The 15-day window is the shortest of the five and the reason this is tier ' +
          '2 rather than 1: cookie is sorted on before rate everywhere in this file.' },
 
   { key:'mezeaudio', name:'Meze Audio', room:'audio', domain:'www.mezeaudio.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
-    rate:'unpublished', cookie:30, tier:1, pending:true,
+    rate:'5%', cookie:30, tier:1, pending:true,
     note:'AWIN application sent 31 Aug 2026. Advertiser id 33417 when it clears. ' +
+         'FIVE PER CENT, read off the commission manager 31 Aug, on the highest baskets in ' +
+         'the room: the 99 Classics are around $300 and the Empyrean is four figures, so ' +
+         'one sale here is worth a dozen anywhere else on this sheet. ' +
          'Hand-finished in Baia Mare, 100% approval, feed. High basket and low volume: ' +
          'the one on this list that sells on a photograph, which suits a card with a big ' +
          'image on it.' },
 
   { key:'statusaudio', name:'Status Audio', room:'audio', domain:'www.thestatusaudio.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
-    rate:'unpublished', cookie:30, tier:1, pending:true,
+    rate:'1%', cookie:30, tier:2, pending:true,
     note:'AWIN application sent 31 Aug 2026. Advertiser id 77862 when it clears. ' +
+         'ONE PER CENT, read off the commission manager 31 Aug, and that is the whole ' +
+         'story of this row: a dollar on a hundred-dollar pair. Kept, because the owner ' +
+         'said take it if it clears and because the shelf is better with it on, but moved ' +
+         'to tier 2 and worth naming here so nobody later mistakes it for a headline row. ' +
+         'For comparison the same shelf pays 6% at beyerdynamic and 20% on some Maono. ' +
          'Direct-to-consumer studio headphones at prices people actually pay, so the ' +
          'widest audience of the five, 100% approval and EPC 0.68. NO PRODUCT FEED: its ' +
          'capture has to come off the storefront and its cards get written by hand.' },
