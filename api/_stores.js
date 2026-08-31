@@ -239,6 +239,43 @@ export const STORES = [
   { key:'trtlgaming', name:'TRTL GAMING', room:'play', domain:'www.trtlgaming.com',
     platform:'shopify', ref:'', rate:'5%', cookie:30, tier:1, pending:true },
 
+  /* ---- ROUND THREE, 31 Aug ------------------------------------- */
+  { key:'redragon', name:'Redragon', room:'play', domain:'redragonshop.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:90, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 76584 when it clears. ' +
+         'Keyboards, mice and headsets under a name gamers recognise. 90-day window, 93.2% approval, feed. The 0.06 EPC is the network average, not a verdict.' },
+
+  { key:'moddedzone', name:'ModdedZone', room:'play', domain:'moddedzone.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:90, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 89749 when it clears. ' +
+         'Custom modded controllers, built to order. 90 days, 100% approval, and a product nothing else on the shelf sells.' },
+
+  { key:'gigatech', name:'Gigatech Gaming', room:'play', domain:'gigatechgaming.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:90, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 98721 when it clears. ' +
+         'Prebuilt gaming PCs and complete setups. High basket, 90-day window, and they decline four applications in ten.' },
+
+  { key:'onexplayer', name:'OneXPlayer', room:'play', domain:'onexplayer.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 97359 when it clears. ' +
+         'Handheld gaming PCs. A category that did not exist when these rooms were drawn.' },
+
+  { key:'geekshare', name:'GeekShare', room:'play', domain:'geekshare.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 124946 when it clears. ' +
+         'Nintendo Switch accessories, cheap and cute. Reads as Kawaii Katz stock as much as Verda stock.' },
+
+  { key:'tomtoc', name:'tomtoc', room:'play', domain:'www.tomtoc.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 96147 when it clears. ' +
+         'Cases and bags for handhelds and laptops. Accessory attach, which is what this room sells between releases.' },
+
   { key:'surfacegaming', name:'Surface Gaming', room:'battlestation', domain:'surface-gaming.com',
     platform:'shopify', ref:'', rate:'20%', cookie:7, tier:2, pending:false },
 
@@ -261,6 +298,19 @@ export const STORES = [
 
   { key:'tabletopitemshop', name:'Tabletop Itemshop', room:'tabletop', domain:'tabletop-itemshop.myshopify.com',
     platform:'shopify', ref:'yrsdhbqg', rate:'15%', cookie:7, tier:3, pending:true },
+
+  /* ---- ROUND THREE, 31 Aug ------------------------------------- */
+  { key:'theop', name:'The Op / Usaopoly', room:'tabletop', domain:'theop.games',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:60, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 93879 when it clears. ' +
+         'AN ACTUAL BOARD GAME PUBLISHER, with a feed. This room had four merchants and none of them made the games.' },
+
+  { key:'easyrollerdice', name:'Easy Roller Dice', room:'tabletop', domain:'www.easyrollerdice.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:365, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 89093 when it clears. ' +
+         'A 365-DAY COOKIE on dice, the longest window in the entire intake, sitting on the cheapest product in it. New programme, no trading data.' },
 
   /* ==========================================================
      BATTLESTATION — the desk. Chairs, boards, mice, headsets, screens.
@@ -373,6 +423,52 @@ export const STORES = [
   { key:'3dprinternational', name:'3D Printernational', room:'workshop', domain:'www.3dprinternational.com',
     platform:'shopify', ref:'hqvplmpo', rate:'5%', cookie:30, tier:1,  },
 
+  /* ---- ROUND THREE, 31 Aug: 3D printing is where AWIN is deep --
+     Seven of them, against four merchants in the room before. The
+     printers are the headline and the filament is the business:
+     eSUN, Chitu and BIQU are bought again every month. */
+  { key:'foxalien', name:'FoxAlien', room:'workshop', domain:'www.foxalien.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:15, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 59247 when it clears. ' +
+         'CNC machines and laser engravers. EPC 4.09, 98.8% approval, feed. Short 15-day window against the best earnings in the room.' },
+
+  { key:'biqu', name:'BIQU', room:'workshop', domain:'biqu3d.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 95665 when it clears. ' +
+         '3D printer parts, boards and upgrades. 98.9% approval, EPC 1.03, feed. The consumable half of the hobby.' },
+
+  { key:'crealityfalcon', name:'Creality Falcon', room:'workshop', domain:'www.crealityfalcon.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:60, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 69964 when it clears. ' +
+         'Laser engravers from the biggest name in consumer 3D printing. 60-day window, EPC 2.01, feed, and they decline a third of applications.' },
+
+  { key:'bambulab', name:'Bambu Lab', room:'workshop', domain:'bambulab.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:15, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 46345 when it clears. ' +
+         'The desktop 3D printer people actually name right now. 99.8% approval and a feed; the 15-day cookie is the only thing wrong with it.' },
+
+  { key:'elegoo', name:'ELEGOO', room:'workshop', domain:'www.elegoo.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 61127 when it clears. ' +
+         'Resin printers, the other half of the hobby. 93.2% approval, EPC 0.83, no feed.' },
+
+  { key:'chitu', name:'Chitu Systems', room:'workshop', domain:'www.chitusystems.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 120083 when it clears. ' +
+         'Resin printing accessories and supplies. Pure consumables, which is the repeat purchase this room lacks. Feed.' },
+
+  { key:'esun', name:'eSUN', room:'workshop', domain:'www.esun3d.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 99267 when it clears. ' +
+         'Filament. Bought again every month, which is why it is here at all.' },
+
   /* ==========================================================
      AUDIO.
      ========================================================== */
@@ -461,6 +557,31 @@ export const STORES = [
   { key:'distromanga', name:'DISTRO MANGA', room:'vault', domain:'distromanga.com',
     platform:'shopify', ref:'jtndvntg', rate:'10%', cookie:7, tier:3, pending:true },
 
+  /* ---- ROUND THREE, 31 Aug ------------------------------------- */
+  { key:'tortugaforma', name:'Tortuga Forma', room:'vault', domain:'tortugaforma.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:60, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 99037 when it clears. ' +
+         'Designed collectible objects rather than licensed ones. 60 days, 100% approval, EPC 1.20.' },
+
+  { key:'denuonovo', name:'Denuo Novo', room:'vault', domain:'denuonovo.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:7, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 47521 when it clears. ' +
+         'Licensed costumes and props, Star Wars among them. EPC 1.62 against a SEVEN-DAY window, the shortest in the intake, which is what puts a good merchant in tier 3.' },
+
+  { key:'nerdbugs', name:'Nerdbugs', room:'vault', domain:'nerdbugs.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 56891 when it clears. ' +
+         'Plush organs and anatomy toys. Odd, specific, has a feed, EPC 0.12.' },
+
+  { key:'pintrill', name:'PINTRILL', room:'vault', domain:'pintrill.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:45, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 96003 when it clears. ' +
+         'Enamel pins, licensed heavily. Feed, and an EPC of 0.04: pins are an impulse add rather than a destination.' },
+
   /* ==========================================================
      WARDROBE — apparel, kawaii, J-fashion.
      ----------------------------------------------------------
@@ -498,6 +619,19 @@ export const STORES = [
   { key:'gamingtees', name:'Gaming Tees', room:'wardrobe', domain:'gamingtees.store',
     platform:'shopify', ref:'', rate:'10%', cookie:7, tier:3, pending:true,
     note:'Filed under Wardrobe rather than Play. It sells shirts.' },
+
+  /* ---- ROUND THREE, 31 Aug ------------------------------------- */
+  { key:'miccostumes', name:'miccostumes', room:'wardrobe', domain:'www.miccostumes.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:120, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 88285 when it clears. ' +
+         'Cosplay, with a 120-DAY WINDOW and a feed. The window is the whole story: cosplay is planned months out.' },
+
+  { key:'cosplayshopper', name:'Cosplay Shopper', room:'wardrobe', domain:'www.cosplayshopper.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:45, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 90655 when it clears. ' +
+         'The second cosplay option. Worth having only if miccostumes declines.' },
 
   /* ==========================================================
      AUDIO — the room the headphone push is aimed at.
@@ -769,6 +903,43 @@ export const STORES = [
     note:'AWIN application sent 31 Aug 2026. Advertiser id 90411 when it clears. ' +
          '13.44% conversion, the highest of the intake by five points, 100% approval, EPC 0.80, feed yes. Controllers, mice and headsets, so it is filed at the desk and the classifier will scatter it across three rooms. ITS RATE IS THREE RATES, AND THE HEADLINE ONE IS NOT OURS: default 8%, a \'15.0 Voucher Rate\' group at 15%, and a \'Rule 2- 57909\' group at 4%. A voucher group is for coupon and deal sites; this is a shelf, so 8% is the number to plan on and 15% is the number a different kind of publisher gets. Assume the default until the advertiser says otherwise. That drops it from first on rate times conversion to third, which is still the top of the list and no longer a number that was never on offer.' },
 
+  /* ---- ROUND THREE, 31 Aug ------------------------------------- */
+  { key:'huanuo', name:'Huanuo', room:'battlestation', domain:'www.huanuohome.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 82051 when it clears. ' +
+         'Monitor arms and desk mounts. EPC 4.53, THE HIGHEST NUMBER IN THIS FILE and roughly two and a half times the best audio row. The desk objects nobody writes about convert better than the ones everybody does.' },
+
+  { key:'lovedeskmats', name:'LoveDeskMats', room:'battlestation', domain:'lovedeskmats.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:90, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 96107 when it clears. ' +
+         'Deskmats. 90-day window, 100% approval, feed. The one desk object bought for how it looks.' },
+
+  { key:'kawaiikeycaps', name:'KawaiiKeyCaps', room:'battlestation', domain:'kawaiikeycaps.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:60, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 100605 when it clears. ' +
+         'Artisan keycaps. Sits across Verda and Kawaii Katz equally, which is rare enough to note.' },
+
+  { key:'ewinracing', name:'EwinRacing', room:'battlestation', domain:'www.ewinracing.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 64242 when it clears. ' +
+         'Gaming chairs, with a feed. High basket and the most photographed object in the room.' },
+
+  { key:'womier', name:'Womier', room:'battlestation', domain:'womier.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 78646 when it clears. ' +
+         'Mechanical keyboards with the transparent cases. Cheap entry into the deepest room here, EPC 0.14.' },
+
+  { key:'flexispotca', name:'FlexiSpot Canada', room:'battlestation', domain:'www.flexispot.ca',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:45, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 97633 when it clears. ' +
+         'Standing desks, CANADA ONLY. Tier 3 for that reason alone: this shelf is US-facing, and a Canadian storefront on it is a dead end for most of the traffic. Worth having only if a CA audience shows up in the click report.' },
+
   { key:'zygo', name:'Zygo', room:'audio', domain:'www.shopzygo.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
     rate:'17% (0% on customer referrals)', cookie:30, tier:2, pending:true,
@@ -813,6 +984,41 @@ export const STORES = [
          'this box could not reach the domain to check. ' +
          'They offer custom 20% coupon codes; we have not asked for one and nothing ' +
          'advertises a discount until a code has been applied at their real checkout.' },
+  /* ---- ROUND THREE, 31 Aug: the room itself -------------------
+     The Walls had one merchant. Wall art turned out to be the thin
+     end of a whole category -- neon, wallpaper, panels, canvas --
+     and this room is the only one on the map that sells the room
+     rather than something you put in it. */
+  { key:'crazyneon', name:'CrazyNeon', room:'walls', domain:'www.crazyneon.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 95753 when it clears. ' +
+         'Custom LED neon signs, made to order. 94.8% approval, EPC 1.93, no feed. The one object a gaming room is photographed with.' },
+
+  { key:'justcanvasit', name:'JustCanvasIt', room:'walls', domain:'www.justcanvasit.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 22481 when it clears. ' +
+         'Turns a photograph into a canvas. EPC 7.28, the highest in the room sweep. Personalised, so the shelf can only ever link to the tool rather than to a product.' },
+
+  { key:'artzaco', name:'Artza Co.', room:'walls', domain:'artza.co',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:90, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 80156 when it clears. ' +
+         'Premium wallpaper. 90-day window, 87.5% approval. Complements Big Wall Decor rather than competing with it.' },
+
+  { key:'jeedeson', name:'Jeedeson', room:'walls', domain:'jeedeson.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:15, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 108824 when it clears. ' +
+         'Peel-and-stick vinyl flooring and wall panels. EPC 4.77 against a 15-DAY window, which is the shortest here and the reason this is tier 2.' },
+
+  { key:'neonwill', name:'NeonWill', room:'walls', domain:'neonwill.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 33857 when it clears. ' +
+         'LED neon signs WITH A FEED, which CrazyNeon does not have. 62.5% approval: they decline more than a third.' },
+
 ]
 
 /* ============================================================
