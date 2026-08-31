@@ -56,10 +56,23 @@
     } catch (e) { return '$' + v.toFixed(2); }
   }
 
+  /* THE FIFTH REGISTRATION A NEW ROOM NEEDS, and the one that gets
+     missed. A room is added to _scene.js (its classifier and its
+     ROOMS_META door), to _stores.js (ROOM_ORDER), to app.js (its pin
+     on the map) and to vercel.json (its route) -- and then to this
+     map, which is the only one that turns a key into words a visitor
+     reads. Nothing throws when it is absent. `ROOMS[k] || k` and the
+     empty-state's `|| 'this room'` both fall back politely, so The
+     Walls shipped with fifteen registered makers and told every one
+     of its visitors "15 makers signed for this room", which reads as
+     a page that does not know where it is.
+
+     A test now asserts this map covers every key in ROOMS_META. */
   var ROOMS = {
     arcade: 'The Arcade Floor', play: 'Play', tabletop: 'The Table',
     battlestation: 'Battlestation', workshop: 'The Workshop', audio: 'Audio',
-    power: 'Power', vault: 'The Vault', wardrobe: 'The Wardrobe'
+    power: 'Power', vault: 'The Vault', wardrobe: 'The Wardrobe',
+    walls: 'The Walls'
   };
 
   /* THE RARITY LADDER. Items.luau in the Heavenpillar repo grades

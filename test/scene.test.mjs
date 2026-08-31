@@ -147,6 +147,37 @@ test('every room the registry can name has display metadata', async () => {
   for (const s of STORES) assert.ok(known.has(s.room), `${s.key} sits in unknown room "${s.room}"`)
 })
 
+test('every room has a name the browser can print', async () => {
+  /* THE PREVIOUS TEST CHECKS THE SERVER HALF AND THAT WAS NOT ENOUGH.
+     ROOMS_META gives a room its door on the map; a SECOND map, ROOMS
+     in public/js/grid.js, gives it the words. grid.js ships to a
+     browser as an IIFE and cannot be imported, so it had no test, and
+     The Walls went live present in every server-side registration and
+     absent from that one.
+
+     Nothing broke, which is the point. Both readers of that map fall
+     back politely -- the facet chip prints the raw key, the empty
+     state prints "this room" -- so the room simply stopped saying its
+     own name, on the page whose entire content at the time was one
+     sentence naming the room.
+
+     Read as text rather than parsed: the alternative is evaluating a
+     browser bundle in the test process, which would drag window and
+     document in for one object literal. */
+  const { readFileSync } = await import('node:fs')
+  const src = readFileSync(new URL('../public/js/grid.js', import.meta.url), 'utf8')
+  const block = /var ROOMS = \{([\s\S]*?)\};/.exec(src)
+  assert.ok(block, 'grid.js no longer declares ROOMS as an object literal')
+  const named = new Set([...block[1].matchAll(/(\w+)\s*:/g)].map(m => m[1]))
+
+  for (const r of ROOMS_META) {
+    assert.ok(named.has(r.key),
+      `public/js/grid.js ROOMS has no label for "${r.key}", so that room ` +
+      'renders its own key in the facet chips and calls itself "this room" ' +
+      'in its empty state.')
+  }
+})
+
 test('a non-product TYPE is refused, and the test actually fires', () => {
   /* NONPRODUCT_TYPE HAD NEVER FIRED, ON ANY CALLER, SINCE IT WAS
      WRITTEN. It is anchored ^...$ and was tested against the whole
