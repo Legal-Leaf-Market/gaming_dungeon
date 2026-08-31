@@ -561,10 +561,24 @@ export const STORES = [
          'best brand fit in the whole electronics cut, which is why it was worth the ' +
          'second ask. 30-day cookie, 37-day auto-validation, US only. ' +
          'PAYMENT IS EXPOSURE LEVEL 4, the worst band AWIN publishes: over their credit ' +
-         'limit AND over settlement terms, average payment 76 days. Recorded rather than ' +
+         'limit AND over settlement terms, 75 days to pay on the dashboard. Its 79.37% '  +
+         'approval rate is the lowest of the three joined: one order in five is ' +
+         'declined after the click. Recorded rather than ' +
          'argued -- it is a real risk on a real merchant and the owner joined knowing it. ' +
          'ShopWindow empty, so the link is composed through cread.php and the capture has ' +
          'to come off their own storefront.' },
+
+  { key:'mojawa', name:'MOJAWA', room:'audio', domain:'mojawa.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'123666',
+    rate:'unread', cookie:30, tier:1, pending:true,
+    note:'AWIN advertiser 123666, joined 31 Aug 2026. Open-ear bone conduction for ' +
+         'running and cycling, which is a use case nothing else in this room covers. ' +
+         'Publisher dashboard: 5.85% conversion, 90.62% approval, EPC 1.20, 60 days to ' +
+         'pay, payment amber. THE ONLY ONE OF THE THREE JOINED PROGRAMMES WITH A PRODUCT ' +
+         'FEED, which means it is also the only one that could be ingested through AWIN ' +
+         'rather than captured off its own storefront. That path is not built: `feedcsv` ' +
+         'exists as a platform and wants a feedId and AWIN_API_KEY. Until it is, this is ' +
+         'a capture like the rest. Rate not read yet -- the commission manager has it.' },
 
   /* ---- APPLIED 31 Aug 2026, NOT YET APPROVED ---------------------
      `awinmid` stays empty until the acceptance lands. The id is in
@@ -605,6 +619,12 @@ export const STORES = [
          '10 and worth more per sale than it: these are $300 to $2,000 headphones, so 5% ' +
          'is $15 to $100 a time against $6 on a $60 microphone. Percentage is the wrong ' +
          'unit to compare rows on in this room. ' +
+         'ITS LINK STATUS IS RED ON THE AWIN DASHBOARD, alone among twenty-two pending ' +
+         'applications, all of which are green. Red means AWIN cannot reach their tracking ' +
+         'endpoint. It is not a reason to withdraw and it IS a reason not to clear pending ' +
+         'the day approval lands: an approved programme with a dead link earns nothing and ' +
+         'looks identical to a working one from our side. Re-check the dashboard before ' +
+         'this ships, not after. ' +
          'Planar magnetic, the deep end of the audiophile shelf, 100% approval rate and a ' +
          'feed. The 15-day window is the shortest of the five and the reason this is tier ' +
          '2 rather than 1: cookie is sorted on before rate everywhere in this file.' },
@@ -633,6 +653,119 @@ export const STORES = [
          'widest audience of the five, 100% approval and EPC 0.68. NO PRODUCT FEED: its ' +
          'capture has to come off the storefront and its cards get written by hand.' },
 
+  /* ---- APPLIED 31 Aug 2026, ROUND TWO ----------------------------
+     Seventeen more, sent the same afternoon, all pending. Same rule
+     as the five above: `awinmid` stays empty, the id lives in the
+     note, and approval is a one-line paste.
+
+     THE NUMBERS BELOW ARE OFF THE PUBLISHER DASHBOARD, NOT THE
+     DIRECTORY EXPORT, and they carry a column the export does not:
+     conversion rate. It reorders things. EasySMX converts at 13.44%
+     against Cleer's 0.91%, which is a factor of fifteen and not
+     visible from anything in the CSV.
+     ---------------------------------------------------------------- */
+  { key:'tranya', name:'TRANYA', room:'audio', domain:'shop.tranya.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 62337 when it clears. ' +
+         '2.52% conversion, 100% approval, EPC 0.08, 70 days to pay, feed yes. Thinnest EPC of the twenty-two: here for shelf depth.' },
+
+  { key:'tozo', name:'TOZO', room:'audio', domain:'www.tozostore.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:60, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 98381 when it clears. ' +
+         '8.28% conversion, 100% approval, EPC 0.45, 69 days, no feed. Third-best conversion of the set on a name people already search.' },
+
+  { key:'cleer', name:'Cleer Audio', room:'audio', domain:'cleeraudio.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 24716 when it clears. ' +
+         '0.91% CONVERSION, the worst of the twenty-two, against amber payment and 96 days to pay. 100% approval and a real brand, and the numbers say hold it at the back.' },
+
+  { key:'edifier', name:'Edifier', room:'audio', domain:'edifier-online.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:90, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 54811 when it clears. ' +
+         '3.75% conversion, 89.14% approval, EPC 0.75, 52 days, no feed. Ninety-day window, speakers and headphones both.' },
+
+  { key:'oneodio', name:'OneOdio', room:'audio', domain:'www.oneodio.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 114832 when it clears. ' +
+         '4.14% conversion, 80.39% approval, EPC 0.37, 36 DAYS TO PAY which is the second fastest here, feed yes.' },
+
+  { key:'divoom', name:'Divoom', room:'audio', domain:'divoom.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 105457 when it clears. ' +
+         '6.95% conversion, 98.15% approval, EPC 0.27, 65 days, feed yes. Pixel-art Bluetooth speakers: filed in Audio, and half its catalogue belongs on the Arcade Floor once the classifier sees it.' },
+
+  { key:'dubslabs', name:'DubsLabs', room:'audio', domain:'www.dubslabs.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:45, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 56785 when it clears. ' +
+         '6.66% conversion, 100% approval, EPC 0.12, 71 days, feed yes. Bedphones: headphones flat enough to sleep in.' },
+
+  { key:'doss', name:'DOSS', room:'audio', domain:'www.dossaudio.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 106513 when it clears. ' +
+         '2.49% conversion, 100% approval, EPC 0.21, 64 days, no feed. Twenty-five years of portable and bookshelf speakers.' },
+
+  { key:'jabees', name:'Jabees', room:'audio', domain:'jabeesstore.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 130107 when it clears. ' +
+         'No performance data at all: the programme launched 26 Aug 2026, five days before we applied. Amber payment. States tiered commission to 20%, which is unproven.' },
+
+  { key:'eksa', name:'EKSA', room:'audio', domain:'www.eksa.net',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:60, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 92427 when it clears. ' +
+         '3.43% conversion, 92.86% approval, EPC 0.15, 67 days, feed yes. Gaming headsets only, and the straightest line from this room to GearAvail.' },
+
+  { key:'retrolife', name:'Retrolife', room:'audio', domain:'retrolifeplayer.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:90, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 83661 when it clears. ' +
+         '2.84% conversion, 100% approval, EPC 0.66, 71 days, feed yes. HiFi turntables and record players: a 90-day window, and the best thematic fit in the whole intake for a site with an arcade in it.' },
+
+  { key:'naenka', name:'Nank', room:'audio', domain:'www.naenka.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 60125 when it clears. ' +
+         'No performance data. Amber payment. Bone conduction, thirteen years of it, and a feed.' },
+
+  { key:'kokoon', name:'Kokoon', room:'audio', domain:'kokoon.io',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:60, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 59387 when it clears. ' +
+         'No performance data. Amber payment. Sleep headphones with their own app; publishes 10% up front, which most of this intake does not.' },
+
+  { key:'newbee', name:'New Bee', room:'audio', domain:'anewbee.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 128073 when it clears. ' +
+         'No performance data: launched 19 Jun 2026. Amber payment. States 10-20% and a high average order, with nothing on the board to check it against.' },
+
+  { key:'easysmx', name:'EasySMX', room:'battlestation', domain:'www.easysmx.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 90411 when it clears. ' +
+         '13.44% CONVERSION, the highest of the twenty-two by five points, with 100% approval and EPC 0.80. Controllers, mice and headsets, so it is filed at the desk and the classifier will scatter it across three rooms.' },
+
+  { key:'zygo', name:'Zygo', room:'audio', domain:'www.shopzygo.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 93023 when it clears. ' +
+         '5.33% conversion, 100% approval, EPC 1.93 which is the highest here, 34 DAYS TO PAY which is the fastest. A headset that streams audio underwater, for swimmers: the narrowest product in the intake and the best numbers on it.' },
+
+  { key:'ozlo', name:'Ozlo Sleepbuds', room:'audio', domain:'ozlosleep.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unread', cookie:30, tier:3, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 100653 when it clears. ' +
+         'No performance data. 132 DAYS TO PAY, by far the slowest of the twenty-two. Built by ex-Bose engineers after Bose dropped its own sleepbuds.' },
+
   /* ==========================================================
      THE WALLS — canvas, wallpaper, the room itself.
      ----------------------------------------------------------
@@ -653,7 +786,12 @@ export const STORES = [
          'canvas, metal, acrylic and peel-and-stick wallpaper, plus a custom uploader. ' +
          'AOV $555, which is the highest on this sheet by a distance and the reason a ' +
          '10% headline is worth more here than 38% at Waffle Cone. 30-day cookie, ' +
-         '30-day auto-validation, average payment 38 days, Exposure Level 1. ' +
+         '30-day auto-validation, Exposure Level 1. THE PUBLISHER DASHBOARD AND THE ' +
+         'PROFILE PAGE DISAGREE ON PAYMENT TIME: the profile said 38 days, the ' +
+         'dashboard says 27. The dashboard is the one that moves, so take it as ' +
+         'current and the profile as a snapshot. Dashboard also gives 5.13% ' +
+         'conversion, 99.47% approval and EPC 1.80, which is the best of the three ' +
+         'joined programmes and the highest number anywhere in this file. ' +
          'THEIR AWIN SHOPWINDOW IS EMPTY (0 products, never updated), so there is no ' +
          'feed to ingest and no aw_deep_link to inherit: the capture has to come off ' +
          'their own storefront, and `platform` is unknown rather than guessed because ' +
