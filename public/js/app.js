@@ -201,9 +201,22 @@
          has nothing. Flavour wraps the truth and never replaces it,
          because the one thing a shop can do that is genuinely
          dishonest is make an empty shelf sound like a full one. */
+      /* THE PIN NEEDED THE SAME FIX THE ROOM PAGE GOT, and having
+         only half of it was worse than having neither. The room page
+         says "15 makers signed for The Walls, none stocked yet"; the
+         map pin over the same door said NOTHING HERE. The pin is what
+         a visitor reads first, and on the front page of the site it
+         was the more visible of the two by a distance.
+
+         `signed` is as literal as the labels around it. It does not
+         claim stock, it counts registrations, and a room with neither
+         stock nor a signing still falls through to "nothing here",
+         which is then true of it. */
+      var w = (state.waiting && state.waiting[r.key]) || 0;
       var label = state.loading ? 'counting\u2026'
                 : !state.reached ? 'no answer'
                 : published === 0 ? 'shelves bare'
+                : n === 0 && w ? w + ' signed'
                 : n === 0 ? 'nothing here'
                 : n + (n === 1 ? ' thing' : ' things');
       return {

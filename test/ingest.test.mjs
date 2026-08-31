@@ -328,6 +328,24 @@ test('an empty room says it is unread, not that it was rejected', async () => {
     'the empty state has no branch for a room whose makers are signed but unread')
 })
 
+test('the map pin says signed, not nothing here', async () => {
+  /* HALF A FIX WAS WORSE THAN NONE. The room page got the honest
+     sentence and the pin over the same door on the front page kept
+     saying NOTHING HERE, which is the more visible of the two and the
+     first thing a visitor reads. The Walls carried fifteen signed
+     makers under that label.
+
+     Asserted on the source, like the room-page checks above: the pin
+     label is built inside renderMap() from live state and there is no
+     DOM here to render it into. */
+  const app = readFileSync(new URL('../public/js/app.js', import.meta.url), 'utf8')
+  assert.match(app, /state\.waiting\[r\.key\]/,
+    'renderMap never asks how many makers are waiting on a room')
+  assert.match(app, /n === 0 && w \? w \+ ' signed'/,
+    'the map pin has no branch between "no stock" and "nothing here", so a room ' +
+    'with makers signed and unread is labelled the same as a room we rejected')
+})
+
 test('a new payload field forces the cache key to be bumped', async () => {
   /* THE TEST ABOVE PASSED WHILE THE FEATURE DID NOTHING ON PRODUCTION,
      and that gap is what this one closes.
