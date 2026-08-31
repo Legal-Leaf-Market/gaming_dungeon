@@ -1496,7 +1496,33 @@ const BUDGET_MS = 45000
    is a second thing to pay for and forget the credentials of. With
    DATABASE_URL unset every call here no-ops and the behaviour is exactly
    what it was without a cache. */
-const KV_KEY = 'gd:catalogue:v1'
+/* THE KEY CARRIES A VERSION AND THE VERSION IS THE EVICTION.
+   ------------------------------------------------------------
+   BUMP IT IN THE SAME COMMIT AS ANY CHANGE TO THE PAYLOAD'S SHAPE.
+   Not its contents, its SHAPE: a new top-level field, a renamed one,
+   a field that changes type. A warm entry is served for six hours
+   without being looked at, so new code reading a payload built by
+   old code sees the field simply missing, and every reader here
+   falls back politely rather than throwing.
+
+   v1 -> v2, 2026-08-31, having done exactly that. `waiting` was
+   added so an unstocked room could say "25 makers signed, none
+   stocked yet" instead of implying we had opened those shops and
+   turned them down. It shipped, it deployed, and the site went on
+   serving a payload built five hours earlier with no `waiting` in
+   it. `state.waiting` was `{}` on every page, the new branch never
+   ran once, and the rooms kept telling visitors the old sentence.
+   Nothing failed. There was no error to find, on either side.
+
+   PAYLOAD_KEYS below is the guard. A test asserts the payload's real
+   top-level keys match it exactly, so adding a field fails until
+   this line is edited -- and this line is one line from the version,
+   which is the whole trick. */
+export const PAYLOAD_KEYS = [
+  'ok', 'stores', 'meta', 'count', 'truncated', 'dropped',
+  'byRoom', 'waiting', 'updated', 'items',
+]
+const KV_KEY = 'gd:catalogue:v2'
 /* Serve from the store rather than scrape while it is younger than this.
    Longer than TTL on purpose: stale prices beat a spinner, and a
    background refresh replaces them within the minute. */

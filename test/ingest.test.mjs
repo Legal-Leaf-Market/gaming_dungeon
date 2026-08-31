@@ -327,3 +327,38 @@ test('an empty room says it is unread, not that it was rejected', async () => {
   assert.match(app, /' signed for '/,
     'the empty state has no branch for a room whose makers are signed but unread')
 })
+
+test('a new payload field forces the cache key to be bumped', async () => {
+  /* THE TEST ABOVE PASSED WHILE THE FEATURE DID NOTHING ON PRODUCTION,
+     and that gap is what this one closes.
+
+     `waiting` was added, deployed, and never once reached a browser.
+     Every assertion above was true of the payload this harness builds,
+     because this harness builds a FRESH one. Production did not: the
+     shared cache in Neon holds the last good payload for six hours and
+     serves it without inspecting it, so new code went on reading a
+     payload that old code had written. `state.waiting` was `{}` on
+     every page and the branch never ran. There is nothing to catch
+     here at runtime, on either side: a missing field reads as an empty
+     object and every fallback is polite by design.
+
+     The rule that prevents it is that a SHAPE change bumps KV_KEY's
+     version in the same commit. A rule nobody can forget is better, so:
+     PAYLOAD_KEYS is declared one line above the version, this asserts
+     it matches what the payload actually has, and adding a field is
+     therefore a failing test until somebody edits the line next to the
+     number they need to change. */
+  const { PAYLOAD_KEYS } = await import('../api/products.js?shape=' + Date.now())
+  const out = await catalogue()
+  assert.deepEqual(
+    Object.keys(out).sort(),
+    [...PAYLOAD_KEYS].sort(),
+    'the payload\'s top-level fields no longer match PAYLOAD_KEYS in api/products.js. ' +
+    'If you added or renamed one, update that list AND bump the version in KV_KEY on ' +
+    'the line below it, or a warm cache will serve the old shape for six hours after ' +
+    'the deploy and the change will look like it did nothing.')
+
+  const src = readFileSync(new URL('../api/products.js', import.meta.url), 'utf8')
+  assert.match(src, /const KV_KEY = 'gd:catalogue:v(\d+)'/,
+    'KV_KEY is no longer a versioned literal, so there is nothing to bump')
+})
