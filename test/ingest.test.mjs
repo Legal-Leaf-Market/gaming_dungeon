@@ -31,7 +31,7 @@
 
 import { test, before, after, mock } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -132,6 +132,15 @@ before(async () => {
         domain: 'fixture.test', platform: 'shopify',
         ref: 'TESTCODE', rate: '10%', cookie: 30, tier: 1,
         pending: false,
+      }, {
+        /* SIGNED AND NOT YET READ. Contributes no products and no
+           public store row, so every count in this file is unchanged
+           by it; it exists so the `waiting` map has something to
+           count. */
+        key: 'fixture-waiting', name: 'Fixture Pending', room: 'wardrobe',
+        domain: 'pending.test', platform: 'shopify',
+        ref: '', rate: '10%', cookie: 30, tier: 1,
+        pending: true,
       }],
       PROSPECTS: [], REJECTED: [], ROOM_ORDER: ['arcade', 'wardrobe'],
       /* products.js imports this for the AWIN link shape. A mocked
@@ -281,4 +290,40 @@ test('an unreviewed merchant publishes nothing, however live it looks', async ()
       roomMap: { Apparel: 'wardrobe', Accessories: 'battlestation' },
     }))
   }
+})
+
+test('an empty room says it is unread, not that it was rejected', async () => {
+  /* THE EMPTY STATE WAS TELLING THE WRONG STORY, and it is the only
+     thing most visitors will ever read. app.js has three cases: the
+     API is down, nothing at all is publishable, and otherwise. A room
+     with merchants signed but not yet captured fell into "otherwise",
+     which says "nothing read so far belongs on these shelves" -- that
+     we opened those shops and turned them down. Audio went from two
+     merchants to twenty-five in one afternoon and said that sentence
+     the whole time.
+
+     So the payload carries a per-room count of what is registered and
+     not yet publishable. A COUNT AND NOTHING ELSE: publicStores() is
+     an allow-list because rates and tracking codes are our paperwork,
+     and a number is not paperwork. */
+  const out = await catalogue()
+  assert.ok(out.waiting, 'the payload has no waiting map')
+  assert.equal(out.waiting.wardrobe, 1,
+    'a registered, pending store must be counted as waiting for its room')
+  assert.equal(out.waiting.arcade, undefined,
+    'a store that publishes must not also be counted as waiting')
+
+  /* And the client has to actually read it. A payload nobody consumes
+     is the failure this whole file was written about. */
+  const app = readFileSync(new URL('../public/js/app.js', import.meta.url), 'utf8')
+  assert.match(app, /state\.waiting\s*=\s*j\.waiting/,
+    'app.js never takes `waiting` off the payload')
+  /* Matched on the fragment either side of the singular/plural
+     ternary rather than on a whole sentence, because the sentence is
+     assembled at runtime and a whole-sentence regex would pass only
+     until somebody fixed the pluralisation. */
+  assert.match(app, /state\.waiting\[roomKey\]/,
+    'the empty state never asks how many makers are waiting on this room')
+  assert.match(app, /' signed for '/,
+    'the empty state has no branch for a room whose makers are signed but unread')
 })

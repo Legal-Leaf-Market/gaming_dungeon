@@ -106,7 +106,7 @@
   /* `loading` and `tries` are the two the redesign added, and they
      exist so the interface can tell "coming" from "empty" and say so.
      `nextIn` is only set while a retry is pending. */
-  var state = { items: [], stores: [], shopNames: {}, reached: false,
+  var state = { items: [], stores: [], waiting: {}, shopNames: {}, reached: false,
                 loading: true, tries: 0, nextIn: 0 };
 
   /* ---------------------------------------------------------- routing
@@ -415,6 +415,24 @@
         'The <a href="/arcade">arcade</a> is open while you wait. It never sells ' +
         'you anything either.';
     }
+    /* SIGNED BUT NOT YET READ IS ITS OWN STATE, and until this branch
+       existed it was told as the wrong one. A room with makers waiting
+       on a capture fell through to "nothing read so far belongs on
+       these shelves", which says we opened those shops and turned
+       them down. We have not opened them. Audio went from two makers
+       to twenty-five in an afternoon and said the same sentence
+       throughout, which is the site being modest about the one thing
+       actually happening to it. */
+    var waiting = (state.waiting && state.waiting[roomKey]) || 0;
+    if (waiting) {
+      return '<strong>' + waiting + ' maker' + (waiting === 1 ? '' : 's') +
+        ' signed for ' + esc(roomName) + ', none stocked yet.</strong><br>' +
+        'Nothing goes on a shelf here until somebody has opened that shop and read ' +
+        'what it actually sells, which is slower than trusting a feed and is the ' +
+        'entire reason to do it that way.<br><br>' +
+        'There are other doors on the <a href="/">map</a>, and the ' +
+        '<a href="/arcade">arcade</a> is open while you wait.';
+    }
     return '<strong>Nothing in ' + esc(roomName) + ' yet.</strong><br>' +
       'Shops are live, but nothing read so far belongs on these shelves. ' +
       'There are other doors on the <a href="/">map</a>.';
@@ -496,6 +514,7 @@
           return it;
         });
         state.stores = j.stores || [];
+        state.waiting = j.waiting || {};
         state.shopNames = {};
         for (var s2 = 0; s2 < state.stores.length; s2++) {
           state.shopNames[state.stores[s2].key] = state.stores[s2].name;

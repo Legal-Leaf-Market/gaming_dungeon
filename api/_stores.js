@@ -276,6 +276,12 @@ export const STORES = [
     note:'AWIN application sent 31 Aug 2026. Advertiser id 96147 when it clears. ' +
          'Cases and bags for handhelds and laptops. Accessory attach, which is what this room sells between releases.' },
 
+  { key:'airgaming', name:'Air Gaming', room:'play', domain:'airgaming.com.au',
+    platform:'unknown', ref:'', rate:'10%', cookie:30, tier:3, pending:true,
+    note:'GoAffPro, applied 31 Aug 2026. AUSTRALIA ONLY, which is the same dead end as ' +
+         'FlexiSpot Canada and the same tier for the same reason: this shelf is US-facing ' +
+         'and a .com.au storefront on it wastes most of the traffic that reaches it.' },
+
   { key:'surfacegaming', name:'Surface Gaming', room:'battlestation', domain:'surface-gaming.com',
     platform:'shopify', ref:'', rate:'20%', cookie:7, tier:2, pending:false },
 
@@ -311,6 +317,12 @@ export const STORES = [
     rate:'unread', cookie:365, tier:1, pending:true,
     note:'AWIN application sent 31 Aug 2026. Advertiser id 89093 when it clears. ' +
          'A 365-DAY COOKIE on dice, the longest window in the entire intake, sitting on the cheapest product in it. New programme, no trading data.' },
+
+  { key:'animepuzzle', name:'Anime Puzzles', room:'tabletop', domain:'animepuzzle.com',
+    platform:'unknown', ref:'verdastudio', rate:'15%', cookie:7, tier:3, pending:true,
+    note:'GoAffPro store 168539, code issued 31 Aug 2026 and live. Anime cluster (see the ' +
+         'block in Wardrobe). Jigsaws rather than board games, so it shares a room with The ' +
+         'Op and Easy Roller Dice without competing with either.' },
 
   /* ==========================================================
      BATTLESTATION — the desk. Chairs, boards, mice, headsets, screens.
@@ -422,6 +434,11 @@ export const STORES = [
 
   { key:'3dprinternational', name:'3D Printernational', room:'workshop', domain:'www.3dprinternational.com',
     platform:'shopify', ref:'hqvplmpo', rate:'5%', cookie:30, tier:1,  },
+
+  { key:'printflow3d', name:'Printflow3D', room:'workshop', domain:'printflow3d.com',
+    platform:'unknown', ref:'', rate:'10%', cookie:30, tier:2, pending:true,
+    note:'GoAffPro, applied 31 Aug 2026. The ONLY 3D printing merchant GoAffPro has that ' +
+         'clears a sane bar, against seven on AWIN, which is that whole comparison in one row.' },
 
   /* ---- ROUND THREE, 31 Aug: 3D printing is where AWIN is deep --
      Seven of them, against four merchants in the room before. The
@@ -582,6 +599,12 @@ export const STORES = [
     note:'AWIN application sent 31 Aug 2026. Advertiser id 96003 when it clears. ' +
          'Enamel pins, licensed heavily. Feed, and an EPC of 0.04: pins are an impulse add rather than a destination.' },
 
+  { key:'animesmemories', name:"Anime's Memories", room:'vault', domain:'animes-memories.myshopify.com',
+    platform:'shopify', ref:'', rate:'20%', cookie:31, tier:2, pending:true,
+    note:'GoAffPro, applied 31 Aug 2026. 20% on 31 days. Read the capture carefully: the ' +
+         'anime end of GoAffPro is thick with one operator running six storefronts under ' +
+         'six keyword domains, and a room can look six merchants deep on one supplier.' },
+
   /* ==========================================================
      WARDROBE — apparel, kawaii, J-fashion.
      ----------------------------------------------------------
@@ -632,6 +655,58 @@ export const STORES = [
     rate:'unread', cookie:45, tier:3, pending:true,
     note:'AWIN application sent 31 Aug 2026. Advertiser id 90655 when it clears. ' +
          'The second cosplay option. Worth having only if miccostumes declines.' },
+
+  /* ---- THE ANIME CLUSTER CAME BACK APPROVED, 31 Aug ------------
+     Six codes arrived at once, all `verdastudio`, all 15% on 7 days,
+     which is the exact pair of numbers the Vault's cluster warning
+     predicted before any of them was applied for. That is the
+     diagnosis confirmed by data rather than by eye: one operator,
+     one commission policy, six storefronts.
+
+     WHAT THAT WARNING ACTUALLY FORBIDS IS NARROWER THAN IT READS,
+     and these six are the case that shows where its edge is. The
+     failure it names is publishing ONE catalogue under several
+     names, so the shopper meets the same product on six cards. But
+     these six are niched by product, not by branding: bedding,
+     backpacks, kimono, jackets, swimwear, puzzles. If the network is
+     what it looks like, each domain serves a SLICE of the supplier's
+     stock, and two slices that do not intersect cannot duplicate
+     each other on a shelf.
+
+     So the duplication risk is not between these six. It is between
+     each of them and the three already carried on search demand
+     (animestatue in the Vault, animekeycaps and anime-mousepad in
+     Battlestation), and it is settled the same way as always: read
+     the captures, and if titles and image URLs repeat across two
+     domains, drop one. Do not keep both because both are approved.
+
+     ALL SIX ARE TIER 3 AND ALL SIX STAY PENDING. A 7-day cookie is
+     the shortest window in the file, and a supplier we cannot yet
+     see the stock of is exactly the shape that should wait for a
+     human to open it. Registered and attributed costs nothing;
+     published without a capture is how a room fills with one
+     dropshipper wearing six hats. */
+  { key:'animebackpack', name:'Anime Backpacks', room:'wardrobe', domain:'animebackpack.com',
+    platform:'unknown', ref:'verdastudio', rate:'15%', cookie:7, tier:3, pending:true,
+    note:'GoAffPro store 169932, code issued 31 Aug 2026 and live. Anime cluster: read the ' +
+         'block above before publishing this alongside any other anime* domain.' },
+
+  { key:'animekimono', name:'Anime Kimono', room:'wardrobe', domain:'animekimono.com',
+    platform:'unknown', ref:'verdastudio', rate:'15%', cookie:7, tier:3, pending:true,
+    note:'GoAffPro store 168549, code issued 31 Aug 2026 and live. Anime cluster.' },
+
+  { key:'animejacket', name:'Anime Jacket', room:'wardrobe', domain:'animejacket.com',
+    platform:'unknown', ref:'verdastudio', rate:'15%', cookie:7, tier:3, pending:true,
+    note:'GoAffPro store 164639, code issued 31 Aug 2026 and live. Anime cluster.' },
+
+  { key:'animeswimsuit', name:'Anime Swimsuits', room:'wardrobe', domain:'animeswimsuit.com',
+    platform:'unknown', ref:'verdastudio', rate:'15%', cookie:7, tier:3, pending:true,
+    note:'GoAffPro store 7007172, code issued 31 Aug 2026 and live. Anime cluster, and the ' +
+         'one of the six with a question over it that is not about duplication: swimwear is ' +
+         'the furthest any row in this file sits from a room somebody games in. It is ' +
+         'registered because the code exists and declining it later costs nothing. Whether ' +
+         'it belongs on the shelf at all is a decision for the capture, not for the sweep ' +
+         'that found it.' },
 
   /* ==========================================================
      AUDIO — the room the headphone push is aimed at.
@@ -984,6 +1059,72 @@ export const STORES = [
          'this box could not reach the domain to check. ' +
          'They offer custom 20% coupon codes; we have not asked for one and nothing ' +
          'advertises a discount until a code has been applied at their real checkout.' },
+  { key:'planetwallart', name:'Planet Wall Art', room:'walls', domain:'planetwallart.com',
+    platform:'unknown', ref:'verdastudio', rate:'20%', cookie:180, tier:1, pending:true,
+    note:'GoAffPro, code issued 31 Aug 2026 and live. TWENTY PER CENT ON A 180-DAY WINDOW, ' +
+         'which is the best pair of numbers anywhere in this file: double Big Wall Decor\'s ' +
+         'rate and six times the AWIN norm on the cookie. Self-serve signup, so it went from ' +
+         'a row in a sweep to a live code in an afternoon, which is the whole argument for ' +
+         'reading GoAffPro alongside AWIN rather than instead of it. ' +
+         '`platform` unverified: this box cannot reach the domain, the gateway answers 403 ' +
+         'on every merchant host. The capture has to come off the bookmarklet.' },
+
+  { key:'maxandmark', name:'Max&Mark Home Decor', room:'walls', domain:'maxandmark.shop',
+    platform:'unknown', ref:'xrgfioiv', rate:'20%', cookie:60, tier:1, pending:true,
+    note:'GoAffPro, code issued 31 Aug 2026 and live. 20% on a 60-day window. ' +
+         'NOTE THE CODE IS NOT `verdastudio`: this merchant issued a random one, ' +
+         'xrgfioiv, where Planet Wall Art and Lighting Style let us pick the vanity ' +
+         'string. Nothing depends on them matching and everything depends on each row ' +
+         'carrying its own, so this is here to stop a future tidy-up making them uniform.' },
+
+  { key:'lightingstyle', name:'Lighting Style', room:'walls', domain:'lighting-style.myshopify.com',
+    platform:'shopify', ref:'verdastudio', rate:'15%', cookie:60, tier:1, pending:true,
+    note:'GoAffPro, code issued 31 Aug 2026 and live. 15% on a 60-day window. ' +
+         'Lighting, which is the second thing after the wall itself that makes a room a ' +
+         'room, and a category The Walls did not have. ' +
+         '`platform` is shopify on the strength of the myshopify.com host, which is the ' +
+         'one case where the domain proves it rather than suggesting it.' },
+
+  { key:'tsunlighting', name:'T-SUN Lighting', room:'walls', domain:'www.tsunlighting.com',
+    platform:'unknown', ref:'verdastudio', rate:'10%', cookie:30, tier:2, pending:true,
+    note:'GoAffPro, code issued 31 Aug 2026 and live. 10% on a 30-day window. ' +
+         'Outdoor and solar lighting more than desk lighting, so read the capture before ' +
+         'assuming it belongs beside Lighting Style: a room lit by garden floods is not ' +
+         'the room this site is about.' },
+
+  { key:'interiorsinvogue', name:'Interiors InVogue', room:'walls', domain:'interiorsinvogue.com',
+    platform:'unknown', ref:'verdastudio', rate:'10%', cookie:30, tier:2, pending:true,
+    note:'GoAffPro, code issued 31 Aug 2026 and live. 10% on a 30-day window. ' +
+         'General interiors, which is the widest catalogue in this room and the one most ' +
+         'likely to need a tight `include` list: a gaming room does not want the whole of ' +
+         'somebody\'s homeware range on its shelf.' },
+
+  /* ---- GOAFFPRO, APPLIED 31 Aug, CODE NOT ISSUED YET ----------
+     GoAffPro usually approves on the spot, so a row still empty here
+     a day later is a merchant reviewing by hand rather than a queue.
+     An empty `ref` links direct and `?debug` shouts, which is the
+     same honest state half this file has always been in. */
+  { key:'emoterugs', name:'Emote Rugs', room:'walls', domain:'emote-rugs.myshopify.com',
+    platform:'shopify', ref:'', rate:'10%', cookie:14, tier:2, pending:true,
+    note:'GoAffPro, applied 31 Aug 2026. Gaming emote rugs: the most on-theme merchant ' +
+         'in this room and the shortest window in it at 14 days.' },
+
+  { key:'kyahomedecor', name:'KYA Home Decor', room:'walls', domain:'kyahomedecor.com',
+    platform:'unknown', ref:'', rate:'10%', cookie:30, tier:2, pending:true,
+    note:'GoAffPro, applied 31 Aug 2026. 10% on 30 days.' },
+
+  { key:'aquasoul', name:'AquaSoul Home Decor', room:'walls', domain:'www.aquasoulhomegiftshop.com',
+    platform:'unknown', ref:'', rate:'5%', cookie:60, tier:3, pending:true,
+    note:'GoAffPro, applied 31 Aug 2026. 5% is the thinnest rate in this room, against a ' +
+         '60-day window that is among the better ones. Tier 3 on the rate.' },
+
+  { key:'animebed', name:'Anime Bedding', room:'walls', domain:'animebed.com',
+    platform:'unknown', ref:'verdastudio', rate:'15%', cookie:7, tier:3, pending:true,
+    note:'GoAffPro store 7007168, code issued 31 Aug 2026 and live. Anime cluster (see the ' +
+         'block in Wardrobe). Filed here rather than in the Vault because bedding furnishes ' +
+         'the room, which is what this room is for, and because a duvet next to a canvas ' +
+         'reads as a room while a duvet next to a statue reads as a warehouse.' },
+
   /* ---- ROUND THREE, 31 Aug: the room itself -------------------
      The Walls had one merchant. Wall art turned out to be the thin
      end of a whole category -- neon, wallpaper, panels, canvas --

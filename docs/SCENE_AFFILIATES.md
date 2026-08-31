@@ -167,6 +167,18 @@ exactly what makes a comparison site worthless.
 Pick **two at most** — keycaps and mousepads have the genuine search demand —
 and treat the rest as one merchant you already have.
 
+**Update, 31 Aug 2026: six of them came back approved in one afternoon**
+(`animebed`, `animebackpack`, `animejacket`, `animekimono`, `animepuzzle`,
+`animeswimsuit`), every one of them 15 percent on 7 days, which is the identical
+commission policy this section predicted and is the diagnosis confirmed rather
+than guessed. They are registered and attributed, all six tier 3 and all six
+pending. The rule that survives is narrower than "pick two": these six are niched
+by *product*, so two slices that do not intersect cannot duplicate each other on
+a shelf. What must not happen is any of them publishing beside `animestatue`,
+`animekeycaps` or `anime-mousepad` with the same titles and the same image URLs.
+That is a question for the captures. See the block comment in `api/_stores.js`
+under Wardrobe.
+
 ---
 
 ## Do not apply to these

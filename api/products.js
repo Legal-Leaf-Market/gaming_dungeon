@@ -1601,6 +1601,25 @@ export default async function handler(req, res) {
     truncated,
     dropped,
     byRoom: items.reduce((a, i) => { a[i.room] = (a[i.room] || 0) + 1; return a }, {}),
+    /* HOW MANY MAKERS ARE SIGNED FOR EACH ROOM AND NOT YET STOCKED.
+       A COUNT, AND NOTHING ELSE: no name, no rate, no cookie, no
+       tracking code. The allow-list in publicStores() is about not
+       shipping our paperwork to every visitor, and a number is not
+       paperwork.
+
+       It is here because without it the empty state lies. The room
+       view can see which PUBLISHABLE stores belong to a room, so an
+       empty Audio -- with twenty-five merchants signed and none of
+       them read yet -- fell through to "nothing read so far belongs
+       on these shelves", which says we looked and rejected them. We
+       have not looked. That is a different sentence and a better
+       one, and the difference matters most on exactly the rooms
+       that are filling up fastest. */
+    waiting: STORES.reduce((a, st) => {
+      if (publishable(st, reviewed).ok) return a
+      a[st.room] = (a[st.room] || 0) + 1
+      return a
+    }, {}),
     updated: new Date().toISOString(),
     items,
   }
