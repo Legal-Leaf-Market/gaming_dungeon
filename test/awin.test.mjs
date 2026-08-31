@@ -35,12 +35,12 @@
 
 import { test, before, after, mock } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const STORES_URL = new URL('../api/_stores.js', import.meta.url).href
-const AFFID = '3064967'
+const AFFID = '3064745'
 const MID = '65850'
 
 /* One product. Its URL is built by the Shopify strategy from the
@@ -187,4 +187,52 @@ test('no id, no wrap, and never a broken link', async () => {
   const fn = src.slice(src.indexOf('function affTemplate'), src.indexOf('function buildAff'))
   assert.match(fn, /if \(!st\.awinmid \|\| !AWIN_PUBLISHER\) return ''/,
     'the AWIN branch must refuse to compose a link with either id missing')
+})
+
+test('an AWIN store with no advertiser id is named, not lumped in', async () => {
+  /* Five stores ship in exactly this state: applied for, not yet
+     approved, `awinmid` empty on purpose with the number sitting in
+     the note. The generic "no ref and no feed" line is true of them
+     and useless -- it names neither the field to fill nor the reason
+     it is blank, so a waiting store reads as a broken one.
+
+     The state itself is the deliberate half of a trade. A FILLED id
+     on an unapproved programme composes a link that looks tracked
+     from every angle we can see: it resolves, the shopper arrives,
+     AWIN declines the click because we are not a partner, and the
+     refresh report calls the store attributed. Empty and loud beats
+     filled and silent. */
+  const src = await import('node:fs')
+    .then(fs => fs.readFileSync(new URL('../api/products.js', import.meta.url), 'utf8'))
+  assert.match(src, /empty `awinmid`/,
+    'the refresh report has no line for an AWIN store awaiting approval')
+  assert.match(src, /st\.network === 'awin'\n?\s*\/\*[\s\S]*?\*\/\n?\s*\? '  \[NO ATTRIBUTION/,
+    'the AWIN case must be its own branch, ahead of the generic fallthrough')
+})
+
+test('the real registry carries THIS site\'s publisher id', () => {
+  /* EVERY OTHER ASSERTION IN THIS FILE READS THE MOCK, so none of
+     them can see a wrong id in the registry -- AFFID above both
+     configures the fixture and checks it, which is a closed loop.
+     Setting AFFID to a sister site's number leaves this suite green.
+
+     It is not hypothetical. The id shipped as 3064967 for one commit,
+     off a merchant profile that had been pasted in as plain text; the
+     next profile arrived as real markup with 3064745 in twenty
+     structured URLs. Nothing had emitted a click, because every AWIN
+     store is still pending. Live, it would have paid a stranger.
+
+     So this one reads the source of truth and names the two numbers
+     that would be silent and wrong. */
+  const src = readFileSync(new URL('../api/_stores.js', import.meta.url), 'utf8')
+  const m = /export const AWIN_PUBLISHER = '(\d+)'/.exec(src)
+  assert.ok(m, '_stores.js no longer exports AWIN_PUBLISHER as a literal')
+  const id = m[1]
+
+  const SISTERS = { '3022399': 'Kawaii Katz', '3004653': 'Herbal Leaf' }
+  assert.ok(!SISTERS[id],
+    `AWIN_PUBLISHER is ${SISTERS[id]}'s publisher id (${id}). Every commission this ` +
+    'site earns would be paid into that account, and nothing would look wrong from ' +
+    'either end.')
+  assert.match(id, /^\d{7}$/, 'an AWIN publisher id is seven digits; got ' + id)
 })

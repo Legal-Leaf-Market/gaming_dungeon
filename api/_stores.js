@@ -161,7 +161,21 @@
    the page works, the shopper arrives, and the click earns nothing.
    `?debug` shouts about it, the same as an empty GoAffPro `ref`.
    ============================================================ */
-export const AWIN_PUBLISHER = '3064967'
+export const AWIN_PUBLISHER = '3064745'
+
+/* IT WAS 3064967 FOR ONE COMMIT, AND THE CORRECTION IS WORTH KEEPING.
+   The first AWIN merchant's profile was pasted in as plain text and
+   its header line read "Verda Studio (3064967)". The second arrived
+   as the page's real markup, and 3064745 appears in roughly twenty
+   structured URLs on it -- the dashboard, the account page, every
+   merchant-profile link, the commission manager. Twenty links from
+   the UI beat one transcribed line.
+
+   Nothing had shipped a click yet, because every AWIN store here is
+   still `pending`. Had one been live, this is precisely the failure
+   the block above describes: the shopper arrives, the sale completes,
+   and the commission lands in an account that is not ours. Nothing
+   errors, and the conversion report shows the click either way. */
 
 export const STORES = [
   /* ==========================================================
@@ -486,6 +500,109 @@ export const STORES = [
     note:'Filed under Wardrobe rather than Play. It sells shirts.' },
 
   /* ==========================================================
+     AUDIO — the room the headphone push is aimed at.
+     ----------------------------------------------------------
+     This room had two merchants, both unattributed and both pending,
+     and it was the emptiest real room on the map. Seven rows arrived
+     on 31 Aug 2026 in one afternoon, and they are in three different
+     states that must not be confused with each other:
+
+       BASN        GoAffPro, code issued, live. Ready to capture.
+       Fosi        AWIN, joined, id in hand. Ready to capture.
+       the five    AWIN, APPLIED FOR AND NOT YET APPROVED. Their
+                   advertiser ids are known -- they are the public
+                   ids in AWIN's own directory export -- and they are
+                   deliberately NOT in `awinmid` yet. See below.
+
+     WHY THE FIVE SHIP WITH AN EMPTY `awinmid` WHEN THE NUMBER IS
+     SITTING RIGHT THERE IN THE NOTE.
+
+     An empty tracking value is a state this registry already handles
+     honestly: buildAff() links direct, isAttributed() says no, and
+     `?debug` shouts in capitals. A FILLED one on an unapproved
+     programme is a state nothing here handles, because it looks
+     exactly like a working store from every angle we can see. The
+     link composes, the shopper arrives, AWIN declines the click
+     because we are not a partner, and every report on our side
+     reports a healthy attributed merchant.
+
+     That is a NEW failure mode this network brought with it, and the
+     fix is to not create it: paste the id on approval, which is the
+     one-line edit this file is built around. Until then the number
+     lives in prose where no code can read it.
+     ========================================================== */
+  { key:'basnaudio', name:'BASN Audio', room:'audio', domain:'www.basnaudio.com',
+    platform:'unknown', ref:'verdastudio', rate:'10%', cookie:7, tier:2, pending:true,
+    note:'GoAffPro, code issued 31 Aug 2026 and live. In-ear monitors for drummers and ' +
+         'stage players, which is a category no other site in the portfolio touches. ' +
+         'The 7-day window is the short end of this sheet, survivable on an impulse buy ' +
+         'and thin for a researched one. `platform` unverified: this box cannot reach ' +
+         'the domain (the gateway answers 403), and GoAffPro is not Shopify-only -- ' +
+         'three merchants in this file were registered shopify and answered on Woo.' },
+
+  { key:'fosiaudio', name:'Fosi Audio', room:'audio', domain:'fosiaudio.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'119395',
+    rate:'8%', cookie:30, tier:1, pending:true,
+    note:'AWIN advertiser 119395, joined 31 Aug 2026. THEY DECLINED US ON 30 AUG AND ' +
+         'ACCEPTED US ON 31 AUG, so this row spent a day in REJECTED with a note saying ' +
+         'not to re-apply "until something about our side changes". Something did: the ' +
+         'site went up and the AWIN account went live. The note was right to be written ' +
+         'and right to be deleted. ' +
+         'HiFi amps, preamps, DACs, headphone amps, speakers, portable DAC amps -- the ' +
+         'best brand fit in the whole electronics cut, which is why it was worth the ' +
+         'second ask. 30-day cookie, 37-day auto-validation, US only. ' +
+         'PAYMENT IS EXPOSURE LEVEL 4, the worst band AWIN publishes: over their credit ' +
+         'limit AND over settlement terms, average payment 76 days. Recorded rather than ' +
+         'argued -- it is a real risk on a real merchant and the owner joined knowing it. ' +
+         'ShopWindow empty, so the link is composed through cread.php and the capture has ' +
+         'to come off their own storefront.' },
+
+  /* ---- APPLIED 31 Aug 2026, NOT YET APPROVED ---------------------
+     `awinmid` stays empty until the acceptance lands. The id is in
+     each note; pasting it is the whole of switching one of these on,
+     after a capture. */
+  { key:'beyerdynamic', name:'beyerdynamic', room:'audio', domain:'north-america.beyerdynamic.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unpublished', cookie:365, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 95259 when it clears. ' +
+         'A 365-DAY COOKIE, which is twelve times the norm on this sheet and the longest ' +
+         'window in the portfolio by a distance. Studio and gaming headphones made by ' +
+         'hand in Heilbronn since 1924; their Creator and Gamer lines are the same shopper ' +
+         'the Battlestation room already has. They publish a product feed.' },
+
+  { key:'maono', name:'Maono', room:'audio', domain:'www.maono.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unpublished', cookie:90, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 83571 when it clears. ' +
+         'Best earnings-per-click of the five at 1.10, 90-day window, 90% approval rate, ' +
+         'and a product feed. Microphones, mixers and boom arms as much as headphones, so ' +
+         'it stocks this room and the Battlestation off one approval.' },
+
+  { key:'hifiman', name:'HIFIMAN', room:'audio', domain:'store.hifiman.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unpublished', cookie:15, tier:2, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 88881 when it clears. ' +
+         'Planar magnetic, the deep end of the audiophile shelf, 100% approval rate and a ' +
+         'feed. The 15-day window is the shortest of the five and the reason this is tier ' +
+         '2 rather than 1: cookie is sorted on before rate everywhere in this file.' },
+
+  { key:'mezeaudio', name:'Meze Audio', room:'audio', domain:'www.mezeaudio.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unpublished', cookie:30, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 33417 when it clears. ' +
+         'Hand-finished in Baia Mare, 100% approval, feed. High basket and low volume: ' +
+         'the one on this list that sells on a photograph, which suits a card with a big ' +
+         'image on it.' },
+
+  { key:'statusaudio', name:'Status Audio', room:'audio', domain:'www.thestatusaudio.com',
+    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    rate:'unpublished', cookie:30, tier:1, pending:true,
+    note:'AWIN application sent 31 Aug 2026. Advertiser id 77862 when it clears. ' +
+         'Direct-to-consumer studio headphones at prices people actually pay, so the ' +
+         'widest audience of the five, 100% approval and EPC 0.68. NO PRODUCT FEED: its ' +
+         'capture has to come off the storefront and its cards get written by hand.' },
+
+  /* ==========================================================
      THE WALLS — canvas, wallpaper, the room itself.
      ----------------------------------------------------------
      THE FIRST ROOM STOCKED FROM AWIN RATHER THAN GOAFFPRO, and the
@@ -601,12 +718,6 @@ export const REJECTED = [
     why:'False positive. Dog puzzle toys.' },
   { name:'Board Game Design Course', terms:'20%',
     why:'An info product, not a shop.' },
-  { name:'Fosi Audio', terms:'8%, 30d',
-    why:'THEY declined us, 2026-08-30. Not a judgement on the merchant: it was the best ' +
-        'brand fit in the whole electronics cut, which is exactly why it will look worth ' +
-        're-applying to. It is not, until something about our side changes. Stocking it ' +
-        'unattributed was possible and is not wanted here: the room already carries two ' +
-        'pending audio merchants, so the shelf loses nothing by waiting for one that pays.' },
   { name:'Tokyo Tiger', terms:'n/a',
     why:'Kawaii Katz measured it at HTTP 403 from Vercel IPs with a real browser UA. Host-level ' +
         'bot protection, not a User-Agent problem. Do not re-run that experiment; a row here ' +

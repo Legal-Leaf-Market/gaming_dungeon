@@ -1440,6 +1440,16 @@ async function scrapeStore(st) {
                gets said. */
             ? '  [NO ATTRIBUTION — ' + st.key + ' has an empty `ref`; these clicks pay nothing. ' +
               'That may be deliberate (see _stores.js) but it is never silent]'
+            : st.network === 'awin'
+            /* Five AWIN stores sit in exactly this state on purpose:
+               applied for, not yet approved, `awinmid` deliberately
+               empty with the number in the note. The generic line
+               below ("no ref and no feed") is true and useless for
+               them -- it names neither the field nor the reason, and
+               they would read as broken rather than as waiting. */
+            ? '  [NO ATTRIBUTION — ' + st.key + ' has an empty `awinmid`; paste the advertiser id ' +
+              'from its note once AWIN approves. Deliberate until then: a filled id on an ' +
+              'unapproved programme composes a link that LOOKS tracked and pays nothing]'
             : st.network === 'cj'
             ? '  [NO ATTRIBUTION — set cjPid and cjAid from the CJ dashboard or these clicks pay nothing]'
             : impactFault(st) === 'unset'
