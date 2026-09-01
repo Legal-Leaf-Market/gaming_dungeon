@@ -474,11 +474,45 @@ export const STORES = [
     note:'AWIN application sent 31 Aug 2026. Advertiser id 61127 when it clears. ' +
          'Resin printers, the other half of the hobby. 93.2% approval, EPC 0.83, no feed.' },
 
+  /* ---- THE FIRST AWIN APPROVAL TO LAND ------------------------
+     Joined 1 Sep 2026, and this row is what the empty `awinmid`
+     convention was built for: the id sat in the note through the
+     application and moves into the field on approval. Nothing else
+     about switching a maker live is required, because every other
+     part of the link was already correct and only refusing to
+     compose. It now composes.
+
+     THE TWO COOKIE FIGURES DISAGREE AND THE ROW TAKES THE SHORTER.
+     AWIN's own attribution field reads 30 days; the programme terms
+     inside the same page say "Cookie duration: up to 14 days", and
+     add that the final period "may vary depending on the affiliate
+     platform". Those cannot both be planning assumptions. 14 is
+     recorded because the number is only ever used to judge whether a
+     maker is worth carrying, and judging on the generous reading of
+     a contradiction is how you talk yourself into a bad one. Worth
+     asking AWIN which governs before it matters.
+
+     WHAT IS GOOD: pure consumables, resin and filament and dryers,
+     which is the repeat purchase this room does not otherwise have.
+     A printer is bought once and resin is bought monthly.
+
+     WHAT IS NOT: 105 days to payment, which is among the slowest on
+     the network, and a ShopWindow of only 20 products across two
+     feeds last updated 15 May 2026. Three and a half months stale
+     for a catalogue that small means the feed is not the way in, so
+     the capture still has to come off the storefront.
+
+     Their terms forbid every paid channel: search, social, display,
+     brand bidding, unauthorised coupon posting. None of that is
+     anything this site does, so there is nothing to change, but it
+     is recorded because a future paid experiment would breach it. */
   { key:'chitu', name:'Chitu Systems', room:'workshop', domain:'www.chitusystems.com',
-    platform:'unknown', ref:'', network:'awin', awinmid:'',
-    rate:'unread', cookie:30, tier:2, pending:true,
-    note:'AWIN application sent 31 Aug 2026. Advertiser id 120083 when it clears. ' +
-         'Resin printing accessories and supplies. Pure consumables, which is the repeat purchase this room lacks. Feed.' },
+    platform:'unknown', ref:'', network:'awin', awinmid:'120083',
+    rate:'10%', cookie:14, tier:2, pending:true,
+    note:'AWIN APPROVED and joined 1 Sep 2026, advertiser id 120083 live in awinmid, so ' +
+         'links are tracked from now. Still pending: approval is not a feed anybody has ' +
+         'read, and the capture gate is unmoved by it. 10% standard. Cookie contested, ' +
+         'see above. 105-day payment, 20 products over 2 feeds, feed stale since May.' },
 
   { key:'esun', name:'eSUN', room:'workshop', domain:'www.esun3d.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
@@ -1283,8 +1317,33 @@ export const REJECTED = [
    ------------------------------------------------------------ */
 
 /** Attribution is real. An empty `ref` earns nothing, however live the store is. */
+/* DOES A CLICK ON THIS STORE EARN ANYTHING.
+   ------------------------------------------------------------
+   IT USED TO ASK ONLY ABOUT `ref`, AND THAT WENT STALE THE DAY
+   AWIN ARRIVED. An AWIN maker is paid by REDIRECT, so its `ref`
+   is empty by design and its money rides on `awinmid`. Chitu
+   Systems approved on 1 Sep 2026 with a live advertiser id, and
+   this function called it unattributed: the capture report would
+   have told whoever runs the next capture that a fully tracked,
+   paying merchant earns nothing.
+
+   That is the cheap direction of the error and still worth
+   fixing, because a report that cries wolf is a report nobody
+   reads on the day it is right.
+
+   THERE IS A SECOND isAttributed IN products.js AND IT WAS
+   ALREADY CORRECT, since it asks affTemplate() whether a link
+   composes. Two functions, one name, one of them quietly a year
+   behind the other. This one cannot call affTemplate (wrong
+   module, and it must stay importable by the browser-facing
+   capture route), so it restates the same question in the terms
+   it can see. If a third network is added, both change. */
 export function isAttributed(st) {
-  return !!(st && typeof st.ref === 'string' && st.ref.trim())
+  if (!st) return false
+  if (st.network === 'awin') {
+    return !!(String(st.awinmid || '').trim() && String(AWIN_PUBLISHER || '').trim())
+  }
+  return !!(typeof st.ref === 'string' && st.ref.trim())
 }
 
 export function byKey(key) {

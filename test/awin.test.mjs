@@ -210,6 +210,35 @@ test('an AWIN store with no advertiser id is named, not lumped in', async () => 
     'the AWIN case must be its own branch, ahead of the generic fallthrough')
 })
 
+test('the REAL isAttributed knows an AWIN store is paid by redirect', async () => {
+  /* THE MOCK IN THIS FILE WAS RIGHT AND THE REAL FUNCTION WAS WRONG,
+     which is the closed-loop hazard in its purest form. Line 80 above
+     stubs `isAttributed` as `st.ref || st.awinmid`, and every
+     assertion here passed against that fiction while the registry's
+     own copy asked about `ref` alone and had done since before AWIN
+     existed on this site.
+
+     It surfaced the moment an approval landed. Chitu Systems joined
+     with a live advertiser id, links composed correctly, money began
+     tracking, and isAttributed() called it unattributed -- so the
+     capture report would have told the next person that a paying
+     merchant earns nothing. The cheap direction of the error, and
+     still the direction that trains somebody to ignore the warning.
+
+     So this one imports the REAL module and gets no mock. */
+  const { isAttributed: real, AWIN_PUBLISHER } = await import('../api/_stores.js?real=' + Date.now())
+  assert.ok(AWIN_PUBLISHER, 'no publisher id, so nothing can be attributed')
+
+  assert.equal(real({ network: 'awin', ref: '', awinmid: '120083' }), true,
+    'an approved AWIN store is paid by redirect with an empty ref, and this must not ' +
+    'report it as earning nothing')
+  assert.equal(real({ network: 'awin', ref: '', awinmid: '' }), false,
+    'an AWIN store still waiting on approval has no advertiser id and earns nothing')
+  assert.equal(real({ ref: 'jacobkennedy' }), true, 'a plain ref store is still attributed')
+  assert.equal(real({ ref: '' }), false, 'no ref and no network is not attributed')
+  assert.equal(real({ ref: '   ' }), false, 'whitespace is not a tracking code')
+})
+
 test('the real registry carries THIS site\'s publisher id', () => {
   /* EVERY OTHER ASSERTION IN THIS FILE READS THE MOCK, so none of
      them can see a wrong id in the registry -- AFFID above both
