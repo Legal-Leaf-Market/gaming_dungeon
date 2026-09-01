@@ -308,8 +308,24 @@
   function renderRoom(room) {
     $('#map').hidden = true;
     $('#roomView').hidden = false;
-    $('#roomName').textContent = room.name;
+    $('#roomNameText').textContent = room.name;
     $('#roomBlurb').textContent = room.blurb;
+
+    /* THE ART IS ADDRESSED BY DATA, NOT BY BRANCHING. The plate is
+       a CSS rule keyed on `data-room` and the sigil is a background
+       built from the realm number, so adding a room needs no code
+       here and a room whose art nobody has drawn simply has none.
+       Both fail to nothing rather than to a broken-image box, which
+       is why neither is an <img>. */
+    var head = document.querySelector('.room-head');
+    if (head) head.setAttribute('data-room', room.key);
+
+    var sig = $('#roomSigil');
+    if (sig) {
+      sig.style.backgroundImage = 'url(/art/sigil-' + room.realm + '.webp)';
+      sig.hidden = false;
+    }
+
     mountGrid(room.key);
   }
 

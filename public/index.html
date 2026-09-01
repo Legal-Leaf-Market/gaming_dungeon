@@ -54,6 +54,7 @@
 <!-- The ink layer is deliberately the last stylesheet on the page: it has
      to sit above this page's own <style> block, not argue with it. -->
 <link rel="stylesheet" href="/css/ink-anim.css"/>
+<link rel="stylesheet" href="/css/art.css"/>
 <link rel="stylesheet" href="/css/ink.css"/>
 </head>
 <body>
@@ -468,6 +469,18 @@
      that keeps both the legibility and the scene.
      =========================================================== -->
 <div class="ground">
+<!-- THE GUTTERS. Scenery, not content: aria-hidden and
+     pointer-events:none, removed outright below 1420px where there
+     is no leftover width to put them in.
+
+     INSIDE .ground, not before it, and that is the whole trick. The
+     hero above is full-bleed: it has no gutters to fill, and rails
+     fixed to the viewport laid two translucent panels straight over
+     the cherry blossom with a hard seam down each side. .ground is
+     the dark page that begins where the hero ends, so anchoring to
+     it puts the scenery exactly where the emptiness is. -->
+<div class="rail rail-l" aria-hidden="true"></div>
+<div class="rail rail-r" aria-hidden="true"></div>
 <main>
   <!-- The map. Rooms are doors; counts are real or the door says so. -->
   <section class="map" id="map" aria-label="The rooms">
@@ -492,7 +505,7 @@
   <section class="room" id="roomView" hidden>
     <div class="room-head">
       <a class="back" href="/">&larr; the map</a>
-      <h2 id="roomName"></h2>
+      <h2 id="roomName"><i class="sigil" id="roomSigil" aria-hidden="true" hidden></i><span id="roomNameText"></span></h2>
       <p id="roomBlurb" class="lede"></p>
     </div>
     <div class="grid" id="grid"></div>
@@ -508,6 +521,10 @@
        a heading standing over nothing is a promise of content, which
        is worse than the empty map above it. -->
   <section class="allshelf" id="allShelf" hidden>
+    <!-- INSIDE the section, not before it. The shelf is hidden until
+         there is stock, and a divider that is its sibling would hang
+         in the dark on every empty page, ruling a line under nothing. -->
+    <div class="art-divider" aria-hidden="true"></div>
     <h2 class="sec">EVERYTHING</h2>
     <div id="allGrid"></div>
   </section>

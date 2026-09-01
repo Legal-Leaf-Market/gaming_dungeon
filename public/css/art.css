@@ -1,0 +1,138 @@
+/* ============================================================
+   art.css — the illuminated margin.
+   ------------------------------------------------------------
+   Everything here is DECORATION AND NOTHING HERE IS CONTENT.
+   Every rule sets `pointer-events:none` and every element it
+   styles is `aria-hidden`, because the one failure mode a page
+   like this has is scenery that looks clickable. A visitor who
+   tries to click a mountain has been lied to by the layout.
+
+   IT ALSO HAS TO SURVIVE MISSING FILES. A room whose plate has
+   not been drawn yet gets no plate and no broken-image box:
+   these are all background-image, which fails to nothing, rather
+   than <img>, which fails to a torn icon in the middle of a
+   heading. That is the whole reason the art is wired this way.
+   ============================================================ */
+
+/* ---- THE GUTTERS ------------------------------------------
+   The page is a 1180px column (`--page`) centred in a dark
+   window, so a 1920-wide screen carries about 370 empty pixels
+   down each side. That emptiness was the single loudest thing
+   about the site below the hero.
+
+   WIDTH IS THE GUTTER, MEASURED, not a guess: each rail is
+   exactly half the leftover after the column, so it can never
+   reach under the text no matter the viewport. Below 1420px
+   there is no leftover worth the bytes and they are removed
+   outright rather than shrunk into a smear.
+
+   They are FIXED rather than scrolled. The art is 2400px tall
+   against a viewport nearer 900, so `cover` shows a band of it
+   and holding that band still reads as a window onto a place.
+   Scrolling it looked like a parallax gimmick and fought the
+   grid for attention, which is the opposite of the job. */
+.rail{
+  position:absolute; top:0; z-index:0;
+  width:calc((100vw - var(--page)) / 2); max-width:380px;
+  /* ASPECT-LOCKED RATHER THAN STRETCHED TO THE PAGE. `top:0;bottom:0`
+     was the first cut and it scaled a 380x2400 painting to whatever
+     the document happened to be tall, which on a room page with a
+     full grid is several thousand pixels of smeared mountain. The
+     ratio is the art's own, so the height follows the width and
+     nothing distorts at any viewport. */
+  aspect-ratio:380 / 2400;
+  pointer-events:none; user-select:none;
+  background-repeat:no-repeat; background-size:cover;
+  opacity:.42;
+  /* A hair of blur so it never competes with type for focus. */
+  filter:blur(.4px);
+}
+.rail-l{ left:0;  background-image:url(/art/rail-left.webp);  background-position:left top }
+.rail-r{ right:0; background-image:url(/art/rail-right.webp); background-position:right top }
+
+/* The column has to sit ON the scenery, not under it. `main` is
+   static, and a positioned sibling paints over static content
+   however early it appears in the document. */
+.ground > main{ position:relative; z-index:1 }
+
+@media (max-width:1419px){ .rail{ display:none } }
+@media (prefers-reduced-motion:reduce){ .rail{ filter:none } }
+
+/* ---- ROOM PLATES ------------------------------------------
+   One per room, behind its heading, keyed off `data-room` which
+   renderRoom() sets. The plate is 1400x320 with its mass on the
+   left, so it sits under the back-link and the room name and
+   runs out before the blurb.
+
+   Masked to nothing at the right and bottom on top of the art's
+   own fade, because a plate that stops dead is a rectangle and a
+   rectangle is the one shape that says "image" rather than
+   "place". */
+.room-head{ position:relative; isolation:isolate }
+.room-head::before{
+  content:''; position:absolute; z-index:-1;
+  left:-24px; right:-40%; top:-28px; height:300px;
+  background-repeat:no-repeat; background-position:left top;
+  background-size:auto 300px;
+  pointer-events:none;
+
+  /* .22, NOT .5. Half opacity was the first cut and it put a lit
+     purple figure straight through the room's own blurb and the
+     panel below it: the words were still there and you could not
+     read them. The brief's own line for this art is that it has to
+     lose every fight with the type, and a plate you notice before
+     the heading has won one. */
+  opacity:.22;
+
+  /* FADED ON BOTH AXES, and the vertical one is the load-bearing
+     half. The plate is 300px tall and .room-head is shorter than
+     that, so a right-only mask left a hard horizontal edge across
+     whatever sat underneath, which on an unstocked room is the
+     empty-state panel. Two gradients intersected: gone to the
+     right, gone at the bottom, no edge anywhere. */
+  -webkit-mask-image:
+    linear-gradient(90deg,#000 0 28%,transparent 86%),
+    linear-gradient(180deg,#000 0 34%,transparent 94%);
+  -webkit-mask-composite:source-in;
+          mask-image:
+    linear-gradient(90deg,#000 0 28%,transparent 86%),
+    linear-gradient(180deg,#000 0 34%,transparent 94%);
+          mask-composite:intersect;
+}
+.room-head[data-room="workshop"]::before     { background-image:url(/art/plate-workshop.webp) }
+.room-head[data-room="play"]::before         { background-image:url(/art/plate-play.webp) }
+.room-head[data-room="tabletop"]::before     { background-image:url(/art/plate-tabletop.webp) }
+.room-head[data-room="battlestation"]::before{ background-image:url(/art/plate-battlestation.webp) }
+.room-head[data-room="arcade"]::before       { background-image:url(/art/plate-arcade.webp) }
+.room-head[data-room="vault"]::before        { background-image:url(/art/plate-vault.webp) }
+.room-head[data-room="wardrobe"]::before     { background-image:url(/art/plate-wardrobe.webp) }
+.room-head[data-room="power"]::before        { background-image:url(/art/plate-power.webp) }
+.room-head[data-room="audio"]::before        { background-image:url(/art/plate-audio.webp) }
+.room-head[data-room="walls"]::before        { background-image:url(/art/plate-walls.webp) }
+
+/* Play's plate is daylight cloud and reads far brighter than the
+   other nine on a near-black page. Turned down rather than
+   redrawn: the art is right, the exposure is the outlier. */
+.room-head[data-room="play"]::before{ opacity:.15 }
+
+/* ---- REALM SIGILS -----------------------------------------
+   The mark for the room's realm, beside its name. Ten of them,
+   thick and earthbound at realm 1 and a hairline that barely
+   closes at realm 10, which is the ladder the rooms already fly
+   in their band colours and had no shape for until now. */
+.room-head h2{ display:flex; align-items:center; gap:14px; flex-wrap:wrap }
+.sigil{
+  display:inline-block; width:38px; height:38px; flex:0 0 auto;
+  background-repeat:no-repeat; background-position:center; background-size:contain;
+  opacity:.9; pointer-events:none;
+}
+.sigil[hidden]{ display:none }
+
+/* ---- DIVIDER ----------------------------------------------
+   Between the map and the shelf under it. Transparent, tiles
+   horizontally, and carries no meaning: it is a breath. */
+.art-divider{
+  height:90px; margin:34px 0 6px; pointer-events:none;
+  background:url(/art/divider-range.webp) center/auto 90px repeat-x;
+  opacity:.5;
+}
