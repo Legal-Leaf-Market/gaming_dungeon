@@ -265,10 +265,9 @@ export const STORES = [
          'Handheld gaming PCs. A category that did not exist when these rooms were drawn.' },
 
   { key:'geekshare', name:'GeekShare', room:'play', domain:'geekshare.com',
-    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    platform:'unknown', ref:'', network:'awin', awinmid:'124946',
     rate:'unread', cookie:30, tier:2, pending:true,
-    note:'AWIN application sent 31 Aug 2026. Advertiser id 124946 when it clears. ' +
-         'Nintendo Switch accessories, cheap and cute. Reads as Kawaii Katz stock as much as Verda stock.' },
+    note:'AWIN APPROVED and joined, id 124946 live in awinmid, links tracked. 5.63% conversion, 100% APPROVAL, EPC 0.23, 52 days. A hundred per cent approval means nothing gets clawed back, which is worth more than it looks against a headline rate: an 8% programme that voids a third of its orders pays less than this.' },
 
   { key:'tomtoc', name:'tomtoc', room:'play', domain:'www.tomtoc.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
@@ -515,10 +514,9 @@ export const STORES = [
          'see above. 105-day payment, 20 products over 2 feeds, feed stale since May.' },
 
   { key:'esun', name:'eSUN', room:'workshop', domain:'www.esun3d.com',
-    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    platform:'unknown', ref:'', network:'awin', awinmid:'99267',
     rate:'unread', cookie:30, tier:2, pending:true,
-    note:'AWIN application sent 31 Aug 2026. Advertiser id 99267 when it clears. ' +
-         'Filament. Bought again every month, which is why it is here at all.' },
+    note:'AWIN APPROVED and joined, id 99267 live in awinmid, links tracked. 8.94% conversion, 100% APPROVAL, EPC 0.55, 71 days. The best pair of numbers on the whole account: highest conversion of the nine and nothing voided. Filament is the repeat purchase this room was short of, which is exactly why it reads that way.' },
 
   /* ==========================================================
      AUDIO.
@@ -947,10 +945,9 @@ export const STORES = [
          '3.75% conversion, 89.14% approval, EPC 0.75, 52 days, no feed. Ninety-day window, speakers and headphones both.' },
 
   { key:'oneodio', name:'OneOdio', room:'audio', domain:'www.oneodio.com',
-    platform:'unknown', ref:'', network:'awin', awinmid:'',
+    platform:'unknown', ref:'', network:'awin', awinmid:'114832',
     rate:'15%', cookie:30, tier:2, pending:true,
-    note:'AWIN application sent 31 Aug 2026. Advertiser id 114832 when it clears. ' +
-         '4.14% conversion, 80.39% approval, EPC 0.37, 36 DAYS TO PAY which is the second fastest here, feed yes.' },
+    note:'AWIN APPROVED and joined, id 114832 live in awinmid, links tracked. Trading data from the dashboard: 6.28% conversion, 83.82% approval, EPC 0.35, 37 DAYS TO PAYMENT which is the fastest of the nine, and a product feed. On conversion x rate it is the strongest audio maker we hold, and Audio is the emptiest real room on the map. Capture this one first.' },
 
   { key:'divoom', name:'Divoom', room:'audio', domain:'divoom.com',
     platform:'unknown', ref:'', network:'awin', awinmid:'',
@@ -1269,6 +1266,26 @@ export const PROSPECTS = [
    price is fiction.
    ============================================================ */
 export const REJECTED = [
+  /* ---- JOINED ON AWIN AND STILL NOT CARRIED ------------------
+     Both of these are approved partnerships on the account, which
+     is exactly why they are written down rather than left off. An
+     approval is a standing invitation, and the next person reading
+     the dashboard will see nine joined programmes and seven rows
+     here and wonder which two were forgotten. Neither was. */
+  { name:'MatchingDonors.com', terms:'joined on AWIN, 9.51% conv, 91.67% approval, EPC 0.00',
+    why:'An organ-donor matching charity. Nothing about it belongs on a gaming and ' +
+        'electronics storefront, and there is no room on the map it could sit in. ' +
+        'The numbers say the same thing from the other side: 9.51% conversion against ' +
+        'an EPC of exactly zero, which is what a programme looks like when the thing ' +
+        'converting is a signup that pays nothing. Joined, and not carried.' },
+  { name:'Cronjager', terms:'joined on AWIN, 0.18% conv, 33.33% approval, EPC GBP 0.03',
+    why:'The worst row on the account on every axis at once, and they compound rather ' +
+        'than average: 0.18% conversion means almost nobody buys, and 33.33% approval ' +
+        'means two of every three who do are voided afterwards. Multiply those and the ' +
+        'traffic is worth about six hundredths of a percent. Payment time is n/a because ' +
+        'nothing has ever been paid. It also settles in GBP, so it is UK-facing on a ' +
+        'US-facing shelf. Joined 2024, kept for the record, not for the map.' },
+
   { name:'CheatArena "Dominate Every Game"', terms:'50%, 365d',
     why:'Sells game cheats. Gets affiliate accounts terminated, and it exists to ruin other people\'s games.' },
   { name:'Casino Game Predictor Software', terms:'20%',
