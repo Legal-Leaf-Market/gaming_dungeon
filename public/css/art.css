@@ -136,3 +136,58 @@
   background:url(/art/divider-range.webp) center/auto 90px repeat-x;
   opacity:.5;
 }
+
+/* ---- REGION CARTOUCHES ------------------------------------
+   One per named region on the map plate, positioned from the
+   label coordinates in tools/city.mjs. See renderMap().
+
+   BEHIND THE PINS AND IN FRONT OF THE PLATE. The pins are the
+   interface and must stay clickable and legible; the plate's
+   own labels are painted into the background image, which is
+   why each cartouche is dropped below its word rather than
+   centred on it.
+
+   Radially faded to nothing at the edge, because the artwork is
+   a 600x400 rectangle and a rectangle on a map reads as a
+   photograph somebody pasted on rather than as terrain. */
+.region{
+  position:absolute; z-index:0; pointer-events:none;
+  left:calc(var(--x) * 1%); top:calc(var(--y) * 1%);
+  width:19%; aspect-ratio:600/400;
+  /* --d is +1 to sit below the label, -1 to sit above it. The two
+     regions near the bottom of the plate use -1: below, they fell
+     off the edge and `overflow:hidden` deleted them entirely. */
+  transform:translate(-50%, calc(var(--d) * 62%  - 50%));
+  background-repeat:no-repeat; background-size:contain; background-position:center;
+  opacity:.42;
+  /* A TIGHT CORE AND AN EARLY FALLOFF. The first pass held solid to
+     34% and only finished at 72%, which left the artwork's own
+     rectangular edge visible down both sides: on a map that reads as
+     a photograph pasted on rather than as terrain. */
+  -webkit-mask-image:radial-gradient(ellipse at 50% 50%, #000 18%, transparent 58%);
+          mask-image:radial-gradient(ellipse at 50% 50%, #000 18%, transparent 58%);
+}
+.plan-narrow .region{ display:none }
+
+/* ---- THE PLATE'S CORNERS AND ITS GRAIN --------------------
+   `paper` is a seamless dark parchment, laid over the plate at
+   a whisper so the plan reads as a surface rather than a
+   screen. The corner is drawn once and mirrored into the other
+   three, which is why the brief asked for one that survives
+   mirroring. */
+.plan::before{
+  content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:url(/art/paper.webp) center/600px repeat;
+  opacity:.10; mix-blend-mode:overlay; border-radius:inherit;
+}
+.plan-corner{
+  position:absolute; z-index:1; pointer-events:none;
+  width:120px; aspect-ratio:1;
+  background:url(/art/corner-tl.webp) center/contain no-repeat;
+  opacity:.4;
+}
+.plan-corner.tl{ top:0; left:0 }
+.plan-corner.tr{ top:0; right:0; transform:scaleX(-1) }
+.plan-corner.bl{ bottom:0; left:0; transform:scaleY(-1) }
+.plan-corner.br{ bottom:0; right:0; transform:scale(-1,-1) }
+@media (max-width:760px){ .plan-corner{ display:none } }

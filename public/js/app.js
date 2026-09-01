@@ -254,10 +254,57 @@
       return p ? p.x + ',' + p.y : '';
     }).filter(Boolean).join(' ');
 
+    /* THE REGIONS GET A PICTURE.
+       ------------------------------------------------------------
+       The five region names are the strongest lore the map has, and
+       until now each was a word floating over empty plate: somebody
+       asked what the Northern Wall WAS without being prompted, which
+       is the reaction to build for and not one an empty label earns.
+
+       COORDINATES ARE THE LABELS' OWN, lifted from the label() calls
+       in tools/city.mjs and divided by that file's 2000x1250 viewBox.
+       The plate is aspect-ratio 16/10 and so is the viewBox, so
+       `cover` crops nothing and a percentage here lands exactly where
+       the word does. If the map is ever regenerated at another size,
+       these move and this comment is where to look.
+
+       OFFSET BELOW THE WORD, not centred on it. The labels live in
+       the background SVG, so anything added here paints on top of
+       them, and a cartouche centred on its own name would smother the
+       name. Dropping it clear puts the picture in the region and
+       leaves the word legible.
+
+       WIDE MAP ONLY. The narrow layout re-places every pin on its own
+       nx/ny grid and does not use the plate's coordinate space at
+       all, so these would land nowhere near their regions. */
+    /* `d` IS WHICH SIDE OF ITS OWN LABEL THE PICTURE SITS ON, and
+       it is per-region rather than a constant because two of the
+       five labels are near the bottom of the plate. Dropping those
+       below their word pushed them straight through the plate's
+       edge, where `overflow:hidden` ate them: The Still Water and
+       The Lantern Quarter rendered as nothing at all. Those two
+       rise instead. */
+    var regions = narrow ? '' : [
+      { k:'northern-wall',   x:20,   y:10.6, d: 1 },
+      { k:'greensleep',      x:7.5,  y:44.8, d: 1 },
+      { k:'eastern-reach',   x:78,   y:34.4, d: 1 },
+      { k:'still-water',     x:75,   y:92.4, d:-1 },
+      { k:'lantern-quarter', x:13.9, y:90.9, d:-1 }
+    ].map(function (r) {
+      return '<span class="region" aria-hidden="true" style="--x:' + r.x + ';--y:' + r.y +
+        ';--d:' + r.d + ';background-image:url(/art/region-' + r.k + '.webp)"></span>';
+    }).join('');
+
     var html =
       '<svg class="map-trail" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
         '<polyline points="' + trail + '"/>' +
       '</svg>' +
+      /* One corner drawn, mirrored into four. Decoration, so
+         aria-hidden and untouchable like everything else here. */
+      ['tl','tr','bl','br'].map(function (c) {
+        return '<span class="plan-corner ' + c + '" aria-hidden="true"></span>';
+      }).join('') +
+      regions +
       pins.map(function (p, i) {
         return '<a class="pin' + (p.cabinet ? ' cabinet' : '') +
           (p.has ? '' : ' quiet') + '" href="' + p.r.path + '"' +
