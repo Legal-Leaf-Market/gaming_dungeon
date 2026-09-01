@@ -1055,6 +1055,24 @@ a.g-card:active{ transform:translateY(-1px) }
      `width:100vw`, because 100vw includes the scrollbar and would
      add a horizontal scroll of its own. */
   width:calc(100vw - 48px);
+  /* 1560 UNTIL THE GUTTERS EXIST, THEN NARROWER, AND THIS IS THE ONE
+     NUMBER THAT DECIDED WHETHER THE SIDE ART WAS VISIBLE AT ALL.
+
+     The plate is the widest thing on the page and it is what sits
+     above the fold, so at the widths this site is actually read at it
+     was covering the rails almost entirely. Measured, before and
+     after, at the viewport the owner uses:
+
+       1627px   1560 plate -> 34px of a 224px rail showing, 15%
+       1627px   1320 plate -> 153px showing, 68%
+       1920px   1560 plate -> 180px of 370, 49%
+       1920px   1320 plate -> 300px, 81%
+
+     Losing 240px of plate costs the map very little: it is still the
+     widest element on the page and still breaks the reading rail. It
+     buys back the entire reason the gutters were drawn. Below 1420px
+     the rails are gone anyway, so the plate keeps its full width
+     there and nothing is given up on a laptop. */
   max-width:1560px;
   margin-inline:calc(50% - min(50vw - 24px, 780px));
   aspect-ratio:16/10;
@@ -1212,3 +1230,43 @@ a.g-card:active{ transform:translateY(-1px) }
    every resize across the narrow breakpoint. A map that re-animates
    while you are reading it is a map that keeps taking itself away.
    The doors below still rise in; they are built once. */
+
+
+/* THE PLATE MAKES ROOM FOR THE GUTTERS, and this is the one number
+   that decided whether the side art was visible at all.
+
+   The plate is the widest thing on the page and it is what sits above
+   the fold, so at the widths this site is actually read at it covered
+   the rails almost entirely. Measured at the owner's own viewport,
+   before and after:
+
+     1627px   1560 plate -> 34px of a 224px rail showing, 15%
+     1920px   1560 plate -> 180px of 370, 49%
+
+   Losing 240px costs the map very little: it is still the widest
+   element on the page and still breaks the reading rail. It buys back
+   the entire reason the gutters were drawn.
+
+   1420px is the same breakpoint the rails use. Below it they are
+   removed, so the plate keeps its full width and nothing is given up
+   on a laptop.
+
+   WRITTEN AS A TOP-LEVEL QUERY, NOT NESTED INSIDE .plan. The nested
+   form was tried first and silently did nothing: the measurements did
+   not move by a single pixel. Not worth debugging whether it was the
+   parser or the cache when the flat form cannot be ambiguous. */
+@media (min-width:1420px){
+  .plan{
+    max-width:1320px;
+    /* AND CENTRED, WHICH max-width ALONE DOES NOT DO HERE.
+       .plan is full-bleed by NEGATIVE margin-inline, pulling it out of
+       the 1180px reading rail on both sides. Capping the width while
+       that margin still applies pins the left edge where it was and
+       takes the whole 240px off the RIGHT: the plate got narrower and
+       the left rail stayed exactly as buried as before. Measured at
+       1627px it did not move by one pixel, 34px of 224 both times,
+       which is the only reason it was caught. `auto` puts the free
+       space back on both sides where the art is. */
+    margin-inline:auto;
+  }
+}
