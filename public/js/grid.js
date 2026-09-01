@@ -492,6 +492,32 @@
       var b = ev.target.closest ? ev.target.closest('[data-facet]') : null;
       if (!b) return;
       var f = b.getAttribute('data-facet'), v = b.getAttribute('data-value');
+
+      /* ON A ROOM PAGE, A ROOM CHIP IS A DOOR, NOT A FILTER.
+         ------------------------------------------------------------
+         Filtering in place is right on the front page's EVERYTHING
+         shelf, where the grid is the whole content and there is no
+         heading to contradict. On a room page it desynchronises the
+         page from itself: a visitor on /tabletop who clicked Audio
+         got The Table's heading, blurb, realm sigil and plate above a
+         shelf reading "1 thing, Audio", with /tabletop still in the
+         address bar. Send that link and the recipient sees The Table.
+         Reload it and it snaps back. Every part of the page except
+         the grid was telling the truth and the grid was the loudest.
+
+         Caught from a saved copy of the live page rather than from
+         anything here, because nothing here knew the two could
+         disagree.
+
+         So the room page hands in `onRoom` and a room chip navigates,
+         which moves heading, blurb, sigil, plate, URL and shelf
+         together. Clicking the room you are already in still just
+         clears, because that is a filter operation and not a door. */
+      if (f === 'room' && opts.onRoom && state.room && v !== state.room) {
+        opts.onRoom(v);
+        return;
+      }
+
       state[f] = (state[f] === v) ? '' : v;
       shown_ = 0;
       draw();

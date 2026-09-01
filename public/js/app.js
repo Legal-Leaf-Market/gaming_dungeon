@@ -441,7 +441,18 @@
        that from a slice that already excluded it. */
     window.GDGrid.mount(grid, state.items, {
       room: roomKey || '',
-      shopNames: state.shopNames
+      shopNames: state.shopNames,
+      /* A room chip on a room page is a door. See the handler in
+         grid.js: filtering in place left the heading, the blurb, the
+         sigil, the plate and the URL all describing a different room
+         from the shelf underneath them. ROOMS is the only place that
+         knows a key's path, and they are not derivable -- `arcade`
+         lives at /arcade-floor -- so the lookup happens here. */
+      onRoom: function (key) {
+        for (var i = 0; i < ROOMS.length; i++) {
+          if (ROOMS[i].key === key) { location.href = ROOMS[i].path; return; }
+        }
+      }
     });
   }
 
