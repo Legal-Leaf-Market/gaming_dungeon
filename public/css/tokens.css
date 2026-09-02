@@ -1,216 +1,209 @@
 /* ============================================================
-   tokens.css — the Lantern Quarter
+   tokens.css — paper and ink
 
-   THE REDESIGN, AND THE INSTRUCTION BEHIND IT (owner, 2026-08-29)
+   THE RESTYLE, AND THE INSTRUCTION BEHIND IT (owner, 2026-09-02)
    ------------------------------------------------------------
-   This file used to open by saying every value in it was lifted
-   from the game's UiKit.luau, and that a colour which drifted from
-   the game was worse than one that never matched. That was true of
-   the site it described. It is not the brief any more.
+   "Here is an asset library with zero color. That means I want
+   zero color on the website. This is to completely change the
+   view and feel of the website flat out. I don't wanna see one
+   lingering anything from old shit. I don't wanna see any color."
 
-   The owner looked at the ink-and-paper build twice and said it
-   "looks nothing like what I want", then "our site is clunky right
-   now, it's got the bones, but it really needs help", and finally,
-   in full: complete redesign, "something that feels like a city in
-   that game, but don't try to emulate the game. Come up with your
-   own and just do it."
+   The accompanying brief is stricter than "make it grayscale",
+   and the strictness is the point:
 
-   So this palette is NOT ported. It is a night city, and it is
-   ours. Do not "restore" it to the game's paper values: that is
-   the thing that was asked to stop.
+     NO color. No accent colors. No hidden tinting. No warm or
+     cool palette shifts beyond grayscale. Use black, white and
+     gray only.
 
-   WHAT DID SURVIVE, because it is data rather than decoration:
-     - the twelve realm colours (Realms.luau). Rooms fly realms and
-       that mapping is still true, so the hues stay; only the ground
-       under them changed.
-     - the four rarity grades (Items.luau).
-     - EB Garamond, still the display face.
-   WHAT DID NOT:
-     - the paper ground, the ink text, the 5px radii, the hard
-       offset shadows, and Merriweather. All four of them are the
-       things that read as clunky.
+   So EVERY colour token in this file is R = G = B. Not "warm
+   off-white", not "near-black with a hint of umber" -- those are
+   exactly the "hidden tinting" the brief names, and they are how
+   a palette creeps back one plausible step at a time. If you are
+   adding a value here and it is not three equal channels, it does
+   not belong in this file.
 
-   WHY DARK. Every reference the owner has ever approved is a lit
-   scene in low light: lanterns, mist, a glow on the underside of
-   the air. You cannot put that on a page whose ground is #f6f3e9,
-   because there is no headroom for light above white. Dark ground
-   is not a style choice here, it is the requirement for the one
-   effect the whole site is built on.
+   WHY THE GROUND FLIPPED. The previous build was a night city:
+   near-black page, light art. The new library is brush-and-ink on
+   paper -- dark marks, light ground -- and a large part of it is
+   TRANSPARENT (ten sigils, five region cartouches, the dividers,
+   the corner, the compass, both rails). A dark mark on a dark page
+   is not there, and this repo already has that scar written up in
+   CLAUDE.md 8c: "Ink on a dark plate is not there. #15120e on the
+   site's own grounds is invisible, and it fails silently."
 
-   THE ONE RULE THAT DID CARRY OVER, and it is the game's own hard
-   lesson: strokes go on the BORDER of a box, never on the glyphs of
-   text. No -webkit-text-stroke, no shadow ring on body copy. It
-   makes everything read blobby. Still true on a dark ground.
+   The ground is therefore paper, and it is not a preference. It is
+   the requirement for the art to be visible at all.
+
+   WHAT THIS IS NOT. It is not a restoration of the old ink-and-
+   paper build that the 2026-08-29 redesign replaced. That one was
+   paper WITH the game's UiKit colours on it, and its palette is
+   the thing that was asked to stop. This has no palette. It has a
+   value ladder.
+
+   THE ONE RULE THAT HAS SURVIVED EVERY REDESIGN, and it matters
+   more on paper than it ever did on night: strokes go on the
+   BORDER of a box, never on the glyphs of text. No
+   -webkit-text-stroke, no shadow ring on body copy. It reads
+   blobby, and blobby is the failure mode of an ink site.
+
+   NOT STERILE IS A TEXTURE JOB, NOT A TINT JOB. The reason to
+   reach for a cream is that flat neutral grey looks clinical. The
+   answer is grain and brush edges -- paper.webp over the plates,
+   ink-frame.svg on the borders, the enso on round things -- not a
+   few degrees of hue smuggled into the ground. Texture is what
+   the references have; they are not cream because somebody tinted
+   them, they are cream because they are photographs of paper.
    ============================================================ */
 
 :root{
-  /* --- the ground ------------------------------------------
-     Five steps, and the gaps between them are small on purpose.
-     A dark interface goes muddy when its surfaces are far apart:
-     you get "black thing on grey thing" instead of one material
-     catching more or less light. --night deliberately matches the
-     near band of the city art, so the skyline dissolves into the
-     page instead of ending at a visible edge. */
-  /* SAMPLED OFF THE HERO PAINTING, not chosen. The owner's brief
-     after the approved art landed was to design the whole site
-     around it: "that's the city we're looking at, those are the
-     cherry blossoms, everything else is accents."
+  /* --- the ground: paper ------------------------------------
+     Five steps, close together, running from the page up to the
+     brightest lit surface. The gaps are small for the same reason
+     they were small on the dark build: a ground whose steps are
+     far apart stops reading as one material catching more or less
+     light and starts reading as grey boxes on a white box.
 
-     So these five are the painting's own village, read out of it
-     rather than invented: quantising the render gives #1b181d,
-     #23212a, #2a2c38 and #453036 as four of its fourteen dominant
-     colours, and they are the roofs, the shadowed lanes and the
-     wood. The old ground was #04070d to #1a2635, a cool blue-black
-     that belonged to the vector night city it was drawn for. Under
-     a warm dusk painting it read as a different site below the
-     fold, which is exactly what it was.
+     --paper is the page. Everything raised goes UP toward white,
+     everything recessed goes DOWN toward the wash. That is the
+     opposite of the dark build, where raised meant lighter and
+     recessed meant darker; on paper, an inset is a place the ink
+     has soaked in. */
+  --paper:#f1f1f1;
+  --paper-hi:#f8f8f8;
+  --paper-lo:#e7e7e7;
+  --paper-2:#dedede;
+  --paper-3:#d2d2d2;
 
-     Still five steps, still close together: a dark interface goes
-     muddy when its surfaces are far apart. --night still matches
-     the bottom of the art so the picture dissolves into the page
-     rather than ending at an edge. */
-  --void:#12100f;
-  --night:#1a181d;
-  --surface:#23212a;
-  --surface-2:#2a2c38;
-  --surface-3:#343446;
+  /* A laid wash: the flat mid-grey a loaded brush leaves when it
+     is dragged over dry paper. Used for fills that must read as
+     pigment rather than as a surface. */
+  --wash:#c4c4c4;
+  --wash-deep:#9e9e9e;
 
-  /* Hairlines. Light-on-dark, never a darker line: a dark border on
-     a dark surface reads as a gap, and a light one reads as an edge
-     catching the sky. That difference is most of what separates a
-     lit interface from a flat one. */
-  /* Warmed to match. A blue hairline on a warm ground reads as a
-     seam between two materials rather than as an edge catching the
-     light, and every panel on the site is drawn with one. */
-  --line:rgba(226,196,186,.14);
-  --line-2:rgba(226,196,186,.26);
-  --line-3:rgba(226,196,186,.42);
+  /* Hairlines. DARK on paper, and this is the inversion of the
+     dark build's hardest-won rule. There, a light line read as an
+     edge catching the sky and a dark one read as a gap. Here it is
+     exactly reversed: paper has no light above it to catch, so an
+     edge is where ink has settled. Always ink at low alpha, never
+     a grey hex -- alpha keeps the line honest over whichever
+     paper step it happens to cross. */
+  --line:rgba(18,18,18,.14);
+  --line-2:rgba(18,18,18,.26);
+  --line-3:rgba(18,18,18,.44);
 
-  /* --- text ------------------------------------------------
-     Not white. #e9eef6 is a hair cool and a hair down from pure,
-     which stops long copy vibrating on a dark ground. */
-  --text:#f4ece6;
-  --text-dim:#c2aca6;
-  --text-faint:#8a7477;
+  /* --- ink -------------------------------------------------
+     The type ramp, and it is the whole hierarchy now. On the dark
+     build, emphasis had two axes: value AND hue (jade for us,
+     amber for the world). Hue is gone, so value carries all of it,
+     which means these five steps have to be further apart than a
+     colour system would need them.
 
-  /* --- the light -------------------------------------------
-     Two sources and they mean different things, which is the whole
-     colour logic of the site:
-       JADE    is us. The studio, the interface, anything you can
-               press. Verda is green; this is the green.
-       LANTERN is the world. Money, warmth, the city's own light.
-     A jade price or an amber button is a category error and looks
-     like one. */
-  /* JADE IS THE PAINTING'S OWN BUTTON. #5da38b is what the mint CTA
-     measures in the render, so the interface green is now the green
-     that is actually in the picture rather than one beside it. The
-     lit and deep steps are that hue opened and closed, not a
-     separate ramp.
+     --ink is not #000. Pure black on paper vibrates against the
+     grain and reads as printing rather than as a drawn stroke;
+     #141414 is a dried stroke, and it is the same decision the
+     old ink layer made when it picked its ink over black. */
+  --ink:#141414;
+  --ink-2:#333333;
+  --ink-3:#575757;
+  --ink-soft:#7b7b7b;
+  --ink-faint:#a5a5a5;
 
-     LANTERN IS THE PAINTING'S OWN WINDOWS AND SUN: #fabf8e is the
-     gold of the sky beside the sun, #fbf5eb its core. Both were
-     already close; they are exact now.
+  --text:var(--ink);
+  --text-dim:var(--ink-3);
+  --text-faint:var(--ink-soft);
 
-     BLOSSOM IS NEW AND IT IS LOAD-BEARING. The old palette had two
-     light sources, us and the world. The painting has three, and
-     the third one is most of its surface area: rose. It is a real
-     token now rather than a decoration, because it is what the
-     whole page is made of. */
-  --jade:#7fd0b0;
-  --jade-lit:#a8e6c9;
-  --jade-deep:#5da38b;
-  --jade-rgb:127,208,176;
-
-  --lantern:#fabf8e;
-  --lantern-hot:#fbf5eb;
-
-  --blossom:#c6968e;
-  --blossom-lit:#f2c9b1;
-  --blossom-deep:#7f4c4f;
-  --blossom-rgb:198,150,142;
-  --bough:#453036;
+  /* --- the mark --------------------------------------------
+     There is no accent hue any more, so there is no "jade is us,
+     amber is the world" to get right or wrong. What replaces it is
+     WEIGHT: the interface is the darkest thing on the page, and
+     the world is wash. Anything you can press is full ink; the
+     scenery never goes below the wash steps. That reads at a
+     glance for the same reason the colour rule did, and it cannot
+     drift into a second palette. */
+  --mark:var(--ink);
+  --mark-soft:var(--ink-2);
+  --mark-rgb:20,20,20;
 
   /* --- the twelve major realms ------------------------------
-     Realms.luau, unchanged: rooms fly realms and the mapping in
-     api/_scene.js is a claim about meaning, not about colour. They
-     were picked to sit on paper and they happen to sit on night
-     better, because every one of them is mid-value or above. */
-  --realm-1:#a8a196;   /* Body Tempering            */
-  --realm-2:#78aadc;   /* Qi Gathering              */
-  --realm-3:#60b496;   /* Foundation Establishment  */
-  --realm-4:#5896eb;   /* Core Formation            */
-  --realm-5:#e8be50;   /* Golden Core               */
-  --realm-6:#be82eb;   /* Nascent Soul              */
-  --realm-7:#e278b4;   /* Soul Transformation       */
-  --realm-8:#8a8ac4;   /* Void Refinement           */
-  --realm-9:#8cdcdc;   /* Dao Integration           */
-  --realm-10:#f0f0fa;  /* Tribulation Transcendence */
-  --realm-11:#ffe2a0;  /* Immortal Ascension        */
-  --realm-12:#fffaeb;  /* True Immortal             */
+     Rooms fly realms, and that mapping in api/_scene.js is a claim
+     about MEANING rather than about colour, so it survives with
+     the hue taken out of it.
+
+     It survives as a value ladder, and the ladder is arguably
+     truer than the hues were. The art brief's own line for the
+     realms is that the art should get "thinner, cleaner and colder
+     as the number goes up" -- realm 1 is earth and iron, realm 12
+     is almost nothing at all. Twelve hues could only gesture at
+     that. Twelve values ARE it: realm 1 is the heaviest ink on the
+     page and realm 12 is barely darker than the wash.
+
+     Every step stays above the wash, because a band lighter than
+     --wash is a band nobody can see on paper. The ladder ascends
+     toward disappearing; it does not get to actually disappear. */
+  --realm-1:#191919;   /* Body Tempering            */
+  --realm-2:#252525;   /* Qi Gathering              */
+  --realm-3:#313131;   /* Foundation Establishment  */
+  --realm-4:#3d3d3d;   /* Core Formation            */
+  --realm-5:#494949;   /* Golden Core               */
+  --realm-6:#555555;   /* Nascent Soul              */
+  --realm-7:#616161;   /* Soul Transformation       */
+  --realm-8:#6d6d6d;   /* Void Refinement           */
+  --realm-9:#797979;   /* Dao Integration           */
+  --realm-10:#858585;  /* Tribulation Transcendence */
+  --realm-11:#919191;  /* Immortal Ascension        */
+  --realm-12:#9d9d9d;  /* True Immortal             */
 
   /* --- item rarity ------------------------------------------
-     Items.luau's four grades, lifted a step so they read as light
-     rather than as pigment. */
-  --common:#93a3b5;
-  --fine:#6fc79a;
-  --rare:#6fa8f0;
-  --precious:#e8be50;
+     Items.luau's four grades, also a value ladder, and pointing
+     the other way from the realms on purpose: the realms ascend
+     toward nothing, and rarity descends toward ink. A precious
+     item is the most pigment on the card. */
+  --common:#a8a8a8;
+  --fine:#7d7d7d;
+  --rare:#4f4f4f;
+  --precious:#1c1c1c;
 
   /* --- elevation -------------------------------------------
-     THE HARD OFFSET SHADOW IS GONE. `3px 3px 0 var(--ink)` was on
-     every card, door and sister link, and a solid displaced block
-     is the single most dated thing an interface can wear: it says
-     zine, and the brief says cinema.
+     Much lighter than the dark build's. A shadow on a near-black
+     page can be heavy because it has nowhere to go; the same alpha
+     on paper is a grey smudge under every card, and a page of
+     smudges is what "clip art" looks like.
 
-     These are layered instead: a tight contact shadow that says the
-     thing is touching something, and a wide soft one that says
-     there is air under it. Both are pure black at low alpha, never
-     a tinted shadow, because a tinted shadow on a coloured ground
-     goes muddy the moment the ground changes. */
-  --lift-1:0 1px 2px rgba(0,0,0,.36), 0 4px 14px rgba(0,0,0,.28);
-  --lift-2:0 2px 4px rgba(0,0,0,.40), 0 12px 34px rgba(0,0,0,.42);
-  --lift-3:0 4px 8px rgba(0,0,0,.44), 0 28px 68px rgba(0,0,0,.52);
-  /* what a thing wears when it is lit rather than raised */
-  --glow-jade:0 0 0 1px rgba(var(--jade-rgb),.34), 0 6px 26px rgba(var(--jade-rgb),.16);
+     Still pure black at low alpha, never a tinted shadow -- which
+     on this palette is not even expressible, and that is the
+     point. */
+  --lift-1:0 1px 1px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.05);
+  --lift-2:0 1px 2px rgba(0,0,0,.08), 0 6px 20px rgba(0,0,0,.07);
+  --lift-3:0 2px 5px rgba(0,0,0,.10), 0 16px 44px rgba(0,0,0,.10);
+  /* What a thing wears when it is active rather than raised. On
+     paper this is a pressed border rather than a glow: there is no
+     such thing as a light bloom on a white ground. */
+  --glow-ink:0 0 0 1px rgba(var(--mark-rgb),.34), 0 2px 10px rgba(var(--mark-rgb),.10);
 
   /* --- type -------------------------------------------------
-     TWO FACES DOING TWO JOBS, and this is a deliberate reversal.
-     The old build set every token, including --sans, to Garamond,
-     so headings, buttons, counts, prices and nav were all the same
-     serif at different sizes. That is exactly what "clunky" was:
-     nothing had a different voice, so nothing had emphasis.
+     Unchanged in structure and for the same reason: the serif
+     carries what is meant to feel written, and everything
+     functional is a system sans that paints on the first frame.
 
-     Now the serif carries only what is meant to feel written, and
-     everything functional is a system sans. The system stack also
-     costs no bytes and paints on the first frame, so the interface
-     is never mid-swap while the display face loads.
-
-     Merriweather is gone. It was the game's BOLD_FONT and at small
-     sizes on a dark ground it is a slab of texture. */
+     EB Garamond earns its place harder here than it did on night.
+     A calligraphic library wants a written display face beside it,
+     and a geometric sans headline next to a brush painting is the
+     "clean software-generated vector pack" the brief rules out. */
   --display:'EB Garamond',Garamond,Georgia,'Times New Roman',serif;
   --serif:var(--display);
   --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,
          'Helvetica Neue',Arial,sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  /* Anything still asking for these by the old names lands
-     somewhere sane rather than on a missing face. */
   --bold:var(--sans);
   --pixel:var(--sans);
 
-  /* --- geometry ---------------------------------------------
-     5px radii were the game's, and at 5px a card looks like a box
-     someone forgot to round. 14 and 18 are the difference between
-     a panel and a plate. */
+  /* --- geometry --------------------------------------------- */
   --r-sm:8px;
   --r:14px;
   --r-lg:20px;
   --r-pill:999px;
 
-  /* --- rhythm ------------------------------------------------
-     One scale, used everywhere, so that space between things is a
-     decision made once. --gap-section is the big one and it is
-     large on purpose: air is the cheapest thing on this list and
-     it is the thing the old build had none of. */
+  /* --- rhythm ------------------------------------------------ */
   --gap-section:clamp(56px,8vw,104px);
   --gap:18px;
   --gap-sm:10px;
@@ -224,34 +217,56 @@
 
   /* --- compatibility ---------------------------------------
      Older markup on this site and the forked arcade page still ask
-     for the sister sites' names. They resolve into the new language
-     rather than being hunted down one at a time, which is what let
-     this redesign land in one commit instead of six. */
-  --bg:var(--night);
-  --bg2:var(--surface);
-  --panel:var(--surface);
-  --panel2:var(--surface-2);
-  --ink:var(--void);
-  --paper:var(--surface);
-  --paper-dim:var(--surface-2);
-  --inset:var(--surface-3);
-  --chip:var(--surface-2);
-  --muted:var(--text-dim);
-  --dim:var(--text-faint);
-  --accent:var(--jade);
-  --accent-dk:var(--jade-deep);
-  --accent-rgb:var(--jade-rgb);
-  --gold:var(--lantern);
-  --red:#e8695c;
-  --amber:var(--lantern);
-  --leaf:var(--jade);
-  --sage:var(--jade);
-  --qi:#6fa8f0;
-  --health:#e8695c;
-  --stamina:var(--lantern);
-  --xp:#b39ce0;
-  --danger:#e8695c;
-  --arcade:var(--jade);
+     for names from three previous palettes. They resolve into the
+     value system rather than being hunted down one at a time,
+     which is what lets a restyle this total land in one commit.
+
+     EVERY ONE OF THESE IS NEUTRAL. That is the load-bearing part:
+     an alias is exactly how a colour survives a purge, because
+     nobody greps for --qi when they are looking for blue. The
+     five that used to be hues (--accent, --gold, --red, --qi,
+     --xp and friends) now resolve to ink and wash steps, so a rule
+     still asking for them gets a value, not a colour. */
+  --bg:var(--paper);
+  --bg2:var(--paper-lo);
+  --night:var(--paper);
+  --void:var(--paper-2);
+  --surface:var(--paper-hi);
+  --surface-2:var(--paper-lo);
+  --surface-3:var(--paper-2);
+  --panel:var(--paper-hi);
+  --panel2:var(--paper-lo);
+  --paper-dim:var(--paper-lo);
+  --inset:var(--paper-2);
+  --chip:var(--paper-lo);
+  --muted:var(--ink-3);
+  --dim:var(--ink-soft);
+  --accent:var(--ink);
+  --accent-dk:var(--ink-2);
+  --accent-rgb:var(--mark-rgb);
+  --jade:var(--ink);
+  --jade-lit:var(--ink-2);
+  --jade-deep:var(--ink);
+  --jade-rgb:var(--mark-rgb);
+  --lantern:var(--ink-2);
+  --lantern-hot:var(--ink);
+  --blossom:var(--wash-deep);
+  --blossom-lit:var(--wash);
+  --blossom-deep:var(--ink-2);
+  --blossom-rgb:158,158,158;
+  --bough:var(--ink-2);
+  --gold:var(--ink-2);
+  --red:var(--ink-2);
+  --amber:var(--ink-2);
+  --leaf:var(--ink);
+  --sage:var(--ink-3);
+  --qi:var(--ink-3);
+  --health:var(--ink-2);
+  --stamina:var(--ink-3);
+  --xp:var(--ink-3);
+  --danger:var(--ink);
+  --arcade:var(--ink);
+  --glow-jade:var(--glow-ink);
   --radius:var(--r);
   --radius-sm:var(--r-sm);
   --radius-pill:var(--r-pill);
@@ -260,6 +275,9 @@
   --stroke-xs:1px;
 }
 
-/* The page is dark and says so, so form controls, scrollbars and
-   the flash before first paint all come up dark too. */
-:root{ color-scheme:dark }
+/* The page is paper and says so, so form controls, scrollbars and
+   the flash before first paint all come up light too. This line
+   used to read `dark` and it is not a detail: leaving it dark
+   gives you a black scrollbar down the edge of a white page and a
+   dark flash on every cold load. */
+:root{ color-scheme:light }

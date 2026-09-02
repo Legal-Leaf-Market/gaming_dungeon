@@ -39,7 +39,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const INK = '#15120e'
+const INK = '#141414'
 
 function rng(seed) {
   let a = seed >>> 0

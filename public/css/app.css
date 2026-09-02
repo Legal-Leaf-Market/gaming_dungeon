@@ -103,12 +103,29 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
      first section still gets the glow bleeding up behind it, which
      was the whole reason for a gradient, and nothing is set over a
      picture. */
+  /* THE RAMP IS TO PAPER NOW, AND EVERY STOP IN IT HAD TO CHANGE, not
+     just the last one. This ran from transparent through three
+     progressively darker stops to --night, which was correct while
+     --night was near-black: the picture above dissolved into a page
+     the same colour as its own bottom edge.
+
+     --night is paper now, so leaving the middle stops dark ramped
+     the page DOWN into black and back UP into white over 260px, and
+     the first section's heading and intro copy sat inside that band
+     in dark grey on near-black. It rendered, it looked deliberate,
+     and it was unreadable -- which is the failure mode this file
+     keeps warning about, and it got introduced by changing one stop
+     out of five.
+
+     Same structure, same distances, paper the whole way down: the
+     scene bleeds up through the transparent top and is covered by
+     the sheet rather than by the dark. */
   background:linear-gradient(180deg,
-    rgba(20,34,48,0) 0,
-    rgba(24,38,54,.50) 40px,
-    rgba(15,25,38,.90) 110px,
-    rgba(9,15,25,.99) 185px,
-    var(--night) 260px);
+    rgba(241,241,241,0) 0,
+    rgba(241,241,241,.55) 40px,
+    rgba(241,241,241,.90) 110px,
+    rgba(241,241,241,.99) 185px,
+    var(--paper) 260px);
 }
 
 /* ------------------------------------------------------------
@@ -157,8 +174,8 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   position:fixed;
   left:0; right:0; top:-40px; height:190px;
   background:linear-gradient(180deg,
-    rgba(10,20,32,.72) 0, rgba(10,20,32,.44) 40%,
-    rgba(10,20,32,.16) 70%, transparent 100%);
+    rgba(18,18,18,.72) 0, rgba(18,18,18,.44) 40%,
+    rgba(18,18,18,.16) 70%, transparent 100%);
   pointer-events:none; z-index:-1;
 }
 
@@ -234,8 +251,8 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
      beneath. There is no straight edge anywhere in it. */
   background:
     radial-gradient(120% 96% at -8% 108%,
-      rgba(20,34,48,.74) 0%, rgba(20,34,48,.44) 38%,
-      rgba(20,34,48,.14) 62%, transparent 80%),
+      rgba(31,31,31,.74) 0%, rgba(31,31,31,.44) 38%,
+      rgba(31,31,31,.14) 62%, transparent 80%),
     /* BOTH SIDES OF THE JOIN ARE TRANSPARENT. This used to still
        carry a third of its alpha at 100%, and the section simply
        ends there, so a ruled line ran the width of the page at the
@@ -245,7 +262,7 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
        one of them. Ending at nothing cannot come apart. The shade
        under the copy is the radial above; this is only the bottom
        weighting, and it is not needed in the last few percent. */
-    linear-gradient(180deg, transparent 44%, rgba(20,34,48,.30) 82%, transparent 100%);
+    linear-gradient(180deg, transparent 44%, rgba(31,31,31,.30) 82%, transparent 100%);
   /* MASKED TO NOTHING AT THE BOTTOM EDGE, and this is the fix for a
      line the owner could see and I could not reason my way to.
 
@@ -261,8 +278,8 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
      the hero whatever the gradients underneath it are doing. Same
      technique the mist uses, for the same reason: an element that
      paints to its own edge draws that edge. */
-  -webkit-mask-image:linear-gradient(180deg, #000 62%, transparent 98%);
-  mask-image:linear-gradient(180deg, #000 62%, transparent 98%);
+  -webkit-mask-image:linear-gradient(180deg, #000000 62%, transparent 98%);
+  mask-image:linear-gradient(180deg, #000000 62%, transparent 98%);
 }
 
 /* NARROW SCREENS NEED A DIFFERENT SCRIM, because they are a
@@ -281,10 +298,10 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   .ink-hero::before{
     background:
       radial-gradient(140% 90% at -10% 108%,
-        rgba(20,34,48,.62) 0%, rgba(20,34,48,.34) 44%, transparent 74%),
+        rgba(31,31,31,.62) 0%, rgba(31,31,31,.34) 44%, transparent 74%),
       linear-gradient(180deg,
-        transparent 6%, rgba(14,25,37,.38) 32%,
-        rgba(14,25,37,.44) 70%, transparent 100%);
+        transparent 6%, rgba(23,23,23,.38) 32%,
+        rgba(23,23,23,.44) 70%, transparent 100%);
   }
 }
 
@@ -299,12 +316,12 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   font-family:var(--display); font-weight:500;
   font-size:clamp(44px,7.4vw,92px);
   line-height:1.01; letter-spacing:-.017em;
-  margin:0 0 22px; color:#fff;
+  margin:0 0 22px; color:#ffffff;
   /* Two shadows: a tight one for legibility against a busy band,
      and a wide faint one that reads as the title being lit. */
   /* Heavier than it was: the sky behind it is bright now, so the
      title is light-on-light at the top of its own line height. */
-  text-shadow:0 2px 26px rgba(12,22,34,.72), 0 2px 6px rgba(12,22,34,.55);
+  text-shadow:0 2px 26px rgba(20,20,20,.72), 0 2px 6px rgba(20,20,20,.55);
 }
 .ink-hero h1 em{
   font-style:italic; color:var(--jade-lit);
@@ -316,8 +333,8 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   line-height:1.68; margin:0; max-width:56ch;
 }
 .ink-hero .lede{
-  color:#e4ecf4; max-width:50ch;
-  text-shadow:0 1px 16px rgba(12,22,34,.8), 0 1px 3px rgba(12,22,34,.6);
+  color:#ebebeb; max-width:50ch;
+  text-shadow:0 1px 16px rgba(20,20,20,.8), 0 1px 3px rgba(20,20,20,.6);
 }
 
 /* --- the two doors out of the hero ------------------------- */
@@ -332,17 +349,17 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
              background var(--fast), border-color var(--fast), color var(--fast);
 }
 .cta-1{
-  background:var(--jade); color:#04211a;
+  background:var(--jade); color:var(--paper);
   box-shadow:0 2px 10px rgba(0,0,0,.34), 0 10px 34px rgba(var(--jade-rgb),.22);
 }
 .cta-1:hover{ background:var(--jade-lit); transform:translateY(-2px);
   box-shadow:0 3px 12px rgba(0,0,0,.38), 0 16px 46px rgba(var(--jade-rgb),.30) }
 .cta-2{
   color:var(--text); border-color:var(--line-2);
-  background:rgba(9,15,24,.5);
+  background:rgba(14,14,14,.5);
   backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
 }
-.cta-2:hover{ border-color:var(--line-3); background:rgba(20,30,44,.62); transform:translateY(-2px) }
+.cta-2:hover{ border-color:var(--line-3); background:rgba(29,29,29,.62); transform:translateY(-2px) }
 .cta:active{ transform:translateY(0) }
 
 /* The seal, bottom right of the hero: the twelfth realm's name,
@@ -353,7 +370,7 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   display:flex; flex-direction:column; align-items:center; gap:1px;
   padding:11px 13px; border-radius:var(--r-sm);
   border:1px solid rgba(var(--jade-rgb),.30);
-  background:rgba(4,10,16,.42);
+  background:rgba(9,9,9,.42);
   backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   color:var(--jade); font-family:var(--display);
   line-height:1.1; letter-spacing:.06em; z-index:2;
@@ -612,14 +629,14 @@ a.g-card:active{ transform:translateY(-1px) }
 }
 .g-oos{
   position:absolute; left:0; right:0; bottom:0;
-  background:rgba(4,7,13,.82); color:var(--text-dim);
+  background:rgba(7,7,7,.82); color:var(--text-dim);
   font-family:var(--sans); font-weight:600; font-size:9.5px;
   letter-spacing:.15em; text-transform:uppercase;
   padding:6px 10px; text-align:center;
   backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
 }
 .g-live{
-  position:absolute; left:0; bottom:0; background:var(--red); color:#fff;
+  position:absolute; left:0; bottom:0; background:var(--red); color:#ffffff;
   font-family:var(--sans); font-weight:600; font-size:9px;
   letter-spacing:.14em; text-transform:uppercase; padding:4px 9px;
 }
@@ -722,7 +739,7 @@ a.g-card:active{ transform:translateY(-1px) }
   display:flex; align-items:center; justify-content:center;
   border-radius:9px; padding:0; cursor:pointer;
   border:1px solid var(--line-2);
-  background:rgba(4,8,14,.62);
+  background:rgba(7,7,7,.62);
   -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
   color:var(--text-dim);
   /* FAINT, NOT ABSENT. Hiding these until hover is tidier and it
@@ -742,10 +759,10 @@ a.g-card:active{ transform:translateY(-1px) }
 .g-save:focus-visible,.g-zoom:focus-visible{ opacity:1 }
 .g-save:hover,.g-zoom:hover{ color:var(--text); border-color:var(--line-3) }
 /* Kept is a state, so it stays lit whether or not anyone is near it. */
-.g-save.on{ opacity:1; color:var(--lantern); border-color:rgba(255,184,107,.5);
-  background:rgba(255,184,107,.14) }
+.g-save.on{ opacity:1; color:var(--lantern); border-color:rgba(196,196,196,.5);
+  background:rgba(196,196,196,.14) }
 @media (hover:none){
-  .g-save,.g-zoom{ opacity:.85; background:rgba(4,8,14,.7) }
+  .g-save,.g-zoom{ opacity:.85; background:rgba(7,7,7,.7) }
 }
 
 /* ------------------------------------------------------- show more */
@@ -826,7 +843,7 @@ a.g-card:active{ transform:translateY(-1px) }
   transform:translate(-50%,14px); opacity:0; pointer-events:none;
   font-family:var(--sans); font-size:13.5px; color:var(--text);
   padding:12px 20px; border-radius:var(--r-pill);
-  border:1px solid var(--line-2); background:rgba(10,16,26,.94);
+  border:1px solid var(--line-2); background:rgba(15,15,15,.94);
   -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
   box-shadow:var(--lift-2);
   transition:opacity var(--fast), transform var(--fast);
@@ -838,7 +855,7 @@ a.g-card:active{ transform:translateY(-1px) }
   position:fixed; inset:0; z-index:1000; display:none;
   align-items:center; justify-content:center;
   padding:calc(56px + env(safe-area-inset-top)) 14px calc(60px + env(safe-area-inset-bottom));
-  background:rgba(4,7,13,.95);
+  background:rgba(7,7,7,.95);
   -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
   touch-action:pinch-zoom; overscroll-behavior:contain;
 }
@@ -858,9 +875,9 @@ a.g-card:active{ transform:translateY(-1px) }
   position:absolute; top:calc(14px + env(safe-area-inset-top)); right:14px; z-index:2;
   width:42px; height:42px; border-radius:50%; cursor:pointer;
   font-size:22px; line-height:1; color:var(--text);
-  border:1px solid var(--line-2); background:rgba(10,16,26,.8);
+  border:1px solid var(--line-2); background:rgba(15,15,15,.8);
 }
-#vPhotoX:hover{ background:rgba(24,34,48,.9); border-color:var(--line-3) }
+#vPhotoX:hover{ background:rgba(33,33,33,.9); border-color:var(--line-3) }
 #vPhotoCap{
   position:absolute; left:0; right:0; bottom:calc(16px + env(safe-area-inset-bottom));
   text-align:center; padding:0 20px;
@@ -1127,8 +1144,8 @@ a.g-card:active{ transform:translateY(-1px) }
   display:grid; place-items:center;
   border:2px solid color-mix(in srgb, var(--band) 74%, transparent);
   background:radial-gradient(circle at 50% 34%,
-    color-mix(in srgb, var(--band) 20%, rgba(9,16,25,.96)),
-    rgba(7,12,20,.97));
+    color-mix(in srgb, var(--band) 20%, rgba(15,15,15,.96)),
+    rgba(11,11,11,.97));
   box-shadow:0 4px 16px rgba(0,0,0,.62),
     0 0 0 7px color-mix(in srgb, var(--band) 10%, transparent);
   transition:transform var(--fast), box-shadow var(--fast), border-color var(--fast);
@@ -1172,7 +1189,7 @@ a.g-card:active{ transform:translateY(-1px) }
   position:absolute; left:50%; bottom:36px; transform:translate(-50%,6px);
   width:224px; padding:12px 15px;
   border-radius:var(--r); border:1px solid var(--line-2);
-  background:rgba(10,17,26,.96);
+  background:rgba(16,16,16,.96);
   -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
   box-shadow:var(--lift-3);
   display:flex; flex-direction:column; gap:5px;

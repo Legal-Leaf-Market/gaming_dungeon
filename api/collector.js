@@ -463,7 +463,7 @@ const OPERATOR_SOURCE = `
   panel.id = "gd-collector";
   panel.setAttribute("style",
     "position:fixed;top:16px;right:16px;z-index:2147483647;width:346px;max-height:88vh;" +
-    "overflow:auto;background:#12091b;color:#efe6f7;border:1px solid #8b5cf6;border-radius:12px;" +
+    "overflow:auto;background:#0e0e0e;color:#ebebeb;border:1px solid #7c7c7c;border-radius:12px;" +
     "font:13px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif;padding:14px 16px;" +
     "box-shadow:0 14px 50px rgba(0,0,0,.6)");
 
@@ -475,22 +475,22 @@ const OPERATOR_SOURCE = `
 
   panel.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">' +
-      '<strong id="gd-count" style="font-size:15px;color:#c4b5fd">' + capture.products.length + ' products</strong>' +
-      '<button id="gd-x" style="background:none;border:0;color:#a390c4;font-size:18px;cursor:pointer;line-height:1">&times;</button>' +
+      '<strong id="gd-count" style="font-size:15px;color:#c2c2c2">' + capture.products.length + ' products</strong>' +
+      '<button id="gd-x" style="background:none;border:0;color:#9c9c9c;font-size:18px;cursor:pointer;line-height:1">&times;</button>' +
     '</div>' +
     '<div id="gd-per" style="opacity:.8;margin-top:2px">' + esc(per || "nothing found") + '</div>' +
     (capture.platform ? '<div style="opacity:.6;margin-top:2px">platform: ' + esc(capture.platform) + '</div>' : "") +
-    '<ul id="gd-notes" style="margin:9px 0 0;padding-left:18px;opacity:.92;color:#f5d0a9">' + notes + '</ul>' +
+    '<ul id="gd-notes" style="margin:9px 0 0;padding-left:18px;opacity:.92;color:#d7d7d7">' + notes + '</ul>' +
     '<label style="display:block;margin-top:12px;opacity:.85">Merchant key' +
       '<input id="gd-key" value="' + esc(guessKey()) + '" ' +
-      'style="width:100%;margin-top:3px;padding:7px 8px;border-radius:7px;border:1px solid #43306b;' +
-      'background:#0a0413;color:#efe6f7;font:13px ui-monospace,monospace"></label>' +
+      'style="width:100%;margin-top:3px;padding:7px 8px;border-radius:7px;border:1px solid #3c3c3c;' +
+      'background:#080808;color:#ebebeb;font:13px ui-monospace,monospace"></label>' +
     '<label style="display:block;margin-top:8px;opacity:.85">Admin token' +
       '<input id="gd-token" type="password" placeholder="ADMIN_PASSCODE" ' +
-      'style="width:100%;margin-top:3px;padding:7px 8px;border-radius:7px;border:1px solid #43306b;' +
-      'background:#0a0413;color:#efe6f7"></label>' +
-    '<button id="gd-scan" style="width:100%;margin-top:12px;background:none;color:#c4b5fd;' +
-      'border:1px solid #8b5cf6;border-radius:999px;padding:9px 14px;cursor:pointer;font:inherit;' +
+      'style="width:100%;margin-top:3px;padding:7px 8px;border-radius:7px;border:1px solid #3c3c3c;' +
+      'background:#080808;color:#ebebeb"></label>' +
+    '<button id="gd-scan" style="width:100%;margin-top:12px;background:none;color:#c2c2c2;' +
+      'border:1px solid #7c7c7c;border-radius:999px;padding:9px 14px;cursor:pointer;font:inherit;' +
       'font-weight:700">Scan everything</button>' +
     '<div id="gd-scanmsg" style="margin-top:6px;opacity:.7;font-size:12px"></div>' +
     /* THE DESTINATION, ON SCREEN, ALWAYS. A bookmarklet keeps the
@@ -503,9 +503,9 @@ const OPERATOR_SOURCE = `
     '<div style="margin-top:8px;opacity:.55;font-size:11px;word-break:break-all">' +
       'sending to ' + esc(ORIGIN) + '</div>' +
     '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
-      '<button id="gd-send" style="flex:1;background:#8b5cf6;color:#0a0413;border:0;' +
+      '<button id="gd-send" style="flex:1;background:#7c7c7c;color:#080808;border:0;' +
       'border-radius:999px;padding:9px 14px;cursor:pointer;font:inherit;font-weight:700">Send</button>' +
-      '<button id="gd-copy" style="background:none;color:#c4b5fd;border:1px solid #43306b;' +
+      '<button id="gd-copy" style="background:none;color:#c2c2c2;border:1px solid #3c3c3c;' +
       'border-radius:999px;padding:9px 14px;cursor:pointer;font:inherit">Copy</button>' +
     '</div>' +
     '<div id="gd-msg" style="margin-top:9px;opacity:.85"></div>' +

@@ -8,7 +8,7 @@
      /collect. It is not a shopper page and a crawler finding it
      helps nobody. -->
 <meta name="robots" content="noindex,nofollow"/>
-<meta name="theme-color" content="#080d16"/>
+<meta name="theme-color" content="#f1f1f1"/>
 <meta name="color-scheme" content="dark"/>
 <!-- Icons, but NO <link rel="manifest">, for the reason collect.html
      gives: the manifest's start_url is "/", so an install prompt
@@ -33,8 +33,10 @@
      every bar, because rank is already encoded by position and
      repeating it in colour would make a re-sort repaint every row.
 
-     The ONE exception is --win, and it colours a sentence rather
-     than a mark: the note under a funnel's goal step. It exists
+     There is no colour on this page at all now, here or anywhere on
+     the site, so the goal note cannot be the exception it used to be:
+     it is carried by WEIGHT instead -- full ink and semibold against
+     the muted grey every other note is set in. It exists
      because the first version of this page (ported from Kawaii Katz)
      printed "lost N here" in alarm red under the outbound step,
      which read as a leak. An outbound click is the only event on
@@ -54,7 +56,7 @@
     background:var(--chip);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
   input{background:var(--void);color:var(--text);border:1px solid var(--line);
     border-radius:7px;padding:8px 10px;font:inherit}
-  button{background:var(--accent);color:#08130f;border:0;border-radius:999px;
+  button{background:var(--accent);color:var(--paper);border:0;border-radius:999px;
     padding:8px 16px;font:inherit;font-weight:700;cursor:pointer}
   button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
   button.ghost.on{border-color:var(--accent);color:var(--accent)}
@@ -93,7 +95,7 @@
      under, which is how the Kawaii Katz version came to look like it
      was counting people lost BY reaching a shop. */
   .gap{font-size:11.5px;font-weight:600;color:var(--dim);padding-left:44%;margin-left:11px}
-  .win{font-size:11.5px;font-weight:600;color:var(--jade-lit);padding-left:44%;margin-left:11px;
+  .win{font-size:11.5px;font-weight:600;color:var(--ink);padding-left:44%;margin-left:11px;
     margin-top:-2px}
 
   .spark{display:flex;align-items:flex-end;gap:3px;height:62px;margin-top:6px}
@@ -106,7 +108,7 @@
   .term b{color:var(--dim);font-weight:600;margin-left:5px}
   .term.zero{border-color:var(--gold);color:var(--gold)}
 
-  .err{border:1px solid var(--gold);background:rgba(255,184,107,.07);border-radius:10px;
+  .err{border:1px solid var(--gold);background:rgba(196,196,196,.07);border-radius:10px;
     padding:13px 15px;color:var(--gold);margin:14px 0;line-height:1.6}
   .hide{display:none}
 </style>

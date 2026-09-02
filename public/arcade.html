@@ -16,7 +16,7 @@
      listed:true and putting this page in the nav is the step that should wait
      on Brayton actually saying yes. -->
 <meta name="robots" content="noindex,nofollow"/>
-<meta name="theme-color" content="#080d16"/>
+<meta name="theme-color" content="#0d0d0d"/>
 <meta name="color-scheme" content="dark"/>
 <meta name="description" content="A few cabinets in the corner of the shop."/>
 <link rel="icon" href="/assets/mark.svg"/>
@@ -87,8 +87,19 @@ a{color:inherit;text-decoration:none}
 /* The ground, same as index.html: everything below the header rides on a
    nearly opaque plate so copy is legible, with the top of it left soft so
    the city's lantern glow bleeds up behind the first section. */
-.ar-hero{position:relative;width:100%;padding:112px 0 clamp(44px,6vh,72px);
-  min-height:clamp(360px,46svh,470px);display:flex;align-items:flex-end}
+/* THE BOTTOM PADDING RESERVES THE JOIN. The copy in here is bottom
+   aligned and light, and .hero-paint's cover now ramps the last
+   quarter of the hero to paper so the painting dissolves into the
+   sheet instead of ending on a ruled line. Those two want the same
+   pixels: at the old 44-72px the lede sat inside the ramp and faded
+   out from light grey to invisible over its own three lines.
+
+   Reserving the space is the honest fix. Making the ramp shorter
+   instead just moves the edge back toward being an edge, and darkening
+   the lede is worse -- it has to stay light because most of it is
+   still over the painting. */
+.ar-hero{position:relative;width:100%;padding:112px 0 clamp(124px,17vh,196px);
+  min-height:clamp(420px,52svh,540px);display:flex;align-items:flex-end}
 /* NO DIRECTIONAL WASH HERE ANY MORE. This hero used to stand over the
    generated blue-hour scene and carried its own left-to-right wash so
    the copy would hold contrast over lit windows. The scene is gone
@@ -107,29 +118,40 @@ a{color:inherit;text-decoration:none}
 .ar-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px}
 .ar-top h1{
   font-family:var(--display);font-weight:500;font-size:clamp(32px,4.6vw,52px);
-  line-height:1.06;letter-spacing:-.014em;margin:0;color:#fff;
+  line-height:1.06;letter-spacing:-.014em;margin:0;color:#ffffff;
   text-shadow:0 2px 22px rgba(0,0,0,.6);
 }
 .ar-top a{
   margin-left:auto;font-family:var(--sans);font-weight:600;font-size:11.5px;
-  letter-spacing:.14em;color:var(--text-dim);
-  border:1px solid var(--line);border-radius:var(--r-pill);padding:10px 16px;
-  background:rgba(255,255,255,.03);
+  letter-spacing:.14em;
+  /* NAMED LIGHT, NOT --text-dim, AND THIS IS THE THIRD TIME THIS PAGE
+     HAS BEEN CAUGHT BY THE SAME THING. The link sits on the PAINTING,
+     which is a dark photograph, while every token on the site now
+     resolves to ink on paper. --text-dim went from a pale grey to
+     #575757 and the link became dark grey on a dark picture.
+
+     Anything on this page that sits on the artwork rather than on the
+     sheet has to say so in its own rule, because there is no token
+     for "over the photograph" -- the page has two grounds and the
+     token system only describes one of them. */
+  color:rgba(255,255,255,.82);
+  border:1px solid rgba(255,255,255,.24);border-radius:var(--r-pill);padding:10px 16px;
+  background:rgba(255,255,255,.06);
   transition:color var(--fast),border-color var(--fast),background var(--fast);
 }
-.ar-top a:hover{color:var(--jade-lit);border-color:rgba(var(--jade-rgb),.42);background:rgba(var(--jade-rgb),.09)}
+.ar-top a:hover{color:#ffffff;border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.16)}
 
 /* The prose needs no plate now: it sits on the ground like every other
    paragraph on the site. */
 .ar-lede,.hub-sec .lede{
   color:var(--text-dim);font-size:16px;line-height:1.68;max-width:62ch;margin:0;
 }
-/* Light enough to read off blossom. #c6d4e2 was chosen against the
+/* Light enough to read off blossom. #d1d1d1 was chosen against the
    old, thinner canopy; the plates behind this are opaque now and
    carry pale flowers right across the column. */
-.ar-hero .ar-lede{color:#e2ebf3;max-width:56ch;
-  text-shadow:0 1px 3px rgba(8,14,22,.8), 0 1px 18px rgba(8,14,22,.75)}
-.ar-top h1{text-shadow:0 2px 22px rgba(8,14,22,.7), 0 2px 5px rgba(8,14,22,.55)}
+.ar-hero .ar-lede{color:#e9e9e9;max-width:56ch;
+  text-shadow:0 1px 3px rgba(13,13,13,.8), 0 1px 18px rgba(13,13,13,.75)}
+.ar-top h1{text-shadow:0 2px 22px rgba(13,13,13,.7), 0 2px 5px rgba(13,13,13,.55)}
 .hub-sec .lede{margin-bottom:26px}
 
 /* ---- the wall ------------------------------------------------------------ */
@@ -174,7 +196,7 @@ a{color:inherit;text-decoration:none}
     repeating-linear-gradient(180deg,
       rgba(255,255,255,.028) 0 1px, transparent 1px 3px),
     radial-gradient(140% 120% at 50% 50%,
-      transparent 46%, rgba(2,5,9,.5) 100%),
+      transparent 46%, rgba(5,5,5,.5) 100%),
     linear-gradient(155deg,var(--surface-3),var(--void))}
 .ar-screen img{width:100%;height:100%;object-fit:cover;opacity:.78}
 .ar-screen .ar-glyph{font-family:var(--display);font-style:italic;font-size:30px;
@@ -184,7 +206,7 @@ a{color:inherit;text-decoration:none}
   text-shadow:0 1px 6px rgba(0,0,0,.8)}
 .ar-soon{position:absolute;top:9px;right:10px;font-family:var(--sans);font-weight:600;
   font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);
-  border:1px solid var(--line-2);background:rgba(4,7,13,.72);padding:4px 8px;border-radius:var(--r-pill)}
+  border:1px solid var(--line-2);background:rgba(7,7,7,.72);padding:4px 8px;border-radius:var(--r-pill)}
 
 .ar-meta{padding:14px 15px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
 .ar-meta h2{font-family:var(--sans);font-weight:600;font-size:15px;line-height:1.35;
@@ -209,11 +231,11 @@ a{color:inherit;text-decoration:none}
 .ar-stage{padding:18px;display:grid;place-items:center;background:var(--void);min-height:220px}
 .ar-canvaswrap{width:100%;max-width:520px}
 .ar-canvaswrap canvas{width:100%;height:auto;display:block;image-rendering:pixelated;
-  background:#000;border:1px solid var(--line);border-radius:var(--r-sm)}
+  background:#000000;border:1px solid var(--line);border-radius:var(--r-sm)}
 .ar-hint{font-family:var(--sans);font-size:11.5px;line-height:1.8;color:var(--text-faint);
   text-align:center;margin:14px 0 0}
 .ar-stage iframe{width:100%;max-width:960px;aspect-ratio:16/10;border:1px solid var(--line);
-  border-radius:var(--r-sm);background:#000;display:block}
+  border-radius:var(--r-sm);background:#000000;display:block}
 .ar-note{color:var(--text-dim);font-size:14.5px;line-height:1.6;text-align:center;
   max-width:52ch;padding:28px 8px}
 

@@ -24,13 +24,13 @@
 
   window.LL_invaders = function mount(host) {
     var C = {
-      bg: tok("--bg", "#080f14"),
-      ink: tok("--text", "#eaf2f6"),
-      accent: tok("--leaf", "#4ec9ff"),
-      gold: tok("--gold", "#f0b93c"),
-      red: tok("--red", "#ef5350"),
-      dim: tok("--dim", "#7d94a2"),
-      line: tok("--line", "#22303a"),
+      bg: tok("--bg", "#0d0d0d"),
+      ink: tok("--text", "#f0f0f0"),
+      accent: tok("--leaf", "#aaaaaa"),
+      gold: tok("--gold", "#bbbbbb"),
+      red: tok("--red", "#818181"),
+      dim: tok("--dim", "#8f8f8f"),
+      line: tok("--line", "#2d2d2d"),
     };
 
     var W = 480, H = 360;
@@ -198,7 +198,7 @@
       for (var m = 0; m < bombs.length; m++) ctx.fillRect(bombs[m].x - 1, bombs[m].y, 2, 6);
 
       if (over || won) {
-        ctx.fillStyle = "rgba(3,8,12,.82)";
+        ctx.fillStyle = "rgba(7,7,7,.82)";
         ctx.fillRect(0, H / 2 - 42, W, 84);
         ctx.textAlign = "center";
         ctx.fillStyle = won ? C.accent : C.red;

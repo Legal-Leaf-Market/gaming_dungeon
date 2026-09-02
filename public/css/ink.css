@@ -11,35 +11,49 @@
    ink last makes it a layer over the site rather than one more
    voice in the cascade arguing with the page.
 
-   The owner's idea, and the best one this site has had: everything
-   you hover over turns to black-and-white ink for as long as you are
-   touching it. Not greyscale, which is sterile, but brush-and-ink
-   hand-drawn.
+   THE GESTURE INVERTED WITH THE GROUND, and it had to.
 
-   IT IS NOT AN EFFECT BOLTED ON, IT IS THE SITE'S OWN STORY. The
-   boot plate is a brush enso on black; the studio's mark is a brush
-   V inside a brush ring; the colour world is what the ink lifts to
-   reveal. Peeling a control back to paper and ink for the moment you
-   touch it is that same idea, at the scale of a button.
+   The owner's original idea was: everything you hover over turns to
+   black-and-white ink for as long as you are touching it. That worked
+   because the site underneath was a colour world and the ink was
+   something you LIFTED TO REVEAL.
+
+   The site underneath is now paper and ink already. So "turn it to
+   ink on hover" is a no-op -- the rule would fire, repaint a paper
+   control as a paper control, and look broken in the one way nobody
+   reports: nothing happens. A hover state that does nothing is worse
+   than none, because every visitor concludes the thing is not a
+   control.
+
+   So the gesture is the same idea pointing the other way: THE INK
+   POOLS. Touch a control and it floods to ink with its type reserved
+   out in paper, the way a seal is stamped. That is still "this thing
+   becomes brush and ink under your finger"; it is just that on paper
+   the dramatic direction is darker, not lighter.
 
    Four things together make it read as drawn rather than as a filter:
 
-     PAPER, not white. A warm off-white with grain on it, because a
-     flat #fff is a dialog box and paper is a material.
-     INK, not black. #15120e is the colour of a dried brush stroke.
+     INK, not black. #141414 is the colour of a dried brush stroke;
+     #000 is a fill.
+     PAPER, not white, for the marks reserved out of it.
+     GRAIN THROUGH THE FLOOD. The same paper texture, multiplied, so
+     the ink sits in the sheet rather than on top of it.
      A BRUSH EDGE, via border-image. A hand-drawn frame has a line
      that swells and thins; a border has one width, and one width is
      the entire tell.
-     NO SHADOW. Ink on paper does not float. Every lift and glow is
-     removed for the duration, which is also what makes the change
-     feel like a different medium rather than a different colour.
+     NO SHADOW. Ink on paper does not float. Every lift is removed
+     for the duration.
 
    Behind a (hover:hover) query, so a touch device never gets stuck
    showing a control mid-transformation with no way to leave it.
    ============================================================ */
 :root{
-  --ink-paper:#f2efe4;
-  --ink-line:#15120e;
+  /* NAMED FOR THE JOB, NOT FOR THE MATERIAL, because the materials
+     swapped ends. --ink-ground is what a touched control floods
+     with; --ink-mark is what stays reserved on top of it. Both are
+     strictly neutral, like every other value on the site. */
+  --ink-ground:#141414;
+  --ink-mark:#f4f4f4;
 }
 
 @media (hover:hover){
@@ -56,9 +70,27 @@
   .sis:hover,
   .g-card:hover,
   .ar-cab:hover{
-    background:var(--ink-paper) url(/assets/paper.svg) repeat;
-    background-blend-mode:multiply;
-    color:var(--ink-line);
+    background:var(--ink-ground) url(/assets/paper.svg) repeat;
+    /* SCREEN, and this was settled by rendering the three candidates
+       side by side rather than by reasoning about them.
+
+       Multiply is what a paper flood wanted and it is a no-op here:
+       everything it could darken is already dark, so the control came
+       out a flat black rectangle. Overlay reads like the right answer
+       -- it works from the base in both directions -- and it is not,
+       because overlay below 50% base IS multiply, and this base is at
+       8%. Soft-light fails the same way and for the same reason. All
+       three were built and photographed; two of them are indis-
+       tinguishable from a filled div.
+
+       Screen is the one that puts the sheet back: the paper's pale
+       fibres come up THROUGH the ink, the wash gives the flood a lit
+       corner, and the brush frame has something to be an edge
+       against. The animated block near the bottom of this file
+       restates this background and must use the same blend; they are
+       changed together. */
+    background-blend-mode:screen;
+    color:var(--ink-mark);
     /* THE BRUSH FRAME, and all three numbers here were arrived at by
        looking rather than by reasoning.
 
@@ -87,24 +119,29 @@
     transition:none;
   }
 
-  /* Everything inside goes to ink too. Colour that survives on a
-     paper ground reads as a mistake rather than as an accent. */
+  /* Everything inside is reserved out of the ink. A mark left at its
+     resting value reads as a mistake rather than as an accent -- and
+     since resting is now dark ink, anything missed here is invisible
+     rather than merely wrong, which is harder to spot in review. */
   .sis:hover strong,.sis:hover span,.sis:hover::after,
   .g-card:hover .g-title,.g-card:hover .g-shop,
   .g-card:hover .g-price,.g-card:hover .g-rar,
   .ar-cab:hover .ar-by,.ar-cab:hover .ar-blurb,.ar-cab:hover .ar-weight,
   .ar-cab:hover .ar-meta h2,
   .g-chip:hover .g-n{
-    color:var(--ink-line);
+    color:var(--ink-mark);
   }
   .g-card:hover .g-rar{ opacity:.72 }
 
-  /* A photograph becomes an ink wash: desaturated, pushed to
-     contrast, and lightened so it sits ON the paper rather than as a
-     dark hole punched in it. */
+  /* A photograph becomes a print pasted on an ink mount: desaturated
+     and pushed, but NOT lightened any further. The old rule lifted
+     brightness because the photo had to sit on paper; on an ink
+     ground the photo is already the bright thing in the frame, and
+     lifting it again blows the product out. Never inverted: a
+     negative of a keyboard reads as a fault, not as a wash. */
   .g-card:hover .g-shot img,
   .ar-cab:hover .ar-screen img{
-    filter:grayscale(1) contrast(1.5) brightness(1.12);
+    filter:grayscale(1) contrast(1.28);
   }
   /* TRANSPARENT, NOT PAPER, and the difference is a missing line.
      A descendant's background paints ABOVE its parent's border, and
@@ -122,41 +159,55 @@
      needs saying. A single coloured numeral left on the paper is
      what gives the whole thing away as a filter. */
   .ar-cab:hover .ar-glyph,
-  .g-card:hover .g-noimg{ color:var(--ink-line); opacity:.3 }
+  .g-card:hover .g-noimg{ color:var(--ink-mark); opacity:.3 }
   /* the out-of-stock strap is a dark plate with its own backdrop
      blur, which on paper is a black bar across the picture */
   .g-card:hover .g-oos{
-    background:rgba(242,239,228,.86); color:var(--ink-line);
+    background:rgba(20,20,20,.72); color:var(--ink-mark);
     -webkit-backdrop-filter:none; backdrop-filter:none;
   }
-  .ar-cab:hover .ar-slot{ color:var(--ink-line); opacity:.55; text-shadow:none }
+  .ar-cab:hover .ar-slot{ color:var(--ink-mark); opacity:.55; text-shadow:none }
   .ar-cab:hover .ar-soon{
-    color:var(--ink-line); border-color:var(--ink-line);
-    background:rgba(242,239,228,.72);
+    color:var(--ink-mark); border-color:var(--ink-mark);
+    background:rgba(20,20,20,.55);
   }
   /* The card's own controls invert with it. */
   .g-card:hover .g-save,.g-card:hover .g-zoom{
-    color:var(--ink-line); border-color:var(--ink-line);
-    background:rgba(242,239,228,.72);
+    color:var(--ink-mark); border-color:var(--ink-mark);
+    background:rgba(20,20,20,.55);
   }
 
   /* --------------------------------------------------- the pins
      Round things get the ENSO instead of the frame: the same
      gesture as the logo, one stroke with a gap where the brush
      lifted. A rectangle's border-image would have to be squeezed
-     into a circle and would stop looking drawn. */
-  /* The enso rides ON the paper, not around it. Drawn on the plan's
-     own dark plate the ring was ink-black on near-black and simply
-     did not exist; the only ground it reads against is the paper the
-     dot has just turned into. So it is a background layer of the dot,
-     sized inside the rim, and the room glyph sits in the ring the way
-     the leaf sits in the logo. */
+     into a circle and would stop looking drawn.
+
+     THE PIN IS THE ONE CONTROL THAT DOES NOT FLOOD, and the reason
+     is the enso itself. enso.svg is drawn in ink; flooding the dot
+     to ink and then laying a black ring on it paints black on black,
+     which is the exact failure this file already has written up one
+     paragraph down about the old dark plate. The ring has to have
+     paper to be a ring on.
+
+     So the pin's gesture is the other half of the same idea: the
+     buttons take ink ON, and the pin has a ring drawn AROUND it. It
+     still reads as the same hand, and it is the only shape on the
+     site where the ink is a stroke rather than a flood. */
   .pin:hover .pin-dot,.pin:focus-visible .pin-dot{
-    background-color:var(--ink-paper);
+    background-color:var(--ink-mark);
     background-image:url(/assets/enso.svg), url(/assets/paper.svg);
     background-repeat:no-repeat, repeat;
     background-position:center, center;
     background-size:86% 86%, auto;
+    /* MULTIPLY HERE, AND THE BLEND FOLLOWS THE GROUND RATHER THAN THE
+       FILE. Everything that floods to ink up above is screened, so
+       the sheet's fibres come up through it. The pin does the
+       opposite -- it flags to PAPER and takes an ink ring -- so it
+       needs the opposite blend: enso.svg is drawn in ink, and
+       screening ink onto paper erases it. A blanket find-and-replace
+       of the blend mode in this file deletes the ring and leaves a
+       plain pale dot, which looks like nothing happened. */
     background-blend-mode:multiply, multiply;
     border-color:transparent;
     box-shadow:none;
@@ -164,26 +215,28 @@
        stock rather than as a quiet room, so the paper comes up full */
     opacity:1;
   }
-  .pin:hover .pin-ico,.pin:focus-visible .pin-ico{ color:var(--ink-line) }
-  /* The label and the card come with it, or the pin is ink and its
-     name is still floating in the coloured world beside it. */
-  .pin:hover .pin-name{ color:var(--ink-paper) }
-  .pin:hover .pin-count{ color:var(--ink-paper); opacity:.8 }
+  .pin:hover .pin-ico,.pin:focus-visible .pin-ico{ color:var(--ink-ground) }
+  /* The label and the card come with it. Both sit on the MAP, which
+     is a paper sheet now rather than a dark plate, so they go to ink
+     -- the opposite of what they did on the dark build, and getting
+     this one backwards leaves a pin whose name is white on white. */
+  .pin:hover .pin-name{ color:var(--ink-ground) }
+  .pin:hover .pin-count{ color:var(--ink-ground); opacity:.8 }
   .pin:hover .pin-card{
-    background:var(--ink-paper) url(/assets/paper.svg) repeat;
-    background-blend-mode:multiply;
+    background:var(--ink-mark) url(/assets/paper.svg) repeat;
+    background-blend-mode:multiply;  /* paper ground: see the pin dot above */
     border-image:url(/assets/ink-frame.svg) 34 / 6px / 0 stretch;
     box-shadow:none;
   }
-  .pin:hover .pin-epithet,.pin:hover .pin-blurb{ color:var(--ink-line) }
+  .pin:hover .pin-epithet,.pin:hover .pin-blurb{ color:var(--ink-ground) }
   .pin:hover .pin-epithet{ opacity:.78 }
 
   /* Links in running text get an ink underline rather than the whole
      paper treatment: turning a word inside a sentence into a paper
      tile would break the line it sits on. */
   .foot a:hover,.doc a:hover,.back:hover,.empty a:hover{
-    color:var(--ink-paper);
-    text-decoration-color:var(--ink-paper);
+    color:var(--ink-ground);
+    text-decoration-color:var(--ink-ground);
   }
 }
 
@@ -258,22 +311,41 @@
        than font-weight because weight reflows the label inside a
        button that is mid-hover, and the wobble below then jumps a
        word to a new line. */
-    -webkit-text-stroke:0.32px var(--ink-line);
-    text-shadow:0.4px 0.35px 0 rgba(21,18,14,.2);
+    -webkit-text-stroke:0.32px var(--ink-mark);
+    text-shadow:0.4px 0.35px 0 rgba(244,244,244,.22);
     /* The popped control has to sit over its neighbours or the tilt
        clips against the next card in the grid. */
     position:relative; z-index:6;
-    /* Flat paper is printer paper. A wash under the grain gives it a
-       lit side and a shaded one, which is what a sheet on a desk
-       actually looks like. Set as longhands: the shorthand above put
-       the colour last, and a third layer has to say which of the
-       three the blend applies to. */
-    background-color:var(--ink-paper);
+    /* Flat ink is a filled rectangle. A wash under the grain gives
+       the flood a lit side and a shaded one, which is what a loaded
+       brush on a sheet actually looks like. Set as longhands: the
+       shorthand above put the colour last, and a third layer has to
+       say which of the three the blend applies to.
+
+       SCREEN, NOT MULTIPLY, AND THIS BLOCK HAD TO CHANGE WITH THE
+       ONE ABOVE IT. Multiply was right when the flood was PAPER: a
+       light ground has room to be darkened, so the grain read as
+       fibre. The flood is ink now and multiply can only darken, so
+       both layers had nothing left to do and the control came out a
+       flat black rectangle -- which is the "clean software-generated
+       vector pack" the brief rules out, arrived at by leaving a blend
+       mode alone.
+
+       Overlay is the plausible fix and it is also a no-op: below 50%
+       base, overlay IS multiply, and ink sits at 8%. Screen is what
+       actually puts the fibres back. See the note on the resting
+       flood above, where the three were compared by rendering.
+
+       AND THIS BLOCK RESTATES THE BACKGROUND, so it wins over the
+       resting flood higher up the file whatever that one says. The
+       two have to be changed together; changing only the first is
+       how this was flat black for a commit. */
+    background-color:var(--ink-ground);
     background-image:url(/assets/paper.svg),
       radial-gradient(118% 132% at 26% 4%,
-        rgba(255,255,255,.9), rgba(96,74,52,.17) 76%);
+        rgba(255,255,255,.34), rgba(20,20,20,.30) 76%);
     background-repeat:repeat, no-repeat;
-    background-blend-mode:multiply, multiply;
+    background-blend-mode:screen, screen;
   }
 
   /* The big surfaces move a third as much and do not scale up: they

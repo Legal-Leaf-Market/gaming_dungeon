@@ -704,42 +704,105 @@ link, which is the entire reason it is the connective tissue across the sites.
 
 ---
 
-## 8. The design system: the Lantern Quarter
+## 8. The design system: paper and ink
 
-**This site has been redesigned twice in two days and the second one is a
-clean break.** On 2026-08-29 the owner looked at the ink-and-paper build and
-said, in full: complete redesign, *"something that feels like a city in that
-game, but don't try to emulate the game. Come up with your own and just do
-it."* That instruction is the whole brief and it overrides the rule this
-section used to open with.
+**The site has no colour. Not "muted colour", not "mostly greyscale": none.**
+On 2026-09-02 the owner delivered a black-and-white calligraphy asset brief
+and said it four ways in one message: *"Here is an asset library with zero
+color. Do you hear me? That means I want zero color on the website... I don't
+wanna see one lingering anything from old shit. I don't wanna see any color."*
 
-**Do not restore the paper palette, and do not re-derive anything from the
-game's UiKit.** The previous version of this section said a colour that
-drifted from the game was worse than one that never matched. That was true of
-the site it described. It is the thing that was asked to stop.
+The accompanying brief is stricter than "make it grayscale" and names its own
+failure mode: **"No accent colors. No hidden tinting. No warm or cool palette
+shifts beyond grayscale."** So every colour value on this site is `R = G = B`.
+A warm off-white paper and a near-black-with-umber ink are exactly the hidden
+tinting that rules out, and they are how a palette comes back — nobody
+reinstates "the colour scheme", somebody picks a cream because flat grey looks
+clinical. `test/monochrome.test.mjs` fails if any of it returns.
+
+**THE GROUND FLIPPED, AND IT WAS NOT A PREFERENCE.** The new library is brush
+and ink *on paper* — dark marks, light ground — and a large part of it is
+transparent: ten sigils, five region cartouches, the dividers, the corner, the
+compass, both rails. A dark mark on a dark page is not there, and §8c already
+had that scar written up before this change: *"Ink on a dark plate is not
+there. `#15120e` on the site's own grounds is invisible, and it fails
+silently."* Paper is the requirement for the art to be visible at all.
+
+**This is not a restoration of the pre-2026-08-29 paper build.** That one was
+paper *with the game's UiKit colours on it*, and its palette is still the
+thing that was asked to stop. This has no palette. It has a value ladder.
 
 ### What the site is now
 
-A night city. Deep blue-black ground, jade for the interface, lantern amber
-for the world, and a five-plate silhouette skyline behind everything.
+An ink wash on a sheet. Neutral paper ground, ink for everything drawn on it,
+and depth carried entirely by value.
 
 | | |
 |---|---|
-| ground | `--night #080d16`, rising through three surfaces to `--surface-3` |
-| edges | light hairlines (`rgba(146,180,214,.13)`), never a dark border |
-| interface | `--jade #7fdcb8`. Anything you can press, and the studio itself |
-| the world | `--lantern #ffb86b`. Money, warmth, the city's own light |
+| ground | `--paper #f1f1f1`, through `--paper-lo/2/3` down to `--wash` |
+| edges | dark hairlines, `rgba(18,18,18,.14)` — the inverse of the old rule |
+| the interface | `--ink #141414`. Anything you can press, and the studio |
+| the world | `--wash`. Scenery never goes below the wash steps |
 | display type | EB Garamond, headings only |
 | everything else | the system sans stack |
 
-**Jade is us, amber is the world.** A jade price or an amber button is a
-category error and looks like one.
+**Weight replaced hue, and it carries the same job.** "Jade is us, amber is the
+world" is gone because there is no jade and no amber; what replaced it is that
+the interface is the darkest thing on the page and the scenery is wash. That
+reads at a glance for the same reason the colour rule did, and it cannot drift
+into a second palette.
+
+**Not sterile is a texture job, not a tint job.** The reason to reach for a
+cream is that flat neutral grey looks clinical. The answer is grain and brush
+edges — `paper.webp` over the plates, `ink-frame.svg` on the borders, the enso
+on round things — never a few degrees of hue smuggled into the ground. The
+reference images are not cream because somebody tinted them; they are cream
+because they are photographs of paper.
+
+**The hairline rule inverted and it is easy to get backwards.** On the dark
+build a light line read as an edge catching the sky and a dark one read as a
+gap. On paper it is exactly reversed: paper has no light above it to catch, so
+an edge is where ink has settled. Always ink at low alpha, never a grey hex.
+
+### The art in `public/art/` is DERIVED, and that is worth knowing before you judge it
+
+The restyle brief asks for a hand-painted sumi-e library and ships five style
+references for it. **The library that arrived with it was not that.** 33 of the
+35 files were byte-identical to the colour library already committed here —
+`sigil-6` was 93% violet (`#be82eb`, Nascent Soul), `plate-audio` 91% cyan
+(`#8cdcdc`), `compass` 49% jade. The zip was the brief's own `current_library/`
+folder: the INPUT to the restyle, handed over as though it were the output.
+Only `rail-left` and `rail-right` were new work.
+
+So the committed files are a **mechanical conversion**, not paintings:
+true-greyscale, then polarity-corrected per asset (measured, not guessed — 19
+of them were light marks drawn for the old dark page and had to be inverted or
+they are blank paper), then an ink curve. Line art is lossless WebP, wash is
+lossy q92. The conversion script is not in the repo because it needs Pillow and
+this repo has one dependency; the measurements are in the commit message.
+
+**This is honest interim work and should be replaced by the real thing.** It is
+zero-colour and it is the right way up, which is what the site needed to ship;
+it is not brush-painted, and the plates that read best (`battlestation`,
+`power`, `vault`) do so because the source art was already wash-like. When real
+ink versions arrive, they drop in at the same filenames with no code change —
+which is what the original art brief promised and is still true.
 
 ### What survived, and it is only the data
 
-- **The twelve realm colours** (`Realms.luau`). Rooms fly realms, that mapping
-  is still a claim about meaning, and it still lives in `ROOMS_META`
-  (`api/_scene.js`) mirrored in `public/js/app.js`. **The two must agree.**
+- **The twelve realms** (`Realms.luau`), now as a VALUE ladder rather than
+  twelve hues. Rooms fly realms, that mapping is still a claim about meaning,
+  and it still lives in `ROOMS_META` (`api/_scene.js`) mirrored in
+  `public/js/app.js`. **The two must agree**, and a test now proves it.
+
+  The ladder is arguably truer than the hues were. The art brief's own line
+  for the realms is that they get *"thinner, cleaner and colder as the number
+  goes up"* — realm 1 is earth and iron, realm 12 is almost nothing at all.
+  Twelve hues could only gesture at that; twelve values ARE it. Realm 1 is the
+  heaviest ink on the page (`#191919`) and realm 12 is barely darker than the
+  wash (`#9d9d9d`). **Every step must stay above `--wash`**: a band lighter
+  than the wash is a door nobody can see, which is a failure the old palette
+  could not have, because every hue in it was mid-value by construction.
   Realms 10 to 12 are still unspent except the arcade door, which flies
   Immortal Ascension because it is the room that sells nothing: *"the last
   stair has no rail."*
@@ -841,28 +904,56 @@ one commit.
 
 ---
 
-## 8c. The ink layer: everything you hover over becomes brush and ink
+## 8c. The ink layer: the gesture inverted with the ground
 
 The owner's idea, and the best one the site has had: *"leave everything
 default, but anything you hover over make this black and white thing. And not
 just black and white, I don't want it sterile. I want black and white ink hand
 drawn type shit. Every button, everything you hover over."*
 
-**It is the site's own story, not an effect bolted on.** The boot plate is a
-brush enso on black; the studio's mark is a brush V inside a brush ring. The
-colour world is what the ink lifts to reveal, so peeling a control back to
-paper and ink for as long as you touch it is the same idea at the scale of a
-button.
+**THAT IDEA NOW POINTS THE OTHER WAY, AND IT HAD TO.** It worked because the
+site underneath was a colour world and the ink was something you *lifted to
+reveal*. The site underneath is paper and ink already, so "turn it to ink on
+hover" is a no-op: the rule fires, repaints a paper control as a paper control,
+and looks broken in the one way nobody reports — nothing happens. A hover state
+that does nothing is worse than none, because every visitor concludes the thing
+is not a control.
+
+So the same idea runs in the opposite direction: **the ink pools.** Touch a
+control and it floods to ink with its type reserved out in paper, the way a
+seal is stamped. Still "this thing becomes brush and ink under your finger";
+on paper the dramatic direction is simply darker rather than lighter.
+
+The two tokens are named for the JOB, not the material, because the materials
+swapped ends: `--ink-ground` is what a touched control floods with,
+`--ink-mark` is what stays reserved on top of it. Names tied to the material
+would now be backwards.
 
 Four things together make it read as drawn rather than as a filter, and
 dropping any one of them takes it back to a greyscale filter:
 
 | | |
 |---|---|
-| **Paper, not white** | `#f2efe4` plus `assets/paper.svg` grain, blended `multiply`. A flat `#fff` is a dialog box; paper is a material. |
-| **Ink, not black** | `#15120e`, the colour of a dried stroke. |
-| **A brush edge** | `assets/ink-frame.svg` through `border-image: … 34 / 3px / 0 round`. A drawn line swells and thins; a border has one width, and one width is what "sterile" means. |
+| **Ink, not black** | `--ink-ground #141414`, the colour of a dried stroke. `#000` is a fill. |
+| **Paper, not white** | `--ink-mark #f4f4f4` for the marks reserved out of it. |
+| **Grain through the flood** | `assets/paper.svg`, blended **`screen`**. See the trap below. |
+| **A brush edge** | `assets/ink-frame.svg` through `border-image: … 34 / 6px / 0 stretch`. A drawn line swells and thins; a border has one width, and one width is what "sterile" means. |
 | **The enso on round things** | `assets/enso.svg`, the logo's own gesture, on the map pins. A rectangle's `border-image` squeezed into a circle stops looking drawn. |
+
+**THE BLEND MODE FOLLOWS THE GROUND, AND THE OBVIOUS ANSWER IS WRONG.**
+Multiply was right when the flood was paper: a light ground has room to be
+darkened, so the grain read as fibre. Against ink, multiply has nothing left
+to darken and the control comes out a flat black rectangle — the "clean
+software-generated vector pack" the brief rules out, arrived at by leaving a
+blend mode alone. **Overlay looks like the fix and is also a no-op**, because
+overlay below 50% base *is* multiply and ink sits at 8%; soft-light fails the
+same way. All three were built and photographed side by side, and only
+`screen` puts the sheet back.
+
+**But the pins go the other way**, and a blanket find-and-replace of the blend
+mode in `ink.css` breaks them silently. A pin flags to **paper** and takes an
+**ink** ring, so it needs `multiply`: screening ink onto paper erases it, and
+what you get is a plain pale dot that looks like nothing happened.
 
 `tools/ink.mjs` generates all three assets, zero dependencies, same shape as
 `tools/city.mjs`. `brush()` builds **filled geometry, not a stroke**, because a
@@ -1387,7 +1478,11 @@ before you trust it.
 
 ## 11. Verify before you merge
 
-1. `npm test` — 109 cases. The collector test parses the assembled program with
+1. `npm test` — 170 cases. **14 of them fail on `main` today** and have
+   nothing to do with the restyle (they are the AWIN/ingest/probe group, which
+   want a `DATABASE_URL` and a live registry). Check the count, not just the
+   colour of the run: the number to beat is 14 failures, and anything above it
+   is yours. The collector test parses the assembled program with
    `new Function`, which is the point of having it: a syntax error there does
    not fail locally, it fails silently on a stranger's website with no error
    event.
@@ -1488,3 +1583,31 @@ before you trust it.
 - Do NOT stretch an absolutely positioned scrim past the viewport to escape the
   page rail. `overflow-x:hidden` on body hides the overflow, it does not remove
   it, and the document ends up twice its own width. Position it fixed (§8d).
+
+### The zero-colour rules (§8, added 2026-09-02)
+
+- Do NOT add a colour value with three unequal channels ANYWHERE that reaches a
+  browser, and that includes a "warm" paper and a "warm" ink. That is the
+  hidden tinting the brief names, and `test/monochrome.test.mjs` fails on it.
+- Do NOT reach for a cream to stop the page looking sterile. Non-sterile is a
+  TEXTURE job — grain, brush edges, the enso — never a tint (§8).
+- Do NOT put a hue back into `tools/city.mjs`, `tools/ink.mjs` or
+  `tools/branding.mjs`. A generator is ten committed files the next time
+  anybody runs it, and the guard covers the tools for that reason.
+- Do NOT flip the ground back to dark. The art library is black ink on paper
+  and half of it is transparent; on a dark page it is invisible and it fails
+  silently, which is §8c's own scar (§8).
+- Do NOT let the realm ladder stop ascending, and do NOT let a band go lighter
+  than `--wash`. Value is the ONLY thing distinguishing realm 1 from realm 10
+  now that hue is gone; a band lighter than the wash is a door nobody sees.
+- Do NOT change `ink.css`'s blend mode in bulk. It follows the GROUND: ink
+  floods are `screen`, the paper pins are `multiply`, and a find-and-replace
+  erases the enso without erroring (§8c).
+- Do NOT add a page-local `::before` or `::after` to an element that already
+  carries `.hero-paint`. They are the same element, so a local rule REPLACES
+  the cover rather than adding to it, and being page-local it wins — which put
+  the painting's own headline back on screen under the arcade's live copy.
+- Do NOT assume a rule that had no visible edge on the dark build still has
+  none. Three hard edges only appeared when the ground went light: the ground
+  ramp, the room plate's top and left, and the hero's bottom join. A dark
+  shape on a dark page hides its own edges for free.

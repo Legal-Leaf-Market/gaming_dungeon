@@ -896,20 +896,24 @@ export function renderCard(mark, opts = {}) {
   const { w: W, h: H } = CARD
   const px = new Uint8ClampedArray(W * H * 4)
   const bg = colour(plate(mark))
-  /* Heavenpillar's palette. `violet` keeps its variable name from the
-     old CRT theme rather than being renamed through every use below;
-     what it holds now is the gold the game uses for its own accents.
-     UiKit.Colors: ink 1b1815, gold a8822a, text 26221e. */
-  const violet = colour(opts.accent || '#a8822a')
-  const gold = colour(opts.gold || '#1b1815')
-  const ink = colour(opts.ink || '#26221e')
+  /* THE CARD HAS NO PALETTE, and neither does anything else now.
+     `violet` and `gold` keep their variable names from two dead
+     themes rather than being renamed through every use below; what
+     they hold is a value ladder. Emphasis on this card is carried by
+     weight, exactly as it is on the site: the mark is the darkest
+     thing, the rule under it is a step lighter, the tagline lighter
+     again. Anything with three unequal channels does not belong in
+     this file -- see the head of tokens.css. */
+  const violet = colour(opts.accent || '#141414')
+  const gold = colour(opts.gold || '#3d3d3d')
+  const ink = colour(opts.ink || '#242424')
 
   fillRect(px, W, H, 0, 0, W, H, bg)
 
   /* A hairline frame, inset. Gives the card an edge when a client
      puts it on a white background, which about half of them do. */
-  fillRect(px, W, H, 0, 0, W, 6, colour('#1b1815'), 0.9)
-  fillRect(px, W, H, 0, H - 6, W, 6, colour('#1b1815'), 0.3)
+  fillRect(px, W, H, 0, 0, W, 6, colour('#141414'), 0.9)
+  fillRect(px, W, H, 0, H - 6, W, 6, colour('#141414'), 0.3)
 
   /* LAID OUT FROM THE CONTENT, NOT FROM SIX MAGIC NUMBERS. Every
      measurement below is derived, so changing the tagline or a type
@@ -958,7 +962,7 @@ export function renderCard(mark, opts = {}) {
   if (tx + textWidth(tagline, TAG) > W - 48) {
     throw new Error('branding: the tagline "' + tagline + '" does not fit the card')
   }
-  drawText(px, W, H, tagline, tx, ty, TAG, colour('#6e665c'), 1)
+  drawText(px, W, H, tagline, tx, ty, TAG, colour('#6b6b6b'), 1)
 
   return px
 }

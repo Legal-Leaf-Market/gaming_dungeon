@@ -50,16 +50,24 @@
   z-index: 9999;
   display: grid;
   place-items: center;
-  /* A shade under the site's own --night, so the plate reads as the
-     moment before the lights come up rather than as a panel. */
-  background: #05080d;
+  /* A shade under the site's own paper, so the plate reads as a fresh
+     sheet rather than as a panel. It was #05080d and a dark room; the
+     enso being drawn on it is a BRUSH STROKE, and a brush stroke wants
+     paper under it. That the boot sequence is now literally the site's
+     own story -- ink arriving on a sheet -- is the redesign paying for
+     itself rather than a coincidence. */
+  background: #f1f1f1;
   animation: bootOut .70s cubic-bezier(.65, 0, .35, 1) 1.10s forwards;
 }
 
-/* A pool of light under the mark. Without it the plate is a flat
-   black rectangle and the mark looks pasted on; with it the mark
-   looks like the only lit thing in a dark room, which is the whole
-   image. */
+/* Damp in the paper under the mark. On the dark build this was a pool
+   of LIGHT, because the image was the only lit thing in a dark room.
+   On paper there is no light to pool -- the sheet is already the
+   brightest thing there is -- so the same job is done by the opposite
+   material: a breath of tone, as though the sheet were slightly wet
+   where the brush is about to land. Reaching for a glow here is the
+   single easiest way to make a paper page look like a dark page with
+   the brightness turned up. */
 #boot::before {
   content: '';
   position: absolute;
@@ -67,8 +75,8 @@
   width: min(70vmin, 620px); height: min(70vmin, 620px);
   transform: translate(-50%, -54%);
   background: radial-gradient(circle,
-    rgba(127, 220, 184, .12) 0%,
-    rgba(127, 220, 184, .05) 32%,
+    rgba(20, 20, 20, .055) 0%,
+    rgba(20, 20, 20, .022) 32%,
     transparent 70%);
   pointer-events: none;
 }
@@ -94,20 +102,23 @@
 }
 .boot-ring circle {
   fill: none;
-  stroke: #f4f1e8;
+  stroke: #141414;
   stroke-width: 5;
   stroke-linecap: round;
   /* 2*pi*45, the circumference of the r=45 circle in the markup */
   stroke-dasharray: 283;
   stroke-dashoffset: 283;
   animation: bootDraw .82s cubic-bezier(.4, 0, .2, 1) forwards;
-  filter: drop-shadow(0 0 14px rgba(244, 241, 232, .28));
+  /* A bleed, not a glow. Ink spreads INTO paper; it does not throw
+     light off it, and a 14px halo on a white ground is just a smudge
+     of grey with no edge. */
+  filter: drop-shadow(0 1px 2px rgba(20, 20, 20, .20));
 }
 
 /* The V, fading up inside the ring once the ring is most of the way
    round: the brand's own order of reading. */
 .boot-ring path {
-  fill: #f4f1e8;
+  fill: #141414;
   opacity: 0;
   animation: bootMark .44s ease-out .44s forwards;
 }
@@ -120,7 +131,7 @@
      space; the indent takes it back */
   text-indent: .42em;
   font-size: clamp(13px, 2.6vmin, 17px);
-  color: #f4f1e8;
+  color: #141414;
   opacity: 0;
   margin: 0;
   animation: bootWord .52s ease-out .62s forwards;

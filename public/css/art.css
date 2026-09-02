@@ -43,7 +43,18 @@
   aspect-ratio:380 / 2400;
   pointer-events:none; user-select:none;
   background-repeat:no-repeat; background-size:cover;
-  opacity:.42;
+  /* .13, DOWN FROM .42, AND THE NUMBER IS MEASURED RATHER THAN
+     TASTED. The rails were light marks on a dark page; they are ink
+     on paper now, and their ink density is 0.69 and 0.64 -- nearly
+     twice the median room plate. At .42 they read as two dark
+     columns ruled down the sides of a white sheet, which is the
+     exact opposite of the brief's own line for them: they must lose
+     every fight with the type they sit beside.
+
+     Held to roughly the same effective weight the plates carry
+     (density x opacity), which lands here. An illuminated margin,
+     not a picture hung next to one. */
+  opacity:.13;
   /* A hair of blur so it never competes with type for focus. */
   filter:blur(.4px);
 }
@@ -84,6 +95,17 @@
      the heading has won one. */
   opacity:.22;
 
+  /* AND IT FADES IN AT THE TOP NOW, which it did not need to before.
+     The vertical mask ran `#000 0 34%` -- fully opaque from the first
+     pixel -- so the plate began on a hard horizontal edge. On the old
+     near-black page that edge was invisible for free: a dark plate at
+     .22 over a dark ground has nowhere near the contrast to draw a
+     line. On paper the same plate is the darkest thing in the region
+     and its top edge is a ruled line straight across the heading.
+
+     A short fade-in, not a long one: the art's mass is top-left and
+     that is the part worth keeping, so the ramp is over the first
+     tenth and done well before the heading sits on it. */
   /* FADED ON BOTH AXES, and the vertical one is the load-bearing
      half. The plate is 300px tall and .room-head is shorter than
      that, so a right-only mask left a hard horizontal edge across
@@ -91,12 +113,12 @@
      empty-state panel. Two gradients intersected: gone to the
      right, gone at the bottom, no edge anywhere. */
   -webkit-mask-image:
-    linear-gradient(90deg,#000 0 28%,transparent 86%),
-    linear-gradient(180deg,#000 0 34%,transparent 94%);
+    linear-gradient(90deg,transparent 0,#000000 4%,#000000 28%,transparent 86%),
+    linear-gradient(180deg,transparent 0,#000000 11%,#000000 34%,transparent 94%);
   -webkit-mask-composite:source-in;
           mask-image:
-    linear-gradient(90deg,#000 0 28%,transparent 86%),
-    linear-gradient(180deg,#000 0 34%,transparent 94%);
+    linear-gradient(90deg,transparent 0,#000000 4%,#000000 28%,transparent 86%),
+    linear-gradient(180deg,transparent 0,#000000 11%,#000000 34%,transparent 94%);
           mask-composite:intersect;
 }
 .room-head[data-room="workshop"]::before     { background-image:url(/art/plate-workshop.webp) }
@@ -110,10 +132,32 @@
 .room-head[data-room="audio"]::before        { background-image:url(/art/plate-audio.webp) }
 .room-head[data-room="walls"]::before        { background-image:url(/art/plate-walls.webp) }
 
-/* Play's plate is daylight cloud and reads far brighter than the
-   other nine on a near-black page. Turned down rather than
-   redrawn: the art is right, the exposure is the outlier. */
-.room-head[data-room="play"]::before{ opacity:.15 }
+/* PER-PLATE EXPOSURE, and the whole table moved when the ground did.
+   The old note here turned Play DOWN, because as light art on a dark
+   page it was the bright outlier. Every plate is ink on paper now, so
+   the outliers are the opposite ones: the two thinnest drawings.
+
+   These are density-normalised, not eyeballed. Each plate's
+   alpha-weighted ink coverage was measured and its opacity set to
+   hold the same effective weight as the median plate at .22, so no
+   room's header is louder than another's by an accident of how much
+   black its art happens to contain.
+
+   Audio and Walls are the deliberate exceptions in the artwork
+   itself -- realm 9 is ripples and realm 10 is "almost nothing at
+   all", so they carry a twentieth of the ink the others do. Left at
+   .22 they are blank paper. They are pushed until they are visible,
+   which is not the same as making them loud. */
+.room-head[data-room="arcade"]::before       { opacity:.15 }
+.room-head[data-room="audio"]::before        { opacity:.55 }
+.room-head[data-room="battlestation"]::before{ opacity:.22 }
+.room-head[data-room="play"]::before         { opacity:.24 }
+.room-head[data-room="power"]::before        { opacity:.25 }
+.room-head[data-room="tabletop"]::before     { opacity:.19 }
+.room-head[data-room="vault"]::before        { opacity:.16 }
+.room-head[data-room="walls"]::before        { opacity:.55 }
+.room-head[data-room="wardrobe"]::before     { opacity:.22 }
+.room-head[data-room="workshop"]::before     { opacity:.18 }
 
 /* ---- REALM SIGILS -----------------------------------------
    The mark for the room's realm, beside its name. Ten of them,
@@ -134,7 +178,9 @@
 .art-divider{
   height:90px; margin:34px 0 6px; pointer-events:none;
   background:url(/art/divider-range.webp) center/auto 90px repeat-x;
-  opacity:.5;
+  /* density 0.05: this is a horizon line, not a mountain. It needs
+     most of its opacity to exist at all on paper. */
+  opacity:.85;
 }
 
 /* ---- REGION CARTOUCHES ------------------------------------
@@ -164,8 +210,8 @@
      34% and only finished at 72%, which left the artwork's own
      rectangular edge visible down both sides: on a map that reads as
      a photograph pasted on rather than as terrain. */
-  -webkit-mask-image:radial-gradient(ellipse at 50% 50%, #000 18%, transparent 58%);
-          mask-image:radial-gradient(ellipse at 50% 50%, #000 18%, transparent 58%);
+  -webkit-mask-image:radial-gradient(ellipse at 50% 50%, #000000 18%, transparent 58%);
+          mask-image:radial-gradient(ellipse at 50% 50%, #000000 18%, transparent 58%);
 }
 .plan-narrow .region{ display:none }
 
@@ -178,13 +224,19 @@
 .plan::before{
   content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
   background:url(/art/paper.webp) center/600px repeat;
-  opacity:.10; mix-blend-mode:overlay; border-radius:inherit;
+  /* MULTIPLY, NOT OVERLAY. `overlay` pushes light areas lighter and
+     dark areas darker against the layer beneath; on the old near-
+     black plate that read as grain catching the light. The plate is
+     a paper sheet now, so overlay had almost nothing to darken and
+     the grain vanished. Multiply lays the texture INTO the sheet,
+     which is what a paper grain does. */
+  opacity:.16; mix-blend-mode:multiply; border-radius:inherit;
 }
 .plan-corner{
   position:absolute; z-index:1; pointer-events:none;
   width:120px; aspect-ratio:1;
   background:url(/art/corner-tl.webp) center/contain no-repeat;
-  opacity:.4;
+  opacity:.55;
 }
 .plan-corner.tl{ top:0; left:0 }
 .plan-corner.tr{ top:0; right:0; transform:scaleX(-1) }

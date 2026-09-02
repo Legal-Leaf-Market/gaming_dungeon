@@ -76,12 +76,12 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
    COOL above, WARM below. It just runs at a much higher key now,
    which changes what the bands have to do -- see BAND. */
 const SKY = {
-  top:   '#5f9fd4',   // zenith, clean blue
-  upper: '#8dbcdd',
-  mid:   '#bfd5e4',
-  low:   '#eccfae',   // where the warmth starts
-  haze:  '#f4b98c',
-  glow:  '#ef9358',   // the sun's own colour on the horizon
+  top:   '#dcdcdc',   // zenith, where the wash is heaviest
+  upper: '#e6e6e6',
+  mid:   '#efefef',
+  low:   '#f6f6f6',   // where the paper starts winning
+  haze:  '#fafafa',
+  glow:  '#ffffff',   // reserved paper: the brightest thing is bare sheet
 }
 
 /* THE VALUE LADDER, and the spread matters more than the hues.
@@ -109,17 +109,17 @@ const SKY = {
    Each step is still about 40% of the way from the one in front
    toward the sky; the sky just moved. */
 const BAND = {
-  crag: '#a8bdcd',
-  far:  '#7f9bb2',
-  mid:  '#53708a',
-  near: '#2c3f52',
+  crag: '#b9b9b9',
+  far:  '#909090',
+  mid:  '#5d5d5d',
+  near: '#2b2b2b',
 }
 
 const LIGHT = {
-  lantern: '#ffb86b',   // paper lanterns and window squares
-  hot:     '#ffe0ac',   // the core of a lantern, a stop brighter
-  jade:    '#8fe3c4',   // the studio's green, used sparingly and high up
-  sun:     '#fff3dc',
+  lantern: '#f4f4f4',   // paper lanterns and window squares
+  hot:     '#ffffff',   // the core of a lantern: bare paper, reserved
+  jade:    '#ffffff',   // the studio's one mark, high up and left unpainted
+  sun:     '#ffffff',
   /* THREE BLOSSOM TONES, AND THEY ARE COLOURS RATHER THAN OPACITIES.
 
      The first canopy used one rose at two alpha levels for near and
@@ -141,11 +141,11 @@ const LIGHT = {
      eye, and at hero scale the eye goes straight to them. Sunlit
      blossom is BRIGHTER pink, barely warmer; the light does not
      bleach the pigment out of it. */
-  blossomFar:  '#d493ae',
-  blossom:     '#f4bcd0',
-  blossomLit:  '#ffdde1',   // sunlit: brighter pink, not cream
-  blossomCore: '#dba07d',   // the little centre, warm but not a daisy eye
-  bough:       '#4a3226',   // wood, brown rather than black: it is daytime
+  blossomFar:  '#c9c9c9',
+  blossom:     '#ebebeb',
+  blossomLit:  '#ffffff',   // sunlit: reserved paper, the petal left unpainted
+  blossomCore: '#5e5e5e',   // the little centre, a pressed dot of ink
+  bough:       '#1c1c1c',   // wood is the heaviest stroke in the frame now
 }
 
 /* ------------------------------------------------------------
@@ -574,7 +574,7 @@ function peak() {
      was within a step of the haze and the mountain read as a smudge:
      aerial perspective is real, and the thing at the back still has
      to be a SHAPE first. */
-  const rock = mixHex(BAND.crag, '#20303f', 0.34)
+  const rock = mixHex(BAND.crag, '#2a2a2a', 0.34)
   /* Everything reaches the plate floor. A silhouette that stops
      above its own bottom edge draws a ruled line where the element
      ends, which is the scar this scene has already been fixed for
@@ -583,7 +583,7 @@ function peak() {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
   <path fill="${rock}" d="${cone()}${shoulder()}${floor}"/>
   <path fill="${mixHex(BAND.crag, '#ffffff', 0.82)}" d="${cap()}"/>
-  <path fill="${mixHex(rock, '#0d1620', 0.55)}" d="${house}"/>
+  <path fill="${mixHex(rock, '#141414', 0.55)}" d="${house}"/>
   ${glow.join('')}
 </svg>\n`
 }
@@ -1209,8 +1209,8 @@ function paint(sys, pal) {
    the warm pale the low sun is putting into the air, and mixing it
    toward the blue instead is what turned the far layer a dusty
    mauve: technically hazier, and the wrong hue for the hour. */
-const HAZE = '#c3d8e8'
-const HAZE_WARM = '#efdfe0'
+const HAZE = '#dcdcdc'
+const HAZE_WARM = '#f2f2f2'
 
 function mixHex(a, b, t) {
   const c = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
@@ -1622,15 +1622,15 @@ function quarterPlan() {
   const w = 2000, h = 1250
   const rand = rng(0x9d4c)
 
-  const INK      = '#0d0b0e'
-  const LAND_HI  = '#2f2934'   /* the ground, far side */
-  const LAND     = '#211c26'   /* the ground, near side */
-  const RIDGE    = '#191520'   /* rock, a shade under the ground it stands on */
-  const LINE     = '#7d6470'   /* the pen */
-  const LINE_HI  = '#ad8d90'   /* the pen, pressed */
-  const WATER    = '#141d2b'
-  const WATER_HI = '#44637c'
-  const LEAF     = '#15121c'
+  const INK      = '#f4f4f4'   /* the sheet the map is drawn on */
+  const LAND_HI  = '#ececec'   /* the ground, far side */
+  const LAND     = '#e3e3e3'   /* the ground, near side */
+  const RIDGE    = '#d8d8d8'   /* rock, a shade under the ground it stands on */
+  const LINE     = '#8a8a8a'   /* the pen */
+  const LINE_HI  = '#2e2e2e'   /* the pen, pressed */
+  const WATER    = '#dedede'
+  const WATER_HI = '#a9a9a9'
+  const LEAF     = '#cfcfcf'
 
   const peaks = []      /* {y, svg} -- sorted and emitted back to front */
   const trees = [], roofs = [], walls = [], roads = [], banks = []
@@ -1988,10 +1988,12 @@ function quarterPlan() {
 function skyCss() {
   return `/* GENERATED by tools/city.mjs. Do not edit; run the tool.
 
-   Blue hour over the Lantern Quarter. The one relationship that
-   matters here is that --city-glow is WARM and everything above it
-   is COOL; that single contrast is what makes the scene look lit.
-   Flatten it and the city goes grey. */
+   An ink wash over the Lantern Quarter. The one relationship that
+   matters is that --city-glow is RESERVED PAPER and everything
+   above it carries progressively more pigment; that single value
+   contrast is what makes the scene look lit now that there is no
+   hue to do it. Flatten the ladder and the city goes flat -- which
+   on paper means it disappears, rather than going grey. */
 :root{
   --city-sky-top:${SKY.top};
   --city-sky-upper:${SKY.upper};

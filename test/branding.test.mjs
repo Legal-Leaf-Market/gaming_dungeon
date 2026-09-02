@@ -298,8 +298,21 @@ test('the share card is not a blank rectangle', () => {
      still checked, below, against renderCard.
 
      Two independent ways a blank slips through, so both are closed:
-     a uniform field has almost no distinct colours, and a card whose
-     content missed the centre would still pass a whole-canvas count. */
+     a uniform field has almost no distinct tones, and a card whose
+     content missed the centre would still pass a whole-canvas count.
+
+     THE BINS ARE FINER THAN THEY WERE, because the card is greyscale
+     now and the old granularity made this assertion unpassable rather
+     than merely harder. Binning at >>3 gives 32 levels per channel;
+     on a colour image the three channels vary independently so a
+     photograph lands in the hundreds, but on a greyscale one R=G=B,
+     every bin is on the diagonal, and 32 is the CEILING. The card was
+     hitting 32 of a possible 32 -- using the whole range available to
+     it -- and failing a test that asked for more than 40.
+
+     >>2 gives a ceiling of 64, and a real image still has to fill
+     most of it: this card measures 64. A flat plate measures one or
+     two, which is the thing being caught. */
   const px = decodePNG(readFileSync(pub('assets/og.png')))
   assert.equal(px.w, CARD.w)
   assert.equal(px.h, CARD.h)
@@ -309,7 +322,7 @@ test('the share card is not a blank rectangle', () => {
   for (let y = 0; y < px.h; y += 2) {
     for (let x = 0; x < px.w; x += 2) {
       const i = (y * px.w + x) * 4
-      seen.add((px.data[i] >> 3) + ',' + (px.data[i + 1] >> 3) + ',' + (px.data[i + 2] >> 3))
+      seen.add((px.data[i] >> 2) + ',' + (px.data[i + 1] >> 2) + ',' + (px.data[i + 2] >> 2))
       /* the centre band, where a wordmark lives on either design */
       if (y > px.h * 0.28 && y < px.h * 0.72 && px.data[i] < 110) mid++
     }

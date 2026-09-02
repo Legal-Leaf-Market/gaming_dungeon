@@ -58,7 +58,7 @@
    ============================================================ */
 .hero-paint{
   position:relative;
-  background-color:#1a2233;
+  background-color:#222222;
   background-image:image-set(
     url("/verda-hero/hero-golden-target.webp") type("image/webp"),
     url("/verda-hero/hero-golden-target.png") type("image/png"));
@@ -78,7 +78,7 @@
    THEY WANT OPPOSITE MASKS.
 
    .ink-hero::before is masked with
-   `linear-gradient(#000 62%, transparent 98%)` so that the scrim
+   `linear-gradient(#000000 62%, transparent 98%)` so that the scrim
    cannot draw a ruled line the width of the page where the section
    ends. That is right for a scrim and fatal for a cover: every word
    the painting puts in its bottom third -- three lines of body copy
@@ -100,11 +100,11 @@
   content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
   background:
     linear-gradient(180deg,
-      rgba(12,20,32,1) 0, rgba(12,20,32,1) 84px,
-      rgba(12,20,32,.72) 128px, rgba(12,20,32,.3) 192px,
-      rgba(12,20,32,0) 260px),
+      rgba(19,19,19,1) 0, rgba(19,19,19,1) 84px,
+      rgba(19,19,19,.72) 128px, rgba(19,19,19,.3) 192px,
+      rgba(19,19,19,0) 260px),
     linear-gradient(180deg,
-      rgba(12,20,32,.06) 0%, rgba(12,20,32,.46) 54%, rgba(12,20,32,.84) 100%);
+      rgba(19,19,19,.06) 0%, rgba(19,19,19,.46) 54%, rgba(19,19,19,.84) 100%);
 }
 
 /* ::after, MASKED AT BOTH ENDS -- the cover.
@@ -151,25 +151,50 @@
    the width and the middle band of it is what shows, which put the
    painted copy's last line at 99% of the section, inside a 98-to-100
    fade-out, and "Every door opens onto the maker's own shop" was
-   legible across the bottom of the arcade. The fade-out was there to
-   stop the panel drawing a ruled edge where the section ends, and it
-   cannot: the panel is opaque only on the left, where the page below
-   is the same near-black, and it is down to 0.07 by the right. */
+   legible across the bottom of the arcade. So the MASK still does not
+   fade out at the bottom -- it cannot, or the painted words come
+   back.
+
+   THE JOIN IS A BACKGROUND LAYER INSTEAD, and it had to become one
+   when the page went to paper. The old note here argued the panel
+   could not draw a ruled edge "because the page below is the same
+   near-black". That was true and it is now the reason there IS an
+   edge: the page below is a paper sheet, so a dark panel meeting it
+   is a 200-level step landing on a straight horizontal, which is the
+   one edge a viewer always sees.
+
+   A first (therefore topmost) layer in the stack ramps the whole
+   bottom of the hero to --paper. It is inside the mask rather than
+   fighting it, it applies at every crop, and it belongs to
+   .hero-paint so both heroes that use this class get it.
+
+   NOT A PAGE-LOCAL PSEUDO-ELEMENT. The obvious fix is
+   `.ar-hero::after` in arcade.html, and it is the wrong one twice
+   over: .ar-hero and .hero-paint are the SAME ELEMENT, so a local
+   ::after does not add a layer, it REPLACES this cover -- and being
+   page-local and last in the cascade, it wins. Doing exactly that
+   put the painting's own headline and body copy back on screen
+   underneath the arcade's live copy. This file's header already
+   warns about it for ::before; it is just as true for ::after. */
 .hero-paint::after{
   content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
   background:
+    /* the join into the sheet -- topmost, so it covers the panel */
+    linear-gradient(180deg,
+      rgba(241,241,241,0) 58%, rgba(241,241,241,.55) 80%,
+      rgba(241,241,241,.90) 92%, var(--paper) 100%),
     radial-gradient(58% 40% at 100% 100%,
-      rgba(12,20,32,.94), rgba(12,20,32,0) 72%),
+      rgba(19,19,19,.94), rgba(19,19,19,0) 72%),
     linear-gradient(90deg,
-      rgba(12,20,32,1) 0, rgba(12,20,32,1) 45%,
-      rgba(12,20,32,.995) 48%, rgba(12,20,32,.97) 52%,
-      rgba(12,20,32,.92) 57%, rgba(12,20,32,.80) 63%,
-      rgba(12,20,32,.62) 70%, rgba(12,20,32,.42) 78%,
-      rgba(12,20,32,.22) 88%, rgba(12,20,32,.07) 100%);
+      rgba(19,19,19,1) 0, rgba(19,19,19,1) 45%,
+      rgba(19,19,19,.995) 48%, rgba(19,19,19,.97) 52%,
+      rgba(19,19,19,.92) 57%, rgba(19,19,19,.80) 63%,
+      rgba(19,19,19,.62) 70%, rgba(19,19,19,.42) 78%,
+      rgba(19,19,19,.22) 88%, rgba(19,19,19,.07) 100%);
   -webkit-mask-image:linear-gradient(180deg,
-    transparent 3%, #000 18%, #000 100%);
+    transparent 3%, #000000 18%, #000000 100%);
   mask-image:linear-gradient(180deg,
-    transparent 3%, #000 18%, #000 100%);
+    transparent 3%, #000000 18%, #000000 100%);
 }
 
 /* ------------------------------------------------- the whole composition */

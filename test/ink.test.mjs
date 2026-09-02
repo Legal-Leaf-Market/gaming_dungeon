@@ -70,10 +70,26 @@ test('every page is covered, not just the ones that existed today', () => {
   assert.ok(PAGES.length >= 6, 'expected the six pages at least')
 })
 
-test('the ink layer defines its own paper and ink, and gates on hover', () => {
+test('the ink layer defines its own two tones, and gates on hover', () => {
   const css = readFileSync(join(PUBLIC, 'css', 'ink.css'), 'utf8')
-  assert.match(css, /--ink-paper:/, 'paper token missing')
-  assert.match(css, /--ink-line:/, 'ink token missing')
+  /* RENAMED WITH THE GROUND, from --ink-paper / --ink-line. The site
+     is paper and ink at rest now, so the hover gesture inverted: a
+     touched control FLOODS with ink and reserves its marks out in
+     paper, rather than being peeled back from colour to paper. The
+     tokens are named for the job they do -- what the control becomes,
+     and what stays legible on it -- because the materials swapped
+     ends and names tied to the material would now be backwards. */
+  assert.match(css, /--ink-ground:/, 'the flood tone is missing')
+  assert.match(css, /--ink-mark:/, 'the reserved tone is missing')
+  /* And they must actually be opposite ends, or the flood is
+     invisible: this is the one relationship the layer cannot lose. */
+  const ground = /--ink-ground:\s*#([0-9a-f]{6})/i.exec(css)
+  const mark = /--ink-mark:\s*#([0-9a-f]{6})/i.exec(css)
+  const lum = h => 0.299 * parseInt(h.slice(0, 2), 16) +
+                   0.587 * parseInt(h.slice(2, 4), 16) +
+                   0.114 * parseInt(h.slice(4, 6), 16)
+  assert.ok(Math.abs(lum(ground[1]) - lum(mark[1])) > 120,
+    'the flood and the mark are too close to tell apart')
   /* A touch device has no way to leave a hover state, so a control
      that transformed on tap would stay transformed. Everything in
      here except the tokens lives behind (hover:hover). */
