@@ -58,7 +58,23 @@
    ============================================================ */
 .hero-paint{
   position:relative;
-  background-color:#1a2233;
+
+  /* MONOCHROME STOPGAP. The restyle pack rebuilt all 35 art assets in
+     ink but did not include the hero, which is a colour photograph and
+     the largest thing on the page. Greying it here keeps the front page
+     in one visual language until the ink hero lands.
+
+     blend-mode rather than `filter`, deliberately: a filter on
+     .hero-paint would grey its children too, and the children are the
+     heading and the buttons. background-blend-mode only touches the
+     background layer, and `luminosity` against a neutral takes the
+     image's lightness while taking the colour's zero saturation, which
+     is a greyscale conversion done by the compositor.
+
+     Delete this block, and restore a warm ground, when the real ink
+     hero replaces hero-golden-target.webp. */
+  background-color:#2a2724;
+  background-blend-mode:luminosity;
   background-image:image-set(
     url("/verda-hero/hero-golden-target.webp") type("image/webp"),
     url("/verda-hero/hero-golden-target.png") type("image/png"));
@@ -100,11 +116,11 @@
   content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
   background:
     linear-gradient(180deg,
-      rgba(12,20,32,1) 0, rgba(12,20,32,1) 84px,
-      rgba(12,20,32,.72) 128px, rgba(12,20,32,.3) 192px,
-      rgba(12,20,32,0) 260px),
+      rgba(19,19,19,1) 0, rgba(19,19,19,1) 84px,
+      rgba(19,19,19,.72) 128px, rgba(19,19,19,.3) 192px,
+      rgba(19,19,19,0) 260px),
     linear-gradient(180deg,
-      rgba(12,20,32,.06) 0%, rgba(12,20,32,.46) 54%, rgba(12,20,32,.84) 100%);
+      rgba(19,19,19,.06) 0%, rgba(19,19,19,.46) 54%, rgba(19,19,19,.84) 100%);
 }
 
 /* ::after, MASKED AT BOTH ENDS -- the cover.
@@ -159,13 +175,13 @@
   content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
   background:
     radial-gradient(58% 40% at 100% 100%,
-      rgba(12,20,32,.94), rgba(12,20,32,0) 72%),
+      rgba(19,19,19,.94), rgba(19,19,19,0) 72%),
     linear-gradient(90deg,
-      rgba(12,20,32,1) 0, rgba(12,20,32,1) 45%,
-      rgba(12,20,32,.995) 48%, rgba(12,20,32,.97) 52%,
-      rgba(12,20,32,.92) 57%, rgba(12,20,32,.80) 63%,
-      rgba(12,20,32,.62) 70%, rgba(12,20,32,.42) 78%,
-      rgba(12,20,32,.22) 88%, rgba(12,20,32,.07) 100%);
+      rgba(19,19,19,1) 0, rgba(19,19,19,1) 45%,
+      rgba(19,19,19,.995) 48%, rgba(19,19,19,.97) 52%,
+      rgba(19,19,19,.92) 57%, rgba(19,19,19,.80) 63%,
+      rgba(19,19,19,.62) 70%, rgba(19,19,19,.42) 78%,
+      rgba(19,19,19,.22) 88%, rgba(19,19,19,.07) 100%);
   -webkit-mask-image:linear-gradient(180deg,
     transparent 3%, #000 18%, #000 100%);
   mask-image:linear-gradient(180deg,

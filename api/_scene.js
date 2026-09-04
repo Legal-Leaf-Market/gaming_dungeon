@@ -353,31 +353,31 @@ export const ROOMS_META = [
      the top of the game's ladder and there is no room here that
      earns them yet. Leave them for rooms that do not exist, rather
      than promoting a shelf of cables to immortality. */
-  { key:'arcade',        name:'The Arcade Floor', realm:5,  band:'#e8be50',
+  { key:'arcade',        name:'The Arcade Floor', realm:5,  band:'#b9b6b1',
     epithet:'A sun the size of a seed.',
     blurb:'Cabinets, sticks, and everything that used to eat quarters.' },
-  { key:'play',          name:'Play',             realm:2,  band:'#78aadc',
+  { key:'play',          name:'Play',             realm:2,  band:'#97938d',
     epithet:'Breath by breath, the sea fills.',
     blurb:'Games, keys and the things you actually play.' },
-  { key:'tabletop',      name:'The Table',        realm:3,  band:'#60b496',
+  { key:'tabletop',      name:'The Table',        realm:3,  band:'#a29e99',
     epithet:'What is built on stone endures.',
     blurb:'Dice, decks, minis and the four hours you lost to them.' },
-  { key:'battlestation', name:'Battlestation',    realm:4,  band:'#5896eb',
+  { key:'battlestation', name:'Battlestation',    realm:4,  band:'#adaaa5',
     epithet:'A whirlpool learns to hold its center.',
     blurb:'The desk. Boards, mice, screens, chairs.' },
-  { key:'workshop',      name:'The Workshop',     realm:1,  band:'#9b948a',
+  { key:'workshop',      name:'The Workshop',     realm:1,  band:'#8b8781',
     epithet:'Flesh is the first furnace.',
     blurb:'Parts, printers and the rig you keep almost finishing.' },
-  { key:'audio',         name:'Audio',            realm:9,  band:'#8cdcdc',
+  { key:'audio',         name:'Audio',            realm:9,  band:'#e5e4e1',
     epithet:'The way walks with you now.',
     blurb:'Amps, cans and speakers worth the shelf.' },
-  { key:'power',         name:'Power',            realm:8,  band:'#6e6ea0',
+  { key:'power',         name:'Power',            realm:8,  band:'#dad8d5',
     epithet:'Emptiness, polished until it shines.',
     blurb:'Chargers, cables, and the brick you keep losing.' },
-  { key:'vault',         name:'The Vault',        realm:6,  band:'#be82eb',
+  { key:'vault',         name:'The Vault',        realm:6,  band:'#c4c1bd',
     epithet:'The self that steps outside the self.',
     blurb:'Figures, manga, plush and things kept in the box.' },
-  { key:'wardrobe',      name:'The Wardrobe',     realm:7,  band:'#e278b4',
+  { key:'wardrobe',      name:'The Wardrobe',     realm:7,  band:'#cfccc9',
     epithet:'The river forgets it was rain.',
     blurb:'What you wear to the thing.' },
   /* REALM 10 IS SPENT, AND HERE IS THE CLAIM.
@@ -393,7 +393,7 @@ export const ROOMS_META = [
      Band and epithet verbatim from Realms.luau, like the other nine:
      RGB(240,240,250), which is gallery white and the only near-white
      band on the map. */
-  { key:'walls',         name:'The Walls',        realm:10, band:'#f0f0fa',
+  { key:'walls',         name:'The Walls',        realm:10, band:'#f0efed',
     epithet:'The heavens themselves object.',
     blurb:'Canvas, wallpaper and the things that make it a room.' },
 ]

@@ -124,14 +124,19 @@ test('where the live words come back, the painted ones are covered', () => {
      about an eighth of the artboard's width and the painted headline
      reaches 36% of it. */
   const cover = block(css, css.indexOf('.hero-paint::after'))
-  assert.match(cover, /linear-gradient\(90deg[^)]*rgba\(12,20,32,1\)/,
+  /* The channel values are deliberately not pinned. What this guards is
+     that the cover starts FULLY OPAQUE, and pinning the exact colour made
+     the test fail for the monochrome restyle, which only changed the hue
+     and left the danger untouched. Alpha is the assertion; the palette is
+     free to move. */
+  assert.match(cover, /linear-gradient\(90deg[^)]*rgba\(\d+,\d+,\d+,1\)/,
     '.hero-paint::after has no opaque cover over the painted copy, so the ' +
     'live words and the painted ones will be on screen at once')
   /* NEARLY OPAQUE IS NOT OPAQUE. At 0.96 the painted headline
      measured 18-25 out of 255 against a ground of 18-20: seven
      levels, which is nothing on a chart and a legible grey ghost on
      a dark screen. */
-  assert.ok(!/linear-gradient\(90deg[^;]*rgba\(12,20,32,\.9\d\)\s+0\b/.test(cover),
+  assert.ok(!/linear-gradient\(90deg[^;]*rgba\(\d+,\d+,\d+,\.9\d\)\s+0\b/.test(cover),
     'the cover starts at less than full opacity: the painted words will ghost')
   /* AND IT MUST NOT INHERIT .ink-hero::before's MASK. That mask fades
      the scrim out below 62% so it cannot draw a ruled line where the

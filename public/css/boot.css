@@ -67,8 +67,8 @@
   width: min(70vmin, 620px); height: min(70vmin, 620px);
   transform: translate(-50%, -54%);
   background: radial-gradient(circle,
-    rgba(127, 220, 184, .12) 0%,
-    rgba(127, 220, 184, .05) 32%,
+    rgba(200,198,194, .12) 0%,
+    rgba(200,198,194, .05) 32%,
     transparent 70%);
   pointer-events: none;
 }

@@ -271,7 +271,7 @@
     background-color:var(--ink-paper);
     background-image:url(/assets/paper.svg),
       radial-gradient(118% 132% at 26% 4%,
-        rgba(255,255,255,.9), rgba(96,74,52,.17) 76%);
+        rgba(255,255,255,.9), rgba(78,77,76,.17) 76%);
     background-repeat:repeat, no-repeat;
     background-blend-mode:multiply, multiply;
   }

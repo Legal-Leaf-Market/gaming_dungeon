@@ -104,9 +104,9 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
      was the whole reason for a gradient, and nothing is set over a
      picture. */
   background:linear-gradient(180deg,
-    rgba(20,34,48,0) 0,
-    rgba(24,38,54,.50) 40px,
-    rgba(15,25,38,.90) 110px,
+    rgba(32,32,31,0) 0,
+    rgba(37,36,35,.50) 40px,
+    rgba(24,24,23,.90) 110px,
     rgba(9,15,25,.99) 185px,
     var(--night) 260px);
 }
@@ -157,8 +157,8 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   position:fixed;
   left:0; right:0; top:-40px; height:190px;
   background:linear-gradient(180deg,
-    rgba(10,20,32,.72) 0, rgba(10,20,32,.44) 40%,
-    rgba(10,20,32,.16) 70%, transparent 100%);
+    rgba(19,19,18,.72) 0, rgba(19,19,18,.44) 40%,
+    rgba(19,19,18,.16) 70%, transparent 100%);
   pointer-events:none; z-index:-1;
 }
 
@@ -234,8 +234,8 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
      beneath. There is no straight edge anywhere in it. */
   background:
     radial-gradient(120% 96% at -8% 108%,
-      rgba(20,34,48,.74) 0%, rgba(20,34,48,.44) 38%,
-      rgba(20,34,48,.14) 62%, transparent 80%),
+      rgba(32,32,31,.74) 0%, rgba(32,32,31,.44) 38%,
+      rgba(32,32,31,.14) 62%, transparent 80%),
     /* BOTH SIDES OF THE JOIN ARE TRANSPARENT. This used to still
        carry a third of its alpha at 100%, and the section simply
        ends there, so a ruled line ran the width of the page at the
@@ -245,7 +245,7 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
        one of them. Ending at nothing cannot come apart. The shade
        under the copy is the radial above; this is only the bottom
        weighting, and it is not needed in the last few percent. */
-    linear-gradient(180deg, transparent 44%, rgba(20,34,48,.30) 82%, transparent 100%);
+    linear-gradient(180deg, transparent 44%, rgba(32,32,31,.30) 82%, transparent 100%);
   /* MASKED TO NOTHING AT THE BOTTOM EDGE, and this is the fix for a
      line the owner could see and I could not reason my way to.
 
@@ -281,10 +281,10 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   .ink-hero::before{
     background:
       radial-gradient(140% 90% at -10% 108%,
-        rgba(20,34,48,.62) 0%, rgba(20,34,48,.34) 44%, transparent 74%),
+        rgba(32,32,31,.62) 0%, rgba(32,32,31,.34) 44%, transparent 74%),
       linear-gradient(180deg,
-        transparent 6%, rgba(14,25,37,.38) 32%,
-        rgba(14,25,37,.44) 70%, transparent 100%);
+        transparent 6%, rgba(24,24,23,.38) 32%,
+        rgba(24,24,23,.44) 70%, transparent 100%);
   }
 }
 
@@ -304,7 +304,7 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
      and a wide faint one that reads as the title being lit. */
   /* Heavier than it was: the sky behind it is bright now, so the
      title is light-on-light at the top of its own line height. */
-  text-shadow:0 2px 26px rgba(12,22,34,.72), 0 2px 6px rgba(12,22,34,.55);
+  text-shadow:0 2px 26px rgba(21,21,20,.72), 0 2px 6px rgba(21,21,20,.55);
 }
 .ink-hero h1 em{
   font-style:italic; color:var(--jade-lit);
@@ -316,8 +316,8 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   line-height:1.68; margin:0; max-width:56ch;
 }
 .ink-hero .lede{
-  color:#e4ecf4; max-width:50ch;
-  text-shadow:0 1px 16px rgba(12,22,34,.8), 0 1px 3px rgba(12,22,34,.6);
+  color:#ece9e4; max-width:50ch;
+  text-shadow:0 1px 16px rgba(21,21,20,.8), 0 1px 3px rgba(21,21,20,.6);
 }
 
 /* --- the two doors out of the hero ------------------------- */
@@ -332,7 +332,7 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
              background var(--fast), border-color var(--fast), color var(--fast);
 }
 .cta-1{
-  background:var(--jade); color:#04211a;
+  background:var(--jade); color:#14120f;
   box-shadow:0 2px 10px rgba(0,0,0,.34), 0 10px 34px rgba(var(--jade-rgb),.22);
 }
 .cta-1:hover{ background:var(--jade-lit); transform:translateY(-2px);
@@ -342,7 +342,7 @@ main{ max-width:var(--page); margin:0 auto; padding:0 var(--pad) 96px }
   background:rgba(9,15,24,.5);
   backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
 }
-.cta-2:hover{ border-color:var(--line-3); background:rgba(20,30,44,.62); transform:translateY(-2px) }
+.cta-2:hover{ border-color:var(--line-3); background:rgba(29,29,28,.62); transform:translateY(-2px) }
 .cta:active{ transform:translateY(0) }
 
 /* The seal, bottom right of the hero: the twelfth realm's name,
@@ -742,8 +742,8 @@ a.g-card:active{ transform:translateY(-1px) }
 .g-save:focus-visible,.g-zoom:focus-visible{ opacity:1 }
 .g-save:hover,.g-zoom:hover{ color:var(--text); border-color:var(--line-3) }
 /* Kept is a state, so it stays lit whether or not anyone is near it. */
-.g-save.on{ opacity:1; color:var(--lantern); border-color:rgba(255,184,107,.5);
-  background:rgba(255,184,107,.14) }
+.g-save.on{ opacity:1; color:var(--lantern); border-color:rgba(196,194,190,.5);
+  background:rgba(196,194,190,.14) }
 @media (hover:none){
   .g-save,.g-zoom{ opacity:.85; background:rgba(4,8,14,.7) }
 }
@@ -860,7 +860,7 @@ a.g-card:active{ transform:translateY(-1px) }
   font-size:22px; line-height:1; color:var(--text);
   border:1px solid var(--line-2); background:rgba(10,16,26,.8);
 }
-#vPhotoX:hover{ background:rgba(24,34,48,.9); border-color:var(--line-3) }
+#vPhotoX:hover{ background:rgba(33,33,32,.9); border-color:var(--line-3) }
 #vPhotoCap{
   position:absolute; left:0; right:0; bottom:calc(16px + env(safe-area-inset-bottom));
   text-align:center; padding:0 20px;

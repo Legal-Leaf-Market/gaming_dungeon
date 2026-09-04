@@ -73,7 +73,7 @@
   --night:#1a181d;
   --surface:#23212a;
   --surface-2:#2a2c38;
-  --surface-3:#343446;
+  --surface-3:#35322f;
 
   /* Hairlines. Light-on-dark, never a darker line: a dark border on
      a dark surface reads as a gap, and a light one reads as an edge
@@ -82,16 +82,16 @@
   /* Warmed to match. A blue hairline on a warm ground reads as a
      seam between two materials rather than as an edge catching the
      light, and every panel on the site is drawn with one. */
-  --line:rgba(226,196,186,.14);
-  --line-2:rgba(226,196,186,.26);
-  --line-3:rgba(226,196,186,.42);
+  --line:rgba(204,202,198,.14);
+  --line-2:rgba(204,202,198,.26);
+  --line-3:rgba(204,202,198,.42);
 
   /* --- text ------------------------------------------------
      Not white. #e9eef6 is a hair cool and a hair down from pure,
      which stops long copy vibrating on a dark ground. */
   --text:#f4ece6;
-  --text-dim:#c2aca6;
-  --text-faint:#8a7477;
+  --text-dim:#b5afa8;
+  --text-faint:#7b7671;
 
   /* --- the light -------------------------------------------
      Two sources and they mean different things, which is the whole
@@ -116,45 +116,55 @@
      the third one is most of its surface area: rose. It is a real
      token now rather than a decoration, because it is what the
      whole page is made of. */
-  --jade:#7fd0b0;
-  --jade-lit:#a8e6c9;
-  --jade-deep:#5da38b;
-  --jade-rgb:127,208,176;
+  --jade:#d8d4cd;
+  --jade-lit:#f0ece5;
+  --jade-deep:#a8a49d;
+  --jade-rgb:216,212,205;
 
-  --lantern:#fabf8e;
-  --lantern-hot:#fbf5eb;
+  --lantern:#e8e2d8;
+  --lantern-hot:#fbf8f2;
 
-  --blossom:#c6968e;
-  --blossom-lit:#f2c9b1;
-  --blossom-deep:#7f4c4f;
-  --blossom-rgb:198,150,142;
-  --bough:#453036;
+  --blossom:#b3aca4;
+  --blossom-lit:#ded7cd;
+  --blossom-deep:#6b6660;
+  --blossom-rgb:179,172,164;
+  --bough:#332f2c;
 
   /* --- the twelve major realms ------------------------------
      Realms.luau, unchanged: rooms fly realms and the mapping in
-     api/_scene.js is a claim about meaning, not about colour. They
-     were picked to sit on paper and they happen to sit on night
-     better, because every one of them is mid-value or above. */
-  --realm-1:#a8a196;   /* Body Tempering            */
-  --realm-2:#78aadc;   /* Qi Gathering              */
-  --realm-3:#60b496;   /* Foundation Establishment  */
-  --realm-4:#5896eb;   /* Core Formation            */
-  --realm-5:#e8be50;   /* Golden Core               */
-  --realm-6:#be82eb;   /* Nascent Soul              */
-  --realm-7:#e278b4;   /* Soul Transformation       */
-  --realm-8:#8a8ac4;   /* Void Refinement           */
-  --realm-9:#8cdcdc;   /* Dao Integration           */
-  --realm-10:#f0f0fa;  /* Tribulation Transcendence */
-  --realm-11:#ffe2a0;  /* Immortal Ascension        */
-  --realm-12:#fffaeb;  /* True Immortal             */
+     api/_scene.js is a claim about meaning, not about colour.
+
+     Monochrome restyle: these were twelve hues and are now one
+     ascending ink ladder. That suits the ladder better than the
+     hues did, because a colour ramp is arbitrary and has to be
+     learned while a value ramp is legible on sight: realm 1 is the
+     most earthbound grey and realm 12 is almost the page's own
+     text colour. The art brief states the same rule for the plates
+     and sigils, so the chrome and the art now ascend together.
+
+     Every value stays mid or above, for the same reason as before:
+     these paint text and chips on a near-black page, so a dark
+     realm colour would be an unreadable one. */
+  --realm-1:#8b8781;   /* Body Tempering            */
+  --realm-2:#97938d;   /* Qi Gathering              */
+  --realm-3:#a29e99;   /* Foundation Establishment  */
+  --realm-4:#adaaa5;   /* Core Formation            */
+  --realm-5:#b9b6b1;   /* Golden Core               */
+  --realm-6:#c4c1bd;   /* Nascent Soul              */
+  --realm-7:#cfccc9;   /* Soul Transformation       */
+  --realm-8:#dad8d5;   /* Void Refinement           */
+  --realm-9:#e5e4e1;   /* Dao Integration           */
+  --realm-10:#f0efed;  /* Tribulation Transcendence */
+  --realm-11:#f8f6f2;  /* Immortal Ascension        */
+  --realm-12:#fffdf9;  /* True Immortal             */
 
   /* --- item rarity ------------------------------------------
      Items.luau's four grades, lifted a step so they read as light
      rather than as pigment. */
-  --common:#93a3b5;
-  --fine:#6fc79a;
-  --rare:#6fa8f0;
-  --precious:#e8be50;
+  --common:#9b9791;
+  --fine:#b0aca6;
+  --rare:#c6c2bc;
+  --precious:#e0dbd3;
 
   /* --- elevation -------------------------------------------
      THE HARD OFFSET SHADOW IS GONE. `3px 3px 0 var(--ink)` was on
@@ -242,15 +252,15 @@
   --accent-dk:var(--jade-deep);
   --accent-rgb:var(--jade-rgb);
   --gold:var(--lantern);
-  --red:#e8695c;
+  --red:#33302c;
   --amber:var(--lantern);
   --leaf:var(--jade);
   --sage:var(--jade);
-  --qi:#6fa8f0;
-  --health:#e8695c;
+  --qi:#c6c2bc;
+  --health:#8b8781;
   --stamina:var(--lantern);
-  --xp:#b39ce0;
-  --danger:#e8695c;
+  --xp:#a8a49d;
+  --danger:#33302c;
   --arcade:var(--jade);
   --radius:var(--r);
   --radius-sm:var(--r-sm);

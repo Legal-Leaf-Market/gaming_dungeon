@@ -57,31 +57,31 @@
      file is the server's claim about what a room MEANS; where its
      pin sits is presentation, and the server has no opinion on it. */
   var ROOMS = [
-    { mx:26, my:54, nx:70, ny:16, key:'arcade',        path:'/arcade-floor',  name:'The Arcade Floor', realm:5, band:'#e8be50',
+    { mx:26, my:54, nx:70, ny:16, key:'arcade',        path:'/arcade-floor',  name:'The Arcade Floor', realm:5, band:'#b9b6b1',
       epithet:'A sun the size of a seed.',
       blurb:'Cabinets, sticks, and everything that used to eat quarters.' },
-    { mx:12, my:77, nx:27, ny:7, key:'play',          path:'/play',          name:'Play',             realm:2, band:'#78aadc',
+    { mx:12, my:77, nx:27, ny:7, key:'play',          path:'/play',          name:'Play',             realm:2, band:'#97938d',
       epithet:'Breath by breath, the sea fills.',
       blurb:'Games, keys and the things you actually play.' },
-    { mx:17, my:27, nx:28, ny:25, key:'tabletop',      path:'/tabletop',      name:'The Table',        realm:3, band:'#60b496',
+    { mx:17, my:27, nx:28, ny:25, key:'tabletop',      path:'/tabletop',      name:'The Table',        realm:3, band:'#a29e99',
       epithet:'What is built on stone endures.',
       blurb:'Dice, decks, minis and the four hours you lost to them.' },
-    { mx:42, my:69, nx:28, ny:43, key:'battlestation', path:'/battlestation', name:'Battlestation',    realm:4, band:'#5896eb',
+    { mx:42, my:69, nx:28, ny:43, key:'battlestation', path:'/battlestation', name:'Battlestation',    realm:4, band:'#adaaa5',
       epithet:'A whirlpool learns to hold its center.',
       blurb:'The desk. Boards, mice, screens, chairs.' },
-    { mx:39, my:22, nx:70, ny:32, key:'workshop',      path:'/workshop',      name:'The Workshop',     realm:1, band:'#9b948a',
+    { mx:39, my:22, nx:70, ny:32, key:'workshop',      path:'/workshop',      name:'The Workshop',     realm:1, band:'#8b8781',
       epithet:'Flesh is the first furnace.',
       blurb:'Parts, printers and the rig you keep almost finishing.' },
-    { mx:57, my:45, nx:70, ny:48, key:'audio',         path:'/audio',         name:'Audio',            realm:9, band:'#8cdcdc',
+    { mx:57, my:45, nx:70, ny:48, key:'audio',         path:'/audio',         name:'Audio',            realm:9, band:'#e5e4e1',
       epithet:'The way walks with you now.',
       blurb:'Amps, cans and speakers worth the shelf.' },
-    { mx:73, my:75, nx:28, ny:79, key:'power',         path:'/power',         name:'Power',            realm:8, band:'#6e6ea0',
+    { mx:73, my:75, nx:28, ny:79, key:'power',         path:'/power',         name:'Power',            realm:8, band:'#dad8d5',
       epithet:'Emptiness, polished until it shines.',
       blurb:'Chargers, cables, and the brick you keep losing.' },
-    { mx:69, my:20, nx:28, ny:61, key:'vault',         path:'/vault',         name:'The Vault',        realm:6, band:'#be82eb',
+    { mx:69, my:20, nx:28, ny:61, key:'vault',         path:'/vault',         name:'The Vault',        realm:6, band:'#c4c1bd',
       epithet:'The self that steps outside the self.',
       blurb:'Figures, manga, plush and things kept in the box.' },
-    { mx:88, my:50, nx:70, ny:64, key:'wardrobe',      path:'/wardrobe',      name:'The Wardrobe',     realm:7, band:'#e278b4',
+    { mx:88, my:50, nx:70, ny:64, key:'wardrobe',      path:'/wardrobe',      name:'The Wardrobe',     realm:7, band:'#cfccc9',
       epithet:'The river forgets it was rain.',
       blurb:'What you wear to the thing.' },
     /* THE WALLS sits in the gap between the two mountain ranges,
@@ -90,7 +90,7 @@
        ran 16/34/52/70 with the free arcade at 90, so a tenth stop at
        88 would have landed on top of it. 16/32/48/64/80 fits five
        with the same gap at the bottom. */
-    { mx:55, my:16, nx:70, ny:80, key:'walls',         path:'/walls',         name:'The Walls',        realm:10, band:'#f0f0fa',
+    { mx:55, my:16, nx:70, ny:80, key:'walls',         path:'/walls',         name:'The Walls',        realm:10, band:'#f0efed',
       epithet:'The heavens themselves object.',
       blurb:'Canvas, wallpaper and the things that make it a room.' }
   ];
@@ -232,7 +232,7 @@
        anywhere on this site, on the room that sells nothing:
        "the last stair has no rail." */
     pins.push({
-      r: { key:'arcade-stick', path:'/arcade', name:'The Arcade', band:'#ffe2a0',
+      r: { key:'arcade-stick', path:'/arcade', name:'The Arcade', band:'#f8f6f2',
            epithet:'The last stair has no rail.',
            blurb:'Cabinets in the corner. Free play, nothing for sale, no sign-up.' },
       label: 'open', has: true, cabinet: true,

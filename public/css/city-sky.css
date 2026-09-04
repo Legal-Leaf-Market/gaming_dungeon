@@ -5,20 +5,20 @@
    is COOL; that single contrast is what makes the scene look lit.
    Flatten it and the city goes grey. */
 :root{
-  --city-sky-top:#5f9fd4;
-  --city-sky-upper:#8dbcdd;
-  --city-sky-mid:#bfd5e4;
-  --city-sky-low:#eccfae;
-  --city-haze:#f4b98c;
-  --city-glow:#ef9358;
-  --city-crag:#a8bdcd;
-  --city-far:#7f9bb2;
-  --city-mid:#53708a;
-  --city-near:#2c3f52;
-  --city-lantern:#ffb86b;
-  --city-hot:#ffe0ac;
-  --city-jade:#8fe3c4;
-  --city-blossom:#f4bcd0;
-  --city-blossom-far:#d493ae;
-  --city-sun:#fff3dc;
+  --city-sky-top:#979592;
+  --city-sky-upper:#b7b4b1;
+  --city-sky-mid:#d4d1cd;
+  --city-sky-low:#d5d3cf;
+  --city-haze:#c5c2bf;
+  --city-glow:#a4a29f;
+  --city-crag:#bcbab6;
+  --city-far:#999794;
+  --city-mid:#6d6c6a;
+  --city-near:#3d3c3b;
+  --city-lantern:#c4c2be;
+  --city-hot:#e6e3de;
+  --city-jade:#d1cfcb;
+  --city-blossom:#ccc9c5;
+  --city-blossom-far:#a5a3a0;
+  --city-sun:#f7f4ef;
 }
