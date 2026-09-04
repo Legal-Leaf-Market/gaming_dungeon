@@ -1,243 +1,281 @@
-# Art brief: Verda Studio
+# Art brief: Verda Studio, monochrome
 
-Everything here is **optional**. verdastudio.store is live and complete without a
-single one of these files. Each row says what it adds, so you can do one, all, or
-none, in any order.
+The site is a black-and-white ink world. Same filenames, same dimensions, same
+four rules as the version this replaces; the colour palette is gone and an ink
+scale stands in its place.
 
-The site is a map of a valley with ten doors in it. Each door is a room that
-sells one kind of thing, and the whole conceit is that you are looking at a place
-rather than at a shop. The hero already does that. **Everything below the hero
-does not yet**, and that is the job: the page is a 1180px column centred in a
-dark window, and on the desktop screens this site is actually read on there are
-roughly 370 empty pixels down each side. Those gutters are the brief.
-
-## How to hand art back
-
-1. Generate it.
-2. Drop the file in **`public/art/`** in the GitHub repo, using the **exact
-   filename** in the tables below.
-3. Tell me it is there.
-
-The filenames are wired in already, so a file dropped at the right name appears
-with no code change. Anything with a NEW filename needs one line from me, so tell
-me which ones you added.
-
-**Format:** PNG, transparent where the table says transparent. Send the biggest
-version you have; I convert to WebP and size on my side, so do not optimise
-first.
+This file was rewritten in place rather than added beside the old one, on
+purpose. The previous brief named a primary living colour and gave every room
+its own hex code, which is the exact instruction the restyle exists to undo.
+Two briefs in circulation is how half a pack comes back tinted. If you are
+holding a copy that mentions a palette, it is out of date: this is the brief.
 
 ---
 
-## The four rules that matter
+## 0. The one decision that has to be settled first
 
-**1. Never letter the artwork.** No words, no logos, no room names, no runes that
-read as a real script. Every word on this site is HTML so it can be translated,
-searched, read aloud and edited in a second. A picture with a name baked into it
-is a picture I cannot change.
+Every approved reference is **dark ink on pale paper**. The site's page is
+`#12100f`, near black. Both cannot be true, and 40 pieces painted the wrong way
+round are 40 pieces that vanish on the page.
+
+**The approach this brief assumes: the art brings its own paper.**
+
+Plates, rails, cartouches and dividers are painted on a pale ink-wash ground and
+are **not transparent**. They read as scrolls, plates and hanging panels
+against the dark page. The near-black stops being a problem to paint around and
+becomes the wall the work hangs on. The restyle README already reaches for this
+when it asks the rails to read like "hanging ink scrolls."
+
+What this changes from the old brief:
+
+- **Transparency is no longer wanted on the big pieces.** Rails, plates,
+  cartouches, dividers and the compass all carry paper. Only the **sigils** stay
+  transparent, because they sit inline beside text.
+- **Soft, irregular edges instead of hard rectangles.** A plate whose ink and
+  paper fade out into nothing at the edges reads as a painting on a wall. A
+  plate with four crisp corners reads as a screenshot. Every reference already
+  does this correctly: look at how the paper dissolves at the margins.
+- **Rule 3 of the old brief is void.** "Light-on-dark, generous rim light, no
+  white backgrounds" was written for the colour world. It is now the opposite.
+
+If you would rather keep transparency and invert the ink to light-on-dark, that
+works too and everything else in this brief still applies. It just throws away
+the paper texture, which is most of why the references look hand made. Decide
+before generating, not after.
+
+---
+
+## 1. The four rules that still matter
+
+**1. Never letter the artwork.** No words, no logos, no room names, no marks
+that read as real script. Every word on this site is HTML so it can be
+translated, searched, read aloud and edited in a second.
+
+Worth restating for this style specifically: **sumi-e references are full of
+calligraphy, and an image model will copy it.** Several of the approved
+references have brushed characters in them. Those are style cues, not content
+cues. Any generated piece with writing in it goes back.
 
 **2. No real game, console or franchise IP.** This is a gaming storefront, which
-makes this the rule an image model will break without being asked to. No
-recognisable character, console silhouette, controller shape that names a brand,
-box art, logo, or costume. Draw **the feeling of the hobby**, never the products
-of it. The test: if somebody can name it, regenerate it.
+makes this the rule a model breaks unprompted. No recognisable character,
+console silhouette, controller shape, box art or costume. Draw the feeling of
+the hobby, never the products of it. If somebody can name it, regenerate it.
 
-**3. Everything sits on near-black.** The page is `#12100f` and `#1a181d`. Art
-must read on that, which means light-on-dark, generous rim light, and no white
-backgrounds. Transparent PNG unless the table says otherwise. A piece that only
-works on white is a piece I cannot place.
+**3. The page is near black and the art is not.** See section 0. Art carries its
+own pale ground and dissolves at its edges. The one exception is the sigils.
 
 **4. Nothing may look like a UI element.** No buttons, panels, cursors, health
-bars or icons that a visitor might try to click. The gutters are scenery. The
-moment scenery looks interactive, the real interface gets harder to find.
+bars or icons a visitor might try to click. The moment scenery looks
+interactive, the real interface gets harder to find.
 
 ---
 
-## The world, so the art agrees with itself
+## 2. The ink scale, which replaces the palette
 
-This is the part worth reading twice. The site already has a consistent world and
-the art needs to belong to it rather than decorate it.
+The old brief had eight named colours. This has four values and one rule about
+how to use them.
 
-**The valley.** A wide green river valley at the blue hour, cherry trees in
-blossom, lanterns coming on. Mountains north and east. A river down the middle. A
-few small settlements, one larger city far off, and an arcade in a corner that is
-not selling anything. It is late, it is warm, and nothing is on fire. **This is
-not a battlefield and not a dungeon.** The epic register here is *awe and depth
-of history*, not danger.
+| Value | Where it lives |
+|---|---|
+| **Paper** | The ground. Warm off-white, never pure `#ffffff`, with visible tooth. |
+| **Wash** | Mid grey. Distance, mist, everything more than a few feet away. |
+| **Ink** | Near black. The subject, the strong strokes, the thing being looked at. |
+| **Void** | True black. Used sparingly, for weight and for the deepest shadow. |
 
-**The five regions**, which are labelled on the map and are the strongest lore
-hooks the site has. Somebody asked "what IS the Northern Wall?" without being
-prompted, which is exactly the reaction to design for. Draw them as though the
-answer exists and nobody has written it down:
+**The rule: depth is distance.** Near things are ink, far things are wash, the
+furthest thing is barely there. This is the whole of the style and it is why the
+references read as places rather than as patterns. A piece where everything sits
+at one value is a piece with no space in it.
+
+Splatter, drip and bleed are welcome and should look like consequences of a
+loaded brush, not like a texture applied afterwards. They belong where a stroke
+ended, not scattered evenly across a frame.
+
+---
+
+## 3. The ten realms, as ink rather than hue
+
+The old brief gave each room a band colour. In monochrome that ladder becomes
+**density**, which is a better fit than the hex codes ever were: a hue ladder is
+arbitrary and has to be learned, an ink ladder is legible on sight.
+
+The ladder ascends, so the art gets **thinner, cleaner and emptier as the number
+goes up**. Realm 1 is loaded brush and carved weight. Realm 10 is almost nothing
+at all, and that is the point.
+
+| # | Realm | Room | Ink treatment | The room's own line |
+|---|---|---|---|---|
+| 1 | Body Tempering | The Workshop | Heaviest black in the set. Loaded brush, thick strokes, grit. | Flesh is the first furnace. |
+| 2 | Qi Gathering | Play | Still dark, but opening up. Air entering the frame. | Breath by breath, the sea fills. |
+| 3 | Foundation Establishment | The Table | Solid mid-ink. Flat planes, weight resting on stone. | What is built on stone endures. |
+| 4 | Core Formation | Battlestation | Concentric wash, a still centre held by moving ink. | A whirlpool learns to hold its center. |
+| 5 | Golden Core | The Arcade Floor | The one piece with real light in it. Paper glowing through dark ink. | A sun the size of a seed. |
+| 6 | Nascent Soul | The Vault | Two values of the same shape, one solid, one ghosted. | The self that steps outside the self. |
+| 7 | Soul Transformation | The Wardrobe | Long wet strokes, cloth and water reading as one substance. | The river forgets it was rain. |
+| 8 | Void Refinement | Power | One perfect dark shape on almost empty paper. | Emptiness, polished until it shines. |
+| 9 | Dao Integration | Audio | Ripples only. Line, no mass. | The way walks with you now. |
+| 10 | Tribulation Transcendence | The Walls | Thinnest of the ten. Pale wash, one break of light. Almost blank. | The heavens themselves object. |
+
+The eleventh band was `#ffe2a0`, Immortal Ascension, spent on the arcade: "the
+last stair has no rail." Without colour, the arcade earns its place by being the
+**only piece with a genuine light source in it**. Everything else is ink and
+paper. That one glows. It is the only room that sells nothing and it should be
+the only room that is lit.
+
+---
+
+## 4. The world, unchanged
+
+The restyle is a change of medium, not of place. This is still a river valley at
+the blue hour, cherry trees in blossom, lanterns coming on, mountains north and
+east. It is late, it is warm, and nothing is on fire. **Not a battlefield and
+not a dungeon.** The register is awe and depth of history, never danger.
+
+The five regions, which are the strongest lore hooks the site has:
 
 | Region | What it is, for the art |
 |---|---|
-| **The Northern Wall** | The mountain range along the top. Read it as a wall somebody *built*, not a range that happened: too regular, too deliberate, with the seams of enormous stonework showing through the rock where the snow has come off. Nobody alive stacked those. Do not explain it. |
-| **Greensleep** | The forested west. Old growth, deep moss, light coming down in shafts. The name says the forest is not dead, it is asleep, and the art should make you unsure which. Ruins under the roots, never in the open. |
-| **The Eastern Reach** | The dry high country east. Thinner air, fewer trees, standing stones and long sightlines. The furthest edge of anything anybody maintains. |
-| **The Lantern Quarter** | The settled south, where the map's scale bar sits. Warm, lived in, lantern light in windows, washing lines, boats. The only region with people in it. |
-| **The Still Water** | The lake in the southeast. Absolutely flat, reflecting perfectly, and colder in tone than everything around it. Something is under it. Do not show what. |
+| **The Northern Wall** | The range along the top. A wall somebody *built*: too regular, too deliberate, the seams of enormous stonework showing where the snow has come off. Nobody alive stacked those. Do not explain it. |
+| **Greensleep** | The forested west. Old growth, deep moss, light in shafts. The name says the forest is asleep, not dead, and the art should leave you unsure. Ruins under the roots, never in the open. |
+| **The Eastern Reach** | Dry high country. Thin air, few trees, standing stones, long sightlines. The furthest edge of anything anybody maintains. |
+| **The Lantern Quarter** | The settled south. Warm, lived in, lantern light in windows, washing lines, boats. The only region with people in it. |
+| **The Still Water** | The lake in the southeast. Absolutely flat, reflecting perfectly, colder than everything around it. Something is under it. Do not show what. |
 
-**Lantern Water** is the river running north to south through the middle,
-carrying reflected lantern light.
-
-**The ten realms.** Every room flies a realm, and the realms are a cultivation
-ladder borrowed from the owner's own game project. This is the spine of the whole
-look: the ladder ascends, so the art should get **thinner, cleaner and colder as
-the number goes up**. Realm 1 is earth and iron. Realm 10 is almost nothing at
-all, and that is the point.
-
-| # | Realm | Room | Band | The room's own line |
-|---|---|---|---|---|
-| 1 | Body Tempering | The Workshop | `#9b948a` | Flesh is the first furnace. |
-| 2 | Qi Gathering | Play | `#78aadc` | Breath by breath, the sea fills. |
-| 3 | Foundation Establishment | The Table | `#60b496` | What is built on stone endures. |
-| 4 | Core Formation | Battlestation | `#5896eb` | A whirlpool learns to hold its center. |
-| 5 | Golden Core | The Arcade Floor | `#e8be50` | A sun the size of a seed. |
-| 6 | Nascent Soul | The Vault | `#be82eb` | The self that steps outside the self. |
-| 7 | Soul Transformation | The Wardrobe | `#e278b4` | The river forgets it was rain. |
-| 8 | Void Refinement | Power | `#6e6ea0` | Emptiness, polished until it shines. |
-| 9 | Dao Integration | Audio | `#8cdcdc` | The way walks with you now. |
-| 10 | Tribulation Transcendence | The Walls | `#f0f0fa` | The heavens themselves object. |
-
-There is an eleventh band, `#ffe2a0`, Immortal Ascension, spent on the arcade:
-"the last stair has no rail." It is the only room that sells nothing, and it gets
-the highest colour on the ladder for that reason. If you make one piece warmer
-and stranger than everything else, make it that one.
-
-**The palette.** Work inside this. It is the site's, not a suggestion.
-
-| Token | Hex | Use |
-|---|---|---|
-| void | `#12100f` | The deepest ground |
-| night | `#1a181d` | Page background |
-| surface | `#23212a` | Raised panels |
-| jade | `#7fd0b0` | The primary living colour |
-| lantern | `#fabf8e` | Warm light, windows, flame |
-| blossom | `#c6968e` | Cherry, dusty rose |
-| bough | `#453036` | Branch and shadow |
-| text | `#f4ece6` | Warm off-white |
+**Lantern Water** is the river running north to south, carrying reflected light.
 
 ---
 
-## Priority 1: the gutters
+## 5. The files
 
-**This is the whole reason for the brief.** Everything below the hero is a
-centred column on empty black, and on a 1920-wide screen that is ~370px of
-nothing down each side. Filling it is the single biggest change available to how
-this site feels.
+Same names, same sizes. Transparency column updated per section 0.
 
-Tall, narrow, transparent, and **deliberately quiet**: these sit beside body text
-and must lose every fight with it. Think of them as the illuminated margin of a
-manuscript rather than as a picture hung next to one.
+### Priority 1: the gutters
 
-| Filename | Size | Transparent | What it shows |
+The page is a 1180px column in a dark window, leaving roughly 370px of nothing
+down each side on the screens this site is read on. Filling that is the single
+biggest change available.
+
+These sit beside body text and must lose every fight with it. An illuminated
+margin, not a picture hung next to one.
+
+| Filename | Size | Ground | What it shows |
 |---|---|---|---|
-| `rail-left.webp` | 380 x 2400 | Yes | A vertical strip of valley read from top to bottom: the Northern Wall's stonework at the top, forest below it, the river entering, lanterns at the bottom. Very low contrast. Fades to nothing at both ends. |
-| `rail-right.webp` | 380 x 2400 | Yes | Its counterpart on the east side: high country, standing stones, the lake, one far-off city silhouette. Same restraint. |
+| `rail-left.webp` | 380 x 2400 | Paper, dissolving | A vertical strip of valley top to bottom: the Northern Wall's stonework, forest below, the river entering, lanterns at the base. Very low contrast. |
+| `rail-right.webp` | 380 x 2400 | Paper, dissolving | Its eastern counterpart: high country, standing stones, the lake, one far city silhouette. Same restraint. |
 
-They must **fade out top and bottom** rather than ending on a hard edge, because
-the page scrolls and they will be cut at an unpredictable point. Nothing
-important within 200px of either end.
+Both must **fade to nothing at top and bottom**, because the page scrolls and
+they get cut at an unpredictable point. Nothing important within 200px of either
+end. The twin-scroll reference is exactly right for this.
 
-If tall art proves awkward, an alternative that also works: **six to eight small
-transparent vignettes** I can scatter down the gutters at intervals, each
-150-260px, named `gut-1.webp` through `gut-8.webp`. Say which you did.
+Alternative if tall art proves awkward: six to eight small vignettes at
+150-260px each, `gut-1.webp` through `gut-8.webp`. Say which you did.
 
----
+### Priority 2: the ten room plates
 
-## Priority 2: the ten room plates
+**1400 x 320**, paper ground, dissolving at the edges. Built around its realm's
+ink treatment from section 3.
 
-Each room page has a header with the room's name, its epithet and its band
-colour, and no art at all. A plate sits behind that header as texture.
+The composition reads left to right as *approach*: the strongest part sits left,
+and the right third stays quiet because the room's heading sits over it. Every
+plate reference already does this correctly, with the subject massed left and
+the paper opening out to the right. Keep that.
 
-Transparent, **1400 x 320**, and each one built around its realm's band colour
-from the table above, on near-black. The composition should read from left to
-right as *approach*, so the strongest part sits left where the heading is not.
-
-| Filename | Room | Direction |
-|---|---|---|
-| `plate-workshop.webp` | The Workshop | Forge light, anvils, iron filings, a hand-built machine half finished. Realm 1: heaviest and most physical of the ten. |
-| `plate-play.webp` | Play | Wind, breath, kites, the first air of morning. Realm 2: light and gathering. |
-| `plate-tabletop.webp` | The Table | Cut stone, a long table, dice as carved knucklebones. Realm 3: foundation, solidity. |
-| `plate-battlestation.webp` | Battlestation | A whirlpool held still. Concentric order, a calm centre. Realm 4. |
-| `plate-arcade.webp` | The Arcade Floor | A small sun in a dark hall. Golden, warm, the only lit thing. Realm 5. |
-| `plate-vault.webp` | The Vault | A figure and its double stepping out of it. Sealed boxes, shelves in the dark. Realm 6. |
-| `plate-wardrobe.webp` | The Wardrobe | Cloth in motion, rain becoming river. Hanging fabric, no bodies. Realm 7. |
-| `plate-power.webp` | Power | Polished emptiness. A single perfect void shape, cold and violet. Realm 8. |
-| `plate-audio.webp` | Audio | A path walking itself. Ripples, standing waves, no equipment. Realm 9. |
-| `plate-walls.webp` | The Walls | Sky objecting: lightning behind cloud, almost white, almost nothing. Realm 10 is the thinnest of the ten. |
+`plate-workshop` `plate-play` `plate-tabletop` `plate-battlestation`
+`plate-arcade` `plate-vault` `plate-wardrobe` `plate-power` `plate-audio`
+`plate-walls`
 
 **No product photography and no gear.** A speaker in the Audio plate would date
-instantly and would compete with the real products underneath it. Draw the realm,
-not the category.
+instantly and compete with the real products underneath it. Draw the realm, not
+the category. The audio reference gets this right: ripples and standing waves,
+no equipment.
 
----
+### Priority 3: the ten realm sigils
 
-## Priority 3: the ten realm sigils
-
-Small marks, one per realm, used beside room names and in the map legend.
-
-| Filename | Size | Transparent |
+| Filename | Size | Ground |
 |---|---|---|
-| `sigil-1.webp` … `sigil-10.webp` | 256 x 256 each | Yes |
+| `sigil-1.webp` … `sigil-10.webp` | 256 x 256 | **Transparent** |
 
-One design language across all ten, ascending: **sigil 1 is thick, carved and
-earthbound; sigil 10 is a single hairline that barely closes.** Each in its band
-colour on transparent. They must be legible at 28px, which means very few
-strokes. These are the most reusable thing in the brief.
+The only transparent assets in the set, because they sit inline beside text.
+Ink on nothing, and dark enough to read on the dark page: for these, and only
+these, invert to a pale ink so they show up.
 
----
+One design language across all ten, ascending exactly as section 3 describes:
+**sigil 1 is thick, carved and earthbound; sigil 10 is a single hairline that
+barely closes.** They must be legible at **28px**, which means very few strokes.
+The supplied sigil sheet is close, though several are still too busy to survive
+that size. Test at 28px before delivering, not at full resolution.
 
-## Priority 4: dividers and frame
+These are the most reusable thing in the brief and now carry the whole job of
+telling rooms apart, since the band colours are gone. Worth the most care.
 
-| Filename | Size | Transparent | What |
+### Priority 4: dividers and frame
+
+| Filename | Size | Ground | What |
 |---|---|---|---|
-| `divider-branch.webp` | 1400 x 120 | Yes | A blossom branch that tiles horizontally between sections. |
-| `divider-range.webp` | 1400 x 90 | Yes | A distant mountain silhouette, very low contrast, for section breaks. |
-| `corner-tl.webp` | 400 x 400 | Yes | An ornamental corner for the top-left of the map frame. I mirror it for the other three, so make it work mirrored. |
-| `paper.webp` | 1200 x 1200 | No | A seamless dark parchment texture, used at very low opacity over panels. Must tile. |
-| `compass.webp` | 512 x 512 | Yes | A compass rose in the site's language, replacing the plain one on the map. |
+| `divider-branch.webp` | 1400 x 120 | Paper, dissolving | A blossom branch between sections. |
+| `divider-range.webp` | 1400 x 90 | Paper, dissolving | Distant mountains, very low contrast. |
+| `corner-tl.webp` | 400 x 400 | Paper, dissolving | Ornamental corner for the map frame. **Mirrored for the other three, so it must work mirrored.** |
+| `paper.webp` | 1200 x 1200 | Opaque | Seamless dark ink-wash texture, used at low opacity over panels. **Must tile.** |
+| `compass.webp` | 512 x 512 | Paper, dissolving | A compass rose in the site's language. |
 
----
+`paper.webp` is the one asset that stays dark, because it overlays dark panels
+rather than sitting on them. The supplied ink-wash texture is right for it.
+**Tiling is a hard requirement**, and it is the thing generation gets wrong: the
+edges must match seamlessly. This is checkable and it will be checked.
 
-## Priority 5: the five region cartouches
+### Priority 5: the five region cartouches
 
-Transparent, roughly 600 x 400, one per region, sitting faintly behind that
-region's label on the map. These are where the "what IS the Northern Wall"
-feeling gets made, so put the most thought here and the least detail.
+Roughly 600 x 400, paper ground, dissolving. One per region, sitting faintly
+behind that region's label on the map.
 
-`region-northern-wall.webp`, `region-greensleep.webp`,
-`region-eastern-reach.webp`, `region-lantern-quarter.webp`,
-`region-still-water.webp`
+`region-northern-wall` `region-greensleep` `region-eastern-reach`
+`region-lantern-quarter` `region-still-water`
 
----
+Somebody once asked "what IS the Northern Wall?" without being prompted. That is
+the reaction to design for. **Most thought, least detail.**
 
-## Priority 6: social
+### Priority 6: social
 
 Not used on the site.
 
 | Filename | Size | Use |
 |---|---|---|
-| `social-square.webp` | 1080x1080 | Instagram, Pinterest |
-| `social-story.webp` | 1080x1920 | Stories |
-| `social-wide.webp` | 1200x630 | Link previews |
+| `social-square.webp` | 1080 x 1080 | Instagram, Pinterest |
+| `social-story.webp` | 1080 x 1920 | Stories |
+| `social-wide.webp` | 1200 x 630 | Link previews |
 
 Leave the top ~15% and bottom ~20% of the story frame quiet: that is where the
-platform puts its own caption and reply bar.
+platform puts its caption and reply bar.
 
 ---
 
-## What I am deliberately not asking for
+## 6. Deliberately not wanted
 
-- **Anything with words in it.** See rule 1.
+- **Anything with words in it.** Rule 1, and the biggest risk in this style.
 - **A logo or wordmark.** The mark exists and the type is CSS.
-- **Any real game, console or franchise.** Rule 2, repeated at the bottom because
-  it is the one that will get broken.
-- **Product photography or renders of gear.** Every product image comes live from
-  the maker's own shop. A generated one would be inventing stock.
-- **Characters or a cast.** The sister site has a cast; this one deliberately does
-  not. The valley is empty of people at the scale we draw it, and that emptiness
-  is doing work. Lantern light in a window implies somebody without showing them.
-- **Anything frightening.** No monsters, no ruin-as-threat, no red skies. The
-  register is *old, deep, and quiet*, which is a harder note to hit than menace
-  and is worth much more here.
+- **Any real game, console or franchise.** Rule 2, repeated because it is the
+  one that gets broken.
+- **Product photography or renders of gear.** Every product image comes live
+  from the maker's own shop.
+- **Characters or a cast.** The sister site has a cast; this one deliberately
+  does not. The valley is empty of people at the scale we draw it, and that
+  emptiness is doing work. A lit window implies somebody without showing them.
+- **Anything frightening.** No monsters, no ruin-as-threat. The register is old,
+  deep and quiet, which is harder to hit than menace and worth much more here.
+
+---
+
+## 7. How to hand art back
+
+Generate it, then **send the whole set as a single zip**. Individually pasted
+images arrive as previews and never reach the repo. Filenames must match the
+tables above exactly; a file at the right name needs no code change, a file at a
+new name needs a line of code and a mention.
+
+Send the largest version you have. Conversion to WebP and sizing happens on this
+side, so do not optimise first.
+
+On arrival each piece gets checked for: correct dimensions, no lettering,
+transparency where the table says transparent, the rails actually fading at both
+ends rather than stopping, `paper.webp` actually tiling, and the sigils actually
+legible at 28px. Anything that fails goes back with the measurement.
