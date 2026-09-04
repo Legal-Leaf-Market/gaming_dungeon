@@ -279,3 +279,22 @@ On arrival each piece gets checked for: correct dimensions, no lettering,
 transparency where the table says transparent, the rails actually fading at both
 ends rather than stopping, `paper.webp` actually tiling, and the sigils actually
 legible at 28px. Anything that fails goes back with the measurement.
+
+**What the first monochrome delivery actually measured (2026-09-04).** Two of
+those checks were written and then not run, and both are worth knowing before
+the next round:
+
+- **The paper is right.** Every large piece arrived as promised: a pale sheet
+  with black ink on it, paper luminance 190 to 235. The sigils arrived as
+  promised too, pale ink on transparency, 20% coverage at luminance 235.
+- **Nothing dissolves.** Alpha sits flat at .93 across the whole interior of
+  every large piece and only drops in the final antialiased pixel. There is no
+  fade at the rails' ends, none at a plate's margins, none around a cartouche.
+  Every piece is a hard rectangle.
+
+The site compensates: `public/css/art.css` now cuts each edge itself with a
+mask, and `test/art.test.mjs` fails if a placement ever raises a sheet without
+one. That works, but it is the site doing the illustrator's job, and a CSS
+gradient can only cut a straight soft edge. The irregular, torn, ink-bleeding
+margin this brief asks for is still worth drawing, because it is the thing a
+mask cannot fake.

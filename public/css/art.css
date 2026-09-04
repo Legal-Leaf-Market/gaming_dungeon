@@ -12,6 +12,46 @@
    these are all background-image, which fails to nothing, rather
    than <img>, which fails to a torn icon in the middle of a
    heading. That is the whole reason the art is wired this way.
+
+   THE ART IS INK ON PAPER AND THE PAPER IS PART OF THE ART
+   (owner, 2026-09-04, on the first monochrome build: the pieces
+   "look like inverted bullshit", and the fix he asked for is
+   "a light background so the black ink can show up").
+
+   He was reading the symptom exactly right. MEASURED, on the
+   delivered library: every large piece is a near-opaque pale
+   sheet (mean alpha .93, mean paper luminance 190 to 235) with
+   black ink drawn on it. Only the sigils are what the pack calls
+   transparent, and those are pale ink meant for the dark page.
+
+   The old opacities in this file were tuned against the previous
+   COLOUR library, whose pieces were dark scenes that wanted
+   holding back. Run the same .22 and .42 over a white sheet and
+   you do not get a subtle drawing, you get the sheet averaged
+   halfway to black and the ink averaged halfway to grey: a grey
+   smear whose lights and darks have both collapsed toward the
+   middle. That is what reads as "inverted". Nothing was inverted;
+   the paper was being erased.
+
+   So the pieces are now shown at something near their own
+   strength, and the job that opacity used to do is done two other
+   ways instead, both of which keep the ink black:
+
+     1. MASKS, because these sheets do not dissolve themselves.
+        The handoff note says the big art "dissolves softly at
+        edges". Measured, it does not: alpha sits at .93 flat
+        across the whole interior and only drops in the final
+        antialiased pixel. Every piece is a hard rectangle, and
+        a hard pale rectangle on a near-black page is the single
+        worst thing this library could do. Every placement below
+        therefore cuts its own edge in CSS.
+     2. PLACEMENT, because a bright sheet cannot sit under pale
+        text. Where the old build put art behind words and turned
+        the art down until the words won, the art now moves out
+        of the way instead. See the room plate.
+
+   The page stays near-black. It is the wall, and these are sheets
+   of paper hung on it.
    ============================================================ */
 
 /* ---- THE GUTTERS ------------------------------------------
@@ -43,12 +83,57 @@
   aspect-ratio:380 / 2400;
   pointer-events:none; user-select:none;
   background-repeat:no-repeat; background-size:cover;
-  opacity:.42;
-  /* A hair of blur so it never competes with type for focus. */
-  filter:blur(.4px);
+
+  /* .82, NOT .42. At .42 a white sheet lands near #6b6b6b on this
+     ground and the black ink lands near #4a4a4a: eleven points of
+     separation where the drawing has two hundred and fifty. The
+     whole picture went to fog. At .82 the paper reads as paper and
+     the ink reads as ink, and the 18% that is held back is what
+     keeps the gutter from out-shouting the column. */
+  opacity:.82;
+
+  /* THE SHEET CUTS ITS OWN EDGES, because the file does not.
+     Four fades, and each one is answering a specific hard line
+     the raised opacity would otherwise expose:
+       top and bottom  the rail is 2400px of art in a viewport
+                       band, so both ends stop mid-drawing
+       inner           the edge nearest the text column, which is
+                       the one a reader's eye is already on
+       outer           the viewport edge, where a sheet running
+                       clean off the screen reads as a background
+                       image rather than as a hung print
+     The inner fade is the long one on purpose. It has the most
+     work to do and it is the side that must never look like a
+     border down the side of the column. */
+  -webkit-mask-composite:source-in;
+          mask-composite:intersect;
 }
-.rail-l{ left:0;  background-image:url(/art/rail-left.webp);  background-position:left top }
-.rail-r{ right:0; background-image:url(/art/rail-right.webp); background-position:right top }
+/* Reduced motion keeps the shapes and drops nothing here: there is
+   no filter left to remove now that the blur is gone. The blur was
+   there to stop a fogged rail competing for focus. A rail that is
+   actually legible does not need its own drawing softened, and at
+   .82 the blur only muddied the ink. */
+
+.rail-l{
+  left:0; background-image:url(/art/rail-left.webp);
+  background-position:left top;
+  -webkit-mask-image:
+    linear-gradient(90deg,#000 0 34%,transparent 96%),
+    linear-gradient(180deg,transparent 0,#000 7%,#000 84%,transparent 100%);
+          mask-image:
+    linear-gradient(90deg,#000 0 34%,transparent 96%),
+    linear-gradient(180deg,transparent 0,#000 7%,#000 84%,transparent 100%);
+}
+.rail-r{
+  right:0; background-image:url(/art/rail-right.webp);
+  background-position:right top;
+  -webkit-mask-image:
+    linear-gradient(270deg,#000 0 34%,transparent 96%),
+    linear-gradient(180deg,transparent 0,#000 7%,#000 84%,transparent 100%);
+          mask-image:
+    linear-gradient(270deg,#000 0 34%,transparent 96%),
+    linear-gradient(180deg,transparent 0,#000 7%,#000 84%,transparent 100%);
+}
 
 /* The column has to sit ON the scenery, not under it. `main` is
    static, and a positioned sibling paints over static content
@@ -56,47 +141,72 @@
 .ground > main{ position:relative; z-index:1 }
 
 @media (max-width:1419px){ .rail{ display:none } }
-@media (prefers-reduced-motion:reduce){ .rail{ filter:none } }
 
 /* ---- ROOM PLATES ------------------------------------------
-   One per room, behind its heading, keyed off `data-room` which
-   renderRoom() sets. The plate is 1400x320 with its mass on the
-   left, so it sits under the back-link and the room name and
-   runs out before the blurb.
+   One per room, keyed off `data-room` which renderRoom() sets.
 
-   Masked to nothing at the right and bottom on top of the art's
-   own fade, because a plate that stops dead is a rectangle and a
-   rectangle is the one shape that says "image" rather than
-   "place". */
+   IT SITS BESIDE THE HEADING NOW, NOT BEHIND IT, and that is the
+   whole difference between this plate and the last one. The art
+   is a black drawing on a white sheet; the heading is near-white
+   text on a near-black page. Those two cannot occupy the same
+   pixels at any opacity that leaves either of them intact, and
+   the old build resolved it the only way that direction allows,
+   by turning the sheet down to .22 until the words won. What that
+   bought was a heading you could read over a drawing you could
+   not see.
+
+   MEASURED at 1600px: .room-head is 570px wide inside a 1112px
+   section, so there are 542 unused pixels to the right of the
+   longest room name on the site. The sheet goes there. Nothing
+   overlaps, so nothing has to be faded into uselessness, and the
+   ink can be as black as it was drawn.
+
+   The ink mass of every plate is in its left third and the rest
+   of the 1400px file is empty paper, so the window is anchored
+   left with a small paper margin ahead of it. */
 .room-head{ position:relative; isolation:isolate }
 .room-head::before{
   content:''; position:absolute; z-index:-1;
-  left:-24px; right:-40%; top:-28px; height:300px;
-  background-repeat:no-repeat; background-position:left top;
-  background-size:auto 300px;
+  left:78%; width:540px; top:-72px; height:200px;
+  background-repeat:no-repeat;
+  /* 26px of paper before the drawing starts, so the left fade has
+     something to eat other than the lantern post. */
+  background-position:26px top;
+  background-size:auto 200px;
   pointer-events:none;
+  opacity:.8;
 
-  /* .22, NOT .5. Half opacity was the first cut and it put a lit
-     purple figure straight through the room's own blurb and the
-     panel below it: the words were still there and you could not
-     read them. The brief's own line for this art is that it has to
-     lose every fight with the type, and a plate you notice before
-     the heading has won one. */
-  opacity:.22;
+  /* IT ENDS WHERE THE GRID BEGINS, and that bound is measured
+     rather than eyeballed: .room-head opens at y=995 and .grid at
+     y=1125, so the sheet is hung 72px higher than the heading and
+     given 200px, which lands its last pixel on the grid line. The
+     first cut was 280px from -30 and it printed the anvil straight
+     through the empty-state panel's second paragraph. A sheet this
+     bright cannot be allowed to touch a card or a panel: the whole
+     reason it works is that it never overlaps anything.
 
-  /* FADED ON BOTH AXES, and the vertical one is the load-bearing
-     half. The plate is 300px tall and .room-head is shorter than
-     that, so a right-only mask left a hard horizontal edge across
-     whatever sat underneath, which on an unstocked room is the
-     empty-state panel. Two gradients intersected: gone to the
-     right, gone at the bottom, no edge anywhere. */
+     THE WIDTH IS FIXED PIXELS, NOT AN OVERFLOW PERCENTAGE, and
+     that is the second thing measurement caught. `right:-95%`
+     reads as 95% of the HEADING, which is a constant 570px, so
+     the sheet was the same 667px wide at every viewport while the
+     room it had to fit into was not. At 1100px the last 80px of
+     it, fade and all, fell off the right of the window and left a
+     razor-straight cut down the drawing. 540px is what fits the
+     narrowest viewport the plate is shown at, and at the widest
+     the section stops growing at --page anyway, so one number is
+     right everywhere the plate exists.
+
+     FADED ON ALL FOUR SIDES ANYWAY, generously, because "lands on
+     the grid line" is true of the tallest room head and the fades
+     are what make it true of the others. Two gradients intersected:
+     paper at the middle, nothing at any edge, no hard line. */
   -webkit-mask-image:
-    linear-gradient(90deg,#000 0 28%,transparent 86%),
-    linear-gradient(180deg,#000 0 34%,transparent 94%);
+    linear-gradient(90deg,transparent 0,#000 11%,#000 66%,transparent 100%),
+    linear-gradient(180deg,transparent 0,#000 22%,#000 60%,transparent 100%);
   -webkit-mask-composite:source-in;
           mask-image:
-    linear-gradient(90deg,#000 0 28%,transparent 86%),
-    linear-gradient(180deg,#000 0 34%,transparent 94%);
+    linear-gradient(90deg,transparent 0,#000 11%,#000 66%,transparent 100%),
+    linear-gradient(180deg,transparent 0,#000 22%,#000 60%,transparent 100%);
           mask-composite:intersect;
 }
 .room-head[data-room="workshop"]::before     { background-image:url(/art/plate-workshop.webp) }
@@ -110,16 +220,29 @@
 .room-head[data-room="audio"]::before        { background-image:url(/art/plate-audio.webp) }
 .room-head[data-room="walls"]::before        { background-image:url(/art/plate-walls.webp) }
 
-/* Play's plate is daylight cloud and reads far brighter than the
-   other nine on a near-black page. Turned down rather than
-   redrawn: the art is right, the exposure is the outlier. */
-.room-head[data-room="play"]::before{ opacity:.15 }
+/* NO PLATE WHERE THERE IS NO ROOM FOR ONE. The sheet only works
+   because it stands clear of a 570px heading block and still ends
+   inside the section. Measured: the section is the page column
+   less its padding, so it is 1112px at any viewport at or above
+   --page and narrower below it, and 445 + 540 = 985 only clears
+   with room to spare while that 1112 holds. Under it the sheet
+   would have to go back on top of the words, so it is removed
+   instead, which is the same answer this file gives to a room
+   whose art nobody has drawn yet. */
+@media (max-width:1199px){ .room-head::before{ display:none } }
 
 /* ---- REALM SIGILS -----------------------------------------
    The mark for the room's realm, beside its name. Ten of them,
    thick and earthbound at realm 1 and a hairline that barely
    closes at realm 10, which is the ladder the rooms already fly
-   in their band colours and had no shape for until now. */
+   in their band colours and had no shape for until now.
+
+   THE ONE PIECE IN THE LIBRARY THAT IS ACTUALLY TRANSPARENT, and
+   the one whose ink is pale rather than black. Measured: 20% of
+   its pixels carry any alpha at all and they sit at luminance
+   235. It is drawn for the dark page and it goes on the dark
+   page untouched, which is why it is the only art here with no
+   mask and no paper under it. */
 .room-head h2{ display:flex; align-items:center; gap:14px; flex-wrap:wrap }
 .sigil{
   display:inline-block; width:38px; height:38px; flex:0 0 auto;
@@ -129,12 +252,34 @@
 .sigil[hidden]{ display:none }
 
 /* ---- DIVIDER ----------------------------------------------
-   Between the map and the shelf under it. Transparent, tiles
-   horizontally, and carries no meaning: it is a breath. */
+   Between the map and the shelf under it. Tiles horizontally and
+   carries no meaning: it is a breath.
+
+   A PAPER RULE, not a ghost. The file is a range of mountains in
+   the middle of a wide sheet, so tiled it gives range, paper,
+   range across the page, and at .82 that band of paper is the
+   thing that separates the two halves. The ends fade because a
+   sheet that runs off both sides of the column is a background,
+   and this is meant to be an object lying on the page. */
 .art-divider{
   height:90px; margin:34px 0 6px; pointer-events:none;
   background:url(/art/divider-range.webp) center/auto 90px repeat-x;
-  opacity:.5;
+  opacity:.82;
+  /* FADED ON BOTH AXES, and the vertical pair is not optional even
+     though the strip is only 90px tall. Ends-only was the first cut
+     and it gave a band of paper with two ruler-straight edges
+     running the full width of the page: a 1240px horizontal line is
+     more visible than a 90px vertical one, not less. The vertical
+     fades are 14px each, short enough to leave the range and its
+     reflection intact and long enough that the sheet has no edge. */
+  -webkit-mask-image:
+    linear-gradient(90deg,transparent 0,#000 14%,#000 86%,transparent 100%),
+    linear-gradient(180deg,transparent 0,#000 16%,#000 84%,transparent 100%);
+  -webkit-mask-composite:source-in;
+          mask-image:
+    linear-gradient(90deg,transparent 0,#000 14%,#000 86%,transparent 100%),
+    linear-gradient(180deg,transparent 0,#000 16%,#000 84%,transparent 100%);
+          mask-composite:intersect;
 }
 
 /* ---- REGION CARTOUCHES ------------------------------------
@@ -147,9 +292,13 @@
    why each cartouche is dropped below its word rather than
    centred on it.
 
-   Radially faded to nothing at the edge, because the artwork is
-   a 600x400 rectangle and a rectangle on a map reads as a
-   photograph somebody pasted on rather than as terrain. */
+   These are the one place a raised sheet has to stay polite: the
+   map is a dark panel carrying white pin labels, and five bright
+   rectangles would take it apart. So the cartouche keeps a tight
+   radial mask and a middling opacity, and what it gains over the
+   old .42 is not brightness so much as SEPARATION: the terrain
+   inside the mask now has black ink and white paper in it rather
+   than two greys a few points apart. */
 .region{
   position:absolute; z-index:0; pointer-events:none;
   left:calc(var(--x) * 1%); top:calc(var(--y) * 1%);
@@ -159,13 +308,15 @@
      off the edge and `overflow:hidden` deleted them entirely. */
   transform:translate(-50%, calc(var(--d) * 62%  - 50%));
   background-repeat:no-repeat; background-size:contain; background-position:center;
-  opacity:.42;
+  opacity:.62;
   /* A TIGHT CORE AND AN EARLY FALLOFF. The first pass held solid to
      34% and only finished at 72%, which left the artwork's own
      rectangular edge visible down both sides: on a map that reads as
-     a photograph pasted on rather than as terrain. */
-  -webkit-mask-image:radial-gradient(ellipse at 50% 50%, #000 18%, transparent 58%);
-          mask-image:radial-gradient(ellipse at 50% 50%, #000 18%, transparent 58%);
+     a photograph pasted on rather than as terrain. Tightened again
+     with the opacity lift, because the brighter the sheet the
+     sooner its corners announce themselves. */
+  -webkit-mask-image:radial-gradient(ellipse at 50% 50%, #000 14%, transparent 54%);
+          mask-image:radial-gradient(ellipse at 50% 50%, #000 14%, transparent 54%);
 }
 .plan-narrow .region{ display:none }
 
@@ -180,11 +331,22 @@
   background:url(/art/paper.webp) center/600px repeat;
   opacity:.10; mix-blend-mode:overlay; border-radius:inherit;
 }
+/* THE CORNER WAS THE WORST OF THE FOUR RECTANGLES. corner-tl is a
+   400x400 sheet with a lantern bough drawn into one corner and
+   nothing but paper in the other three quarters, so a plain
+   opacity showed a pale SQUARE at each corner of the map with a
+   smudge in it. The mask is anchored at the drawing's own corner
+   and gone well before the sheet's far edge, so what is left is
+   the bough on a scrap of paper. It mirrors with the element, so
+   all four corners get their own drawn corner rather than three
+   copies of the wrong one. */
 .plan-corner{
   position:absolute; z-index:1; pointer-events:none;
   width:120px; aspect-ratio:1;
   background:url(/art/corner-tl.webp) center/contain no-repeat;
-  opacity:.4;
+  opacity:.72;
+  -webkit-mask-image:radial-gradient(130% 130% at 0% 0%, #000 26%, transparent 70%);
+          mask-image:radial-gradient(130% 130% at 0% 0%, #000 26%, transparent 70%);
 }
 .plan-corner.tl{ top:0; left:0 }
 .plan-corner.tr{ top:0; right:0; transform:scaleX(-1) }

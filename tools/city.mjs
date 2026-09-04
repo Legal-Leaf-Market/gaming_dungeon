@@ -1622,15 +1622,34 @@ function quarterPlan() {
   const w = 2000, h = 1250
   const rand = rng(0x9d4c)
 
-  const INK      = '#0d0b0e'
-  const LAND_HI  = '#2f2934'   /* the ground, far side */
-  const LAND     = '#211c26'   /* the ground, near side */
-  const RIDGE    = '#191520'   /* rock, a shade under the ground it stands on */
-  const LINE     = '#7d6470'   /* the pen */
-  const LINE_HI  = '#ad8d90'   /* the pen, pressed */
-  const WATER    = '#141d2b'
-  const WATER_HI = '#44637c'
-  const LEAF     = '#15121c'
+  /* NINE NEUTRALS, CONVERTED RATHER THAN REPICKED (monochrome
+     restyle, 2026-09-04). These were a mauve ground, a rose pen and
+     a blue river, and they were the last visible hue on the site:
+     the plate read as a purple panel with a blue snake through it
+     under a page that had gone entirely to ink everywhere else.
+
+     Each one is its own former colour's LUMINANCE, so the drawing
+     keeps every value relationship it was composed with and only
+     loses the hue. Ground 43 over ridge 23, pen 106 lifting to 148
+     where it is pressed: all of that is unchanged.
+
+     THE RIVER IS THE ONE THAT COULD NOT BE A STRAIGHT CONVERSION,
+     and it is worth knowing why. Water measured 28 and the near
+     ground measured 30, two points apart, because in the old plate
+     the river was told apart from the land by being BLUE and not
+     by being darker. Convert both honestly and the river vanishes.
+     So the water drops to 14 and its lit edge climbs to 118: a
+     dark channel with a bright bank, which is how a pen would have
+     drawn it if it had never had a colour to lean on. */
+  const INK      = '#0c0c0c'
+  const LAND_HI  = '#2b2b2b'   /* the ground, far side */
+  const LAND     = '#1e1e1e'   /* the ground, near side */
+  const RIDGE    = '#171717'   /* rock, a shade under the ground it stands on */
+  const LINE     = '#6a6a6a'   /* the pen */
+  const LINE_HI  = '#949494'   /* the pen, pressed */
+  const WATER    = '#0e0e0e'
+  const WATER_HI = '#767676'
+  const LEAF     = '#131313'
 
   const peaks = []      /* {y, svg} -- sorted and emitted back to front */
   const trees = [], roofs = [], walls = [], roads = [], banks = []
